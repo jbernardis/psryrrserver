@@ -5,17 +5,15 @@ class Block:
 		self.name = nm
 		self.occupied = False
 		self.indicator = False
+		self.objName = type(self).__name__
 
-	def getOccupied(self):
-		return self.occupied
+	def setAspect(self, av=1):
+		if av != self.aspect:
+			self.aspect = av
+			self.rr.railroadEvent({self.objName: {self.name: av}})
+		return True
 
-	def setOccupied(self, flag=True):
-		self.occupied = flag
-
-	def getIndicator(self):
-		return self.indicator
-
-	def setIndicator(self, flag=True):
-		if self.indicator != flag:
-			self.indicator = flag
-			self.rr.railroadEvent(self.name, flag)
+	def getAspect(self, abit):
+		mask = (1 << abit) & 0xff
+		rv = mask & self.aspect
+		return 1 if rv != 0 else 0

@@ -1,7 +1,7 @@
 import threading
 import socket
 import select
-import logging
+import json
 
 class SktServer (threading.Thread):
 	def __init__(self, ip, port):
@@ -13,7 +13,7 @@ class SktServer (threading.Thread):
 		self.socketLock = threading.Lock()
 		self.sockets = []
 		self.newSockets = []
-		logging.info("Starting socket server at address: %s:%d" % (ip, port))
+		print("Starting socket server at address: %s:%d" % (ip, port))
 
 	def getSockets(self):
 		return [x for x in self.sockets]
@@ -33,12 +33,15 @@ class SktServer (threading.Thread):
 			
 	def sendToOne(self, skt, addr, msg):
 			try:
-				nbytes = len(msg).to_bytes(2, "little")
-				skt.send(nbytes)
+				m = json.dumps(msg).encode()
+			except:
 				try:
 					m = msg.encode()
 				except:
 					m = msg
+			try:
+				nbytes = len(m).to_bytes(2, "little")
+				skt.send(nbytes)
 				skt.send(m)
 			except (ConnectionAbortedError, ConnectionResetError, BrokenPipeError):
 				self.deleteSocket(addr)
@@ -48,7 +51,7 @@ class SktServer (threading.Thread):
 			for i in range(len(self.sockets)):
 				if self.sockets[i][1] == addr:
 					del(self.sockets[i])
-					logging.info("Disconnecting socket client at %s" % str(addr))
+					print("Disconnecting socket client at %s" % str(addr))
 					return
 				
 	def getNewSockets(self):
@@ -71,7 +74,7 @@ class SktServer (threading.Thread):
 			readable, _, _ = select.select(slist, [], [], 1)
 			if s in readable:
 				skt, addr = s.accept()
-				logging.info("Subscription from address %s" % str(addr))
+				print("Subscription from address %s" % str(addr))
 				with self.socketLock:
 					self.sockets.append((skt, addr))
 					self.newSockets.append((skt, addr))

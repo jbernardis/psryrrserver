@@ -6,6 +6,12 @@ MAXTRIES = 3
 def swapbyte(b):
 	return int("0b"+"{0:08b}".format(b)[::-1], 2)
 
+def setBit(obyte, obit, val):
+	if val != 0:
+		return (obyte | (1 << obit)) & 0xff
+	else:
+		return obyte
+
 class Bus:
 	def __init__(self, tty):
 		self.initialized = False
@@ -61,7 +67,7 @@ class Bus:
 				inbuf.append(b)
 				
 		if len(inbuf) != nbytes:
-			print("incomplete read.  Expecting %d characters, got %d" % (nbytes, len(inbuf)))
+			#print("incomplete read.  Expecting %d characters, got %d" % (nbytes, len(inbuf)))
 			return None, 0
 
 		return inbuf, nbytes

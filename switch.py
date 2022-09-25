@@ -8,24 +8,30 @@ class Switch:
 		self.normalPulses = 0;
 		self.reversePulses = 0;
 		self.locked = False
+		self.objName = type(self).__name__
+
 
 	# Normal/Reverse position of the turnout itself - inbound
 	def setPosition(self, np):
+		newposition = None
 		if np == 1:
 			if not self.normal:
-				self.rr.railroadEvent(self.name, "N")
+				newPosition = "N"
 			self.normal = True
 			self.reverse = False
 		elif np == -1:
 			if not self.reverse:
-				self.rr.railroadEvent(self.name, "R")
+				newPosition = "R"
 			self.normal = False
 			self.reverse = True
 		else:
 			if self.reverse or self.normal:
-				self.rr.railroadEvent(self.name, "?")
+				newPosition = "?"
 			self.normal = False
 			self.reverse = False
+
+		if newPosition is not None:
+			self.rr.railroadEvent({self.objName: {self.name: newposition}})
 
 	def getPosition(self): 
 		return 1 if self.normal \

@@ -7,6 +7,8 @@ from railroad import Railroad
 from httpserver import NodeHTTPServer
 from sktserver import SktServer
 
+import pprint
+
 class NodeServerMain:
 	def __init__(self, cfgfn):
 		tty = "COM4"
@@ -59,13 +61,7 @@ class NodeServerMain:
 				return
 
 			print("RRQ=>(%s)" % str(cmd))
-
-	def bus(self):
-		self.rr.setSignalAspect("C24R", 2)
-		self.rr.setSignalAspect("C22L", 2)
-		self.rr.setBlockIndicator("B10")
-		self.rr.setBlockIndicator("C13")
-		self.rr.setSwitchOutPulse("CSw23", -2)
+			self.socketServer.sendToAll(cmd)
 
 	def process(self):
 		self.HTTPProcess()
@@ -86,23 +82,39 @@ class NodeServerMain:
 			if cmd is None:
 				return
 
-			try:
-				verb = cmd["cmd"][0]
-			except KeyError:
-				self.HttpRespQ.put((400, b'missing verb'))
-				continue
-			except:
-				self.HttpRespQ.put((400, b'unexpected error retrieving command'))
-				continue
+			self.HttpRespQ.put((200, b'command received'))
 
-			if verb == "quit":
+			print("received HTTP request: ============================================================")
+			pprint.pprint(cmd)
+
+			verb = cmd["cmd"][0].lower()
+
+			if verb == "signal":
+				signame = cmd["name"][0]
+				aspect = int(cmd["state"][0])
+				resp = {"signal": [signame, aspect]}
+				self.socketServer.sendToAll(resp)
+				op = self.rr.GetOutput(signame)
+				if op is not None: # None happens if there are no physical signals
+					op.SetAspect(aspect)
+
+			elif verb == "turnout":
+				swname = cmd["name"][0]
+				status = cmd["status"][0]
+				resp = {"turnout": { swname : status}}
+				self.socketServer.sendToAll(resp)
+				if swname == "HSw3":
+					resp = {"turnout": { "HSw5" : status}}
+					self.socketServer.sendToAll(resp)
+				elif swname == "HSw11":
+					resp = {"turnout": { "HSw13" : status}}
+					self.socketServer.sendToAll(resp)
+
+			elif verb == "quit":
 				print("HTTP 'quit' command received - terminating server")
 				self.serving = False
 
-			elif verb == "test":
-				self.rr.setSignalAspect("C24R", 2)
 
-			self.HttpRespQ.put((200, b'got command'))
 
 	def serve_forever(self, interval):
 		ticker = threading.Event()
