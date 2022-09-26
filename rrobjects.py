@@ -58,13 +58,13 @@ class TurnoutOutput(PulsedOutput):
 		self.normalPulses = 0;
 		self.reversePulses = 0;
 
-	def SetOutPulse(self, nv):
-		if nv > 0:
+	def SetOutPulse(self, status):
+		if status == "N":
 			self.normalPulses = self.pulseLen
 			self.reversePulses = 0
-		elif nv < 0:
+		elif status == "R":
 			self.normalPulses = 0
-			self.reversePulses = -self.pulseLen
+			self.reversePulses = self.pulseLen
 		else:
 			self.normalPulses = 0
 			self.reversePulses = 0

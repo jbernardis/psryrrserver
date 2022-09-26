@@ -13,7 +13,7 @@ class Hyde(District):
 
 		# Turnouts
 		for toName in [ "HSw1", "HSw3", "HSw7", "HSw9", "HSw11", "HSw15", "HSw17", "HSw19", "HSw21", "HSw23", "HSw25", "HSw27", "HSw29" ]:
-			self.rr.AddOutput(toName, TurnoutOutput(toName, 1))
+			self.rr.AddOutput(toName, TurnoutOutput(toName, 2))
 
 		# indicators
 		for indName in [ "CBHydeJct", "CBHydeEast", "CBHydeWest", "HydeEastPower", "HydeWestPower", "H30.ind", "H10.ind", "H23.ind", "N25.ind" ]:
@@ -81,13 +81,15 @@ class Hyde(District):
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  #Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 
-		if self.verbose:
+		if not self.verbose:
 			print("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
 		inb, inbc = self.rrbus.sendRecv(self.address, outb, 5, swap=True)
 		if inb is None:
-			print("No data received from Hyde")
+			if self.verbose:
+				print("No data received from Hyde")
 			return
+
 		if self.verbose:
 			print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 

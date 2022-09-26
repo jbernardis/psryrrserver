@@ -21,7 +21,7 @@ class Bank(District):
 
 		# turnouts
 		for toName in [ "CSw17", "CSw23" ]:
-			self.rr.AddOutput(toName, TurnoutOutput(toName, 1))
+			self.rr.AddOutput(toName, TurnoutOutput(toName, 2))
 
 		# stopping relays
 		for relayName in [ "B11", "B20", "B21" ]:
@@ -71,8 +71,10 @@ class Bank(District):
 
 		inb, inbc = self.rrbus.sendRecv(self.address, outb, 4, swap=True)
 		if inb is None:
-			print("No data received from Bank")
+			if self.verbose:
+				print("No data received from Bank")
 			return
+
 		if self.verbose:
 			print("BankIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3]))
 
