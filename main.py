@@ -93,14 +93,29 @@ class NodeServerMain:
 				signame = cmd["name"][0]
 				aspect = int(cmd["state"][0])
 				resp = {"signal": [signame, aspect]}
+				# signal changes are echoed back to all listeners
 				self.socketServer.sendToAll(resp)
 				op = self.rr.GetOutput(signame)
-				if op is not None: # None happens if there are no physical signals
+				if op is not None: 
 					op.SetAspect(aspect)
+				else:
+					# None happens if there are no physical signals
+					# print a message just in case
+					print("no output defined for signal %s" % signame)
+					return
 
 			elif verb == "turnout":
 				swname = cmd["name"][0]
 				status = cmd["status"][0]
+
+				op = self.rr.GetOutput(swname)
+				if op is not None:
+					op.SetOutPulse(status)
+				else:
+					print("no output defined for turnout %s" % swname)
+					return
+
+				# the below logic is unnecessary - it makes testing easier
 				resp = {"turnout": { swname : status}}
 				self.socketServer.sendToAll(resp)
 				if swname == "HSw3":

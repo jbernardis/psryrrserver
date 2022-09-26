@@ -68,24 +68,6 @@ class Railroad(threading.Thread):
 	def setVerbose(self, flag=True):
 		self.verbose = flag
 
-	# def setSignalAspect(self, signm, aspv=1):
-	# 	try:
-	# 		sig = self.signals[signm]
-	# 	except KeyError:
-	# 		print("SetSignalAspect: No definition for signal %s" % signm)
-	# 		return False
-
-	# 	return sig.setAspect(aspv)
-
-	# def setSwitchOutPulse(self, swnm, nv=1):
-	# 	try:
-	# 		sw = self.switches[swnm]
-	# 	except KeyError:
-	# 		print("SetSwitchNormalLever: No definition for switch %s" % swnm)
-	# 		return False
-
-	# 	return sw.setOutPulse(nv)
-
 	# def setBlockIndicator(self, blknm, flag=True):
 	# 	try:
 	# 		blk = self.blocks[blknm]
