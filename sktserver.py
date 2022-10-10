@@ -4,15 +4,15 @@ import select
 import json
 
 class SktServer (threading.Thread):
-	def __init__(self, ip, port):
+	def __init__(self, ip, port, cbEvent):
 		threading.Thread.__init__(self)
 		self.ip = ip
 		self.port = port
 		self.isRunning = False
 		self.endOfLife = False
+		self.cbEvent = cbEvent
 		self.socketLock = threading.Lock()
 		self.sockets = []
-		self.newSockets = []
 		print("Starting socket server at address: %s:%d" % (ip, port))
 
 	def getSockets(self):
@@ -53,15 +53,6 @@ class SktServer (threading.Thread):
 					del(self.sockets[i])
 					print("Disconnecting socket client at %s" % str(addr))
 					return
-				
-	def getNewSockets(self):
-		if len(self.newSockets) == 0:
-			return None
-		
-		with self.socketLock:
-			ns = [x for x in self.newSockets]
-			self.newSockets = []
-			return ns
 
 	def run(self):
 		self.isRunning = True
@@ -77,7 +68,7 @@ class SktServer (threading.Thread):
 				print("Subscription from address %s" % str(addr))
 				with self.socketLock:
 					self.sockets.append((skt, addr))
-					self.newSockets.append((skt, addr))
+					self.cbEvent({"newclient": {"socket": skt, "addr": addr}})
 
 		for skt in self.sockets:
 			skt[0].close()

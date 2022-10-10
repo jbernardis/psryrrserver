@@ -1,8 +1,10 @@
-import threading
-import time
+import wx
 
-from districts.bank import Bank
+import pprint
+
 from districts.hyde import Hyde
+from districts.yard import Yard
+from districts.latham import Latham
 
 # tower addresses
 YARD      = 0x11;
@@ -30,96 +32,128 @@ GREENMTN  = 0x92;
 CLIFF     = 0x93;
 SHEFFIELD = 0x95;
 
-
-
-class Railroad(threading.Thread):
-	def __init__(self, rrbus, eventQ, pollInterval=1): #0.25):
-		threading.Thread.__init__(self)
-		self.rrbus = rrbus
-		self.eventQ = eventQ
-
+class Railroad(wx.Notebook):
+	def __init__(self, frame, cbEvent):
+		wx.Notebook.__init__(self, frame, wx.ID_ANY, style=wx.BK_DEFAULT)
+		self.frame = frame
+		self.cbEvent = cbEvent
 		self.verbose = False
-		self.pollInterval = pollInterval * 1000000000 # convert s to ns
-		self.isRunning = False
 
 		districtList = [
-			[ "bank", BANK, Bank ],
 			[ "hyde", HYDE, Hyde ],
+			[ "yard", YARD, Yard ],
+			[ "latham", LATHAM, Latham ],
 		]
 
-		self.districts = []
+		self.districts = {}
 		self.outputs = {}
 		self.inputs = {}
 		for dname, daddr, dclass in districtList:
-			self.districts.append(dclass(dname, daddr, self, self.rrbus))
+			p = dclass(self, dname, daddr)
+			self.AddPage(p, dname)
+			self.districts[dname] = p
 
-	def AddOutput(self, name, output):
-		self.outputs[name] = output
+	def AddOutput(self, output, district):
+		output.SetRailRoad(self)
+		oname = output.GetName()
+		if oname in self.outputs:
+			print("Output (%s) duplicate definition" % oname)
+			return
 
-	def GetOutputs(self):
-		return self.outputs
+		self.outputs[oname] = [output, district]
 
-	def AddInput(self, name, input):
-		self.inputs[name] = input
+	def AddInput(self, input):
+		input.SetRailRoad(self)
+		iname = input.GetName()
+		if iname in self.inputs:
+			print("Input (%s) duplicate definitionb" % iname)
+			return
 
-	def GetInputs(self):
-		return self.inputs
+		self.inputs[iname] = input
 
-	def setVerbose(self, flag=True):
+	def GetOutput(self, oname):
+		try:
+			return self.outputs[oname][0]
+		except KeyError:
+			print("No output found for name \"%s\"" % oname)
+			return None
+
+	def GetInput(self, iname):
+		try:
+			return self.inputs[iname]
+		except KeyError:
+			print("No input found for name \"%s\"" % iname)
+			return None
+
+	def SetAspect(self, signame, aspect):
+		if signame not in self.outputs:
+			print("No output defined for signal %s" % signame)
+			return
+		op, district = self.outputs[signame]
+		op.SetAspect(aspect)
+		district.UpdateSignal(signame)
+
+
+	def SetIndicator(self, indname, state):
+		if indname not in self.outputs:
+			print("no output defined for indicator %s" % indname)
+			return
+		op, district = self.outputs[indname]
+		op.SetStatus(state!=0)
+		district.UpdateIndicator(indname)
+
+
+	def SetOutPulse(self, toname, state):
+		if toname not in self.outputs:
+			print("no output defined for turnout %s" % toname)
+			return
+		op, district = self.outputs[toname]
+		op.SetOutPulse(state)
+		district.UpdateTurnout(toname)
+
+
+	def RefreshTurnout(self, toname):
+		if toname not in self.outputs:
+			print("no output defined for turnout %s" % toname)
+			return
+		district = self.outputs[toname][1]
+		print("callint updateturnout for turnout %s" % toname)
+		district.UpdateTurnout(toname)
+
+	def SetVerbose(self, flag=True):
 		self.verbose = flag
+		for d in self.districts.values():
+			d.SetVerbose(flag)
 
-	# def setBlockIndicator(self, blknm, flag=True):
-	# 	try:
-	# 		blk = self.blocks[blknm]
-	# 	except KeyError:
-	# 		print("SetBlockIndicator: No definition for block %s" % blknm)
-	# 		return False
+	def allIO(self):
+		for d in self.districts.values():
+			d.OutIn()
 
-	# 	return blk.setIndicator(flag)
+	def RailroadEvent(self, event):
+		self.cbEvent(event)
 
-	# def setStoppingRelay(self, srnm, flag=True):
-	# 	try:
-	# 		sr = self.relays[srnm]
-	# 	except KeyError:
-	# 		print("SetStoppingRelay: No definition for stopping relay %s" % srnm)
-	# 		return False
 
-	# 	return sr.setStatus(flag)
 
-	def kill(self):
-		self.isRunning = False
+# 	# def setBlockIndicator(self, blknm, flag=True):
+# 	# 	try:
+# 	# 		blk = self.blocks[blknm]
+# 	# 	except KeyError:
+# 	# 		print("SetBlockIndicator: No definition for block %s" % blknm)
+# 	# 		return False
 
-	# everything below this point is running in thread context
+# 	# 	return blk.setIndicator(flag)
 
-	def railroadEvent(self, msg):
-		print("Reporting change: (%s)" % str(msg))
-		self.eventQ.put(msg)
+# 	# def setStoppingRelay(self, srnm, flag=True):
+# 	# 	try:
+# 	# 		sr = self.relays[srnm]
+# 	# 	except KeyError:
+# 	# 		print("SetStoppingRelay: No definition for stopping relay %s" % srnm)
+# 	# 		return False
 
-	def run(self):
-		self.isRunning = True
-		lastPoll = time.monotonic_ns() - self.pollInterval
-		while self.isRunning:
-			current = time.monotonic_ns()
-			elapsed = current - lastPoll
-			if self.isRunning and elapsed > self.pollInterval:
-				self.allIO()
-				lastPoll = current
-			else:
-				time.sleep(0.001)
+# 	# 	return sr.setStatus(flag)
 
-	def GetOutput(self, oTag):
-		try:
-			return self.outputs[oTag]
-		except KeyError:
-			print("No output found for tag \"%s\"" % oTag)
-			return None
 
-	def GetInput(self, iTag):
-		try:
-			return self.inputs[iTag]
-		except KeyError:
-			print("No input found for tag \"%s\"" % iTag)
-			return None
+
 
 	# # these next methoda are for obtaining information from inbound messages
 	# def setSwitchPosition(self, swnm, ibyte, maskn, maskr):
@@ -139,8 +173,4 @@ class Railroad(threading.Thread):
 	# 		sp = 0
 	# 	sw.setPosition(sp)
 
-	# finally the IO methods themselves
-	def allIO(self):
-		for d in self.districts:
-			d.OutIn()
-
+	

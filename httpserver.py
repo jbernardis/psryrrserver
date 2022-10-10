@@ -1,10 +1,8 @@
 import select
-import queue
 from threading import Thread
 from socketserver import ThreadingMixIn 
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
-import logging
 
 class Handler(BaseHTTPRequestHandler):
 	def do_GET(self):
@@ -19,8 +17,6 @@ class Handler(BaseHTTPRequestHandler):
 			
 		cmdDict['cmd'] = [cmd]
 		rc, b = app.dispatch(cmdDict)
-		req += (" - %d" % rc)
-		logging.info(req)
 		try:
 			body = b.encode()
 		except:
@@ -32,7 +28,6 @@ class Handler(BaseHTTPRequestHandler):
 			self.end_headers()
 			self.wfile.write(body)
 		else:
-			logging.error(body)
 			self.send_response(400)
 			self.send_header("Content-type", "text/plain")
 			self.end_headers()
@@ -55,14 +50,14 @@ class ThreadingHTTPServer(ThreadingMixIn, HTTPServer):
 	def shut_down(self):
 		self.haltServer = True
 
-class NodeHTTPServer:
-	def __init__(self, ip, port, httpcmdq, httprespq):
+class HTTPServer:
+	def __init__(self, ip, port, cbCommand):
 		self.server = ThreadingHTTPServer((ip, port), Handler)
 		self.server.setApp(self)
-		self.httpcmdq = httpcmdq
-		self.httprespq = httprespq
+		self.cbCommand = cbCommand
 		self.thread = Thread(target=self.server.serve_railroad)
 		self.thread.start()
+		print("HTTP Server started at address %s:%s" % (ip, port))
 
 	def getThread(self):
 		return self.thread
@@ -71,13 +66,10 @@ class NodeHTTPServer:
 		return self.server
 
 	def dispatch(self, cmd):
-		self.httpcmdq.put(cmd)
+		self.cbCommand(cmd)
 		
-		try:
-			rc, body = self.httprespq.get(True, 10)
-		except queue.Empty:
-			rc = 400
-			body = b'bad request'
+		rc = 200
+		body = b'request received'
 
 		return rc, body
 

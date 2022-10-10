@@ -1,3 +1,4 @@
+import threading
 import serial
 import time
 
@@ -72,5 +73,32 @@ class Bus:
 
 		return inbuf, nbytes
 
+class RailroadMonitor(threading.Thread):
+	def __init__(self, ttyDevice, rrData, pollInterval=1): #0.25):
+		threading.Thread.__init__(self)
+		self.initialized = False
+		self.tty = ttyDevice
+		self.rrData = rrData
+		self.rrbus = Bus(self.tty)
+		if not self.rrbus.initialized:
+			return
 
-		
+		self.verbose = False
+		self.pollInterval = pollInterval * 1000000000 # convert s to ns
+		self.isRunning = False
+		self.initialized = True
+
+	def kill(self):
+		self.isRunning = False
+
+	def run(self):
+		self.isRunning = True
+		lastPoll = time.monotonic_ns() - self.pollInterval
+		while self.isRunning:
+			current = time.monotonic_ns()
+			elapsed = current - lastPoll
+			if self.isRunning and elapsed > self.pollInterval:
+				self.rrData.allIO()
+				lastPoll = current
+			else:
+				time.sleep(0.001)

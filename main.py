@@ -1,152 +1,142 @@
-import time
-import queue
-import threading
+import wx
+import wx.lib.newevent
 
-from bus import Bus
+from settings import Settings
+from bus import RailroadMonitor
 from railroad import Railroad
-from httpserver import NodeHTTPServer
+from httpserver import HTTPServer
 from sktserver import SktServer
 
 import pprint
 
-class NodeServerMain:
-	def __init__(self, cfgfn):
-		tty = "COM4"
-		ip = "192.168.1.138"
-		port = 9000
-		socketport = 9001
-		busInterval = 1
+(HTTPMessageEvent, EVT_HTTPMESSAGE) = wx.lib.newevent.NewEvent()  
+(RailroadEvent, EVT_RAILROAD) = wx.lib.newevent.NewEvent()  
 
-		print("node initializing...")
 
-		print("Opening bus to railroad on device %s" % tty)
-		self.rrbus = Bus(tty)
-		if not self.rrbus.initialized:
-			print("Failed to open railroad bus on device %s.  Exiting..." % tty)
-			exit(1)
 
-		print("Starting HTTP server at address: %s:%d" % (ip, port))
-		self.startHttpServer(ip, port)
+class MainFrame(wx.Frame):
+	def __init__(self):
+		wx.Frame.__init__(self, None, size=(900, 800), style=wx.DEFAULT_FRAME_STYLE)
+		self.Bind(wx.EVT_CLOSE, self.onClose)
 
-		print("Starting Socket server at address: %s:%d" % (ip, socketport))
-		self.socketServer = SktServer(ip, socketport)
-		self.socketServer.start()
+		self.settings = Settings()
 
 		print("Creating railroad object")
-		self.railroadQ = queue.Queue(0)
-		self.rr = Railroad(self.rrbus, self.railroadQ, busInterval)
-		self.rr.start()
+		self.rr = Railroad(self, self.rrEventReceipt) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
 
-		print("Initialization completed...")
+		print("Opening a railroad monitoring thread on device %s" % self.settings.tty)
+		self.rrMonitor = RailroadMonitor(self.settings.tty, self.rr)
+		if not self.rrMonitor.initialized:
+			print("Failed to open railroad bus on device %s.  Exiting..." % self.settings.tty)
+			exit(1)
+		self.rrMonitor.start()
 
-	def startHttpServer(self, ip, port):
-		self.HttpCmdQ = queue.Queue(0)
-		self.HttpRespQ = queue.Queue(0)
-		self.serving = True
-		self.nodeserver = NodeHTTPServer(ip, port, self.HttpCmdQ, self.HttpRespQ)
+		self.dispServer = HTTPServer(self.settings.ip, self.settings.serverport, self.dispCommandReceipt)
+		self.Bind(EVT_HTTPMESSAGE, self.onHTTPMessageEvent)
+		self.Bind(EVT_RAILROAD, self.onRailroadEvent)
 
-	def stopHttpServer(self):
-		self.nodeserver.close()
-		self.nodeserver.getThread().join()
+		print("Starting Socket server at address: %s:%d" % (self.settings.ip, self.settings.socketport))
+		self.socketServer = SktServer(self.settings.ip, self.settings.socketport, self.socketEventReceipt)
+		self.socketServer.start()
 
-	def railroadProcess(self):
-		# Deal with all reports from the railroad"
-		while not self.railroadQ.empty():
+		vsz = wx.BoxSizer(wx.VERTICAL)
+		hsz = wx.BoxSizer(wx.HORIZONTAL)
+
+		vsz.AddSpacer(20)
+		vsz.Add(self.rr)
+		vsz.AddSpacer(20)
+
+		hsz.AddSpacer(20)
+		hsz.Add(vsz)
+		hsz.AddSpacer(20)
+
+		self.SetSizer(hsz)
+		self.Layout()
+		self.Fit()
+
+	def socketEventReceipt(self, cmd):
+		print("socket event")
+		pprint.pprint(cmd)
+
+	def rrEventReceipt(self, cmd):
+		#print("Main Frame Received railroad event")
+		#pprint.pprint(cmd)
+		evt = RailroadEvent(data=cmd)
+		wx.QueueEvent(self, evt)
+
+	def onRailroadEvent(self, evt):
+		print("Railroad event handler")
+		pprint.pprint(evt.data)
+		cmd = evt.data["cmd"]
+		if cmd == "refreshturnout":
+			toname = evt.data["name"]
+			self.rr.RefreshTurnout(toname)
+
+	def dispCommandReceipt(self, cmd):
+		print("Received display command")
+		pprint.pprint(cmd)
+		evt = HTTPMessageEvent(data=cmd)
+		wx.QueueEvent(self, evt)
+
+	def onHTTPMessageEvent(self, evt):
+		print("HTTP message event handler: ")
+		pprint.pprint(evt.data)
+		verb = evt.data["cmd"][0]
+
+		if verb == "signal":
+			signame = evt.data["name"][0]
+			aspect = int(evt.data["aspect"][0])
+			resp = {"signal": [{"name": signame, "aspect": aspect}]}
+			# signal changes are echoed back to all listeners
+			self.socketServer.sendToAll(resp)
+			self.rr.SetAspect(signame, aspect)
+
+		elif verb == "settrain":
 			try:
-				cmd = self.railroadQ.get(False)			
-			except queue.Empty:
-				cmd = None
-
-			if cmd is None:
-				return
-
-			print("RRQ=>(%s)" % str(cmd))
-			self.socketServer.sendToAll(cmd)
-
-	def process(self):
-		self.HTTPProcess()
-
-		self.railroadProcess()
-
-		ns = self.socketServer.getNewSockets()	
-		if ns is not None:
-			print("send current status of everything to all newly joined listeners")
-
-	def HTTPProcess(self):
-		while not self.HttpCmdQ.empty():
+				trn = evt.data["name"][0]
+			except:
+				trn = None
 			try:
-				cmd = self.HttpCmdQ.get(False)			
-			except queue.Empty:
-				cmd = None
+				loco = evt["loco"][0]
+			except:
+				loco = None
+			block = evt.data["block"][0]
+			# train information is echoed back to all listeners
+			resp = {"settrain": [{"name": trn, "loco": loco, "block": block}]}
+			self.socketServer.sendToAll(resp)
 
-			if cmd is None:
-				return
+		elif verb == "lock":
+			lkname = evt.data["name"][0]
+			stat = int(evt.data["status"][0])
+			resp = {"lock": [{"name": lkname, "state": stat}]}
 
-			self.HttpRespQ.put((200, b'command received'))
-
-			print("received HTTP request: ============================================================")
-			pprint.pprint(cmd)
-
-			verb = cmd["cmd"][0].lower()
-
-			if verb == "signal":
-				signame = cmd["name"][0]
-				aspect = int(cmd["state"][0])
-				resp = {"signal": [signame, aspect]}
-				# signal changes are echoed back to all listeners
+			if self.settings.echoLock:
 				self.socketServer.sendToAll(resp)
-				op = self.rr.GetOutput(signame)
-				if op is not None: 
-					op.SetAspect(aspect)
-				else:
-					# None happens if there are no physical signals
-					# print a message just in case
-					print("no output defined for signal %s" % signame)
-					return
+			self.rr.SetIndicator(lkname, stat)
 
-			elif verb == "turnout":
-				swname = cmd["name"][0]
-				status = cmd["status"][0]
+		elif verb == "turnout":
+			swname = evt.data["name"][0]
+			status = evt.data["status"][0]
 
-				op = self.rr.GetOutput(swname)
-				if op is not None:
-					op.SetOutPulse(status)
-				else:
-					print("no output defined for turnout %s" % swname)
-					return
+			self.rr.SetOutPulse(swname, status)
 
-				# the below logic is unnecessary - it makes testing easier
-				resp = {"turnout": { swname : status}}
+			if self.settings.echoTurnout:
+				resp = {"turnout": [{ "name": swname, "state": status}]}
 				self.socketServer.sendToAll(resp)
-				if swname == "HSw3":
-					resp = {"turnout": { "HSw5" : status}}
-					self.socketServer.sendToAll(resp)
-				elif swname == "HSw11":
-					resp = {"turnout": { "HSw13" : status}}
-					self.socketServer.sendToAll(resp)
 
-			elif verb == "quit":
-				print("HTTP 'quit' command received - terminating server")
-				self.serving = False
+		elif verb == "quit":
+			print("HTTP 'quit' command received - terminating")
+			self.Shutdown()
 
+	def onClose(self, _):
+		self.Shutdown()
 
-
-	def serve_forever(self, interval):
-		ticker = threading.Event()
-		try:
-			while not ticker.wait(interval) and self.serving:
-				if self.serving:
-					self.process()
-
-		except KeyboardInterrupt:
-			print("Keyboard Interrupt - exiting...")
-
-		ticker = None
-
-		print("Stopping HTTP Server...")
-		self.stopHttpServer()
-
+	def Shutdown(self):
+		print("Killing socket server...")
 		self.socketServer.kill()
+
+		print("killing HTTP server...")
+		self.dispServer.close()
 
 		print("closing bus to railroad...")
 		try:
@@ -159,9 +149,14 @@ class NodeServerMain:
 			pass
 
 		print("exiting...")
+		self.Destroy()
 
-server = NodeServerMain("nodecfg.json")
-server.serve_forever(0.25)
+class App(wx.App):
+	def OnInit(self):
+		self.frame = MainFrame()
+		self.frame.Show()
+		return True
 
-
+app = App(False)
+app.MainLoop()
 

@@ -1,28 +1,31 @@
-import threading
-import time
+import wx
 
 from district import District
 from rrobjects import Output, SignalOutput, TurnoutOutput, PulsedOutput, RelayOutput, IndicatorOutput
 from bus import setBit
 
-
-
 class Hyde(District):
-	def __init__(self, name, address, rr, rrbus):
-		District.__init__(self, name, address, rr, rrbus)
+	def __init__(self, parent, name, address):
+		District.__init__(self, parent, name, address)
 
-		# Turnouts
-		for toName in [ "HSw1", "HSw3", "HSw7", "HSw9", "HSw11", "HSw15", "HSw17", "HSw19", "HSw21", "HSw23", "HSw25", "HSw27", "HSw29" ]:
-			self.rr.AddOutput(toName, TurnoutOutput(toName, 2))
+		sigNames = [
+				"H4LA", "H4LB", "H4LC",  "H4LD",  "H4R", 
+				"H6LA", "H6LB", "H6LC", "H6LD", "H6R",  
+				"H8L", "H8R",  
+				"H10L","H10RA", "H10RB", "H10RC", "H10RD", "H10RE", 
+				"H12RA", "H12RB", "H12RC", "H12RD", "H12RE", "H12L"]
+		toNames =[ "HSw1", "HSw3", "HSw7", "HSw9", "HSw11", "HSw15", "HSw17", "HSw19", "HSw21", "HSw23", "HSw25", "HSw27", "HSw29" ]
+		indNames = [ "CBHydeJct", "CBHydeEast", "CBHydeWest", "HydeEastPower", "HydeWestPower", "H30.ind", "H10.ind", "H23.ind", "N25.ind" ]
+		relayNames = [ "H21.srel", "H31.srel" ]
 
-		# indicators
-		for indName in [ "CBHydeJct", "CBHydeEast", "CBHydeWest", "HydeEastPower", "HydeWestPower", "H30.ind", "H10.ind", "H23.ind", "N25.ind" ]:
-			self.rr.AddOutput(indName, IndicatorOutput(indName))
+		ix = 0
+		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
+		ix = self.AddOutputs(toNames, TurnoutOutput, District.turnout, ix)
+		ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
+		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
-		# stopping relays
-		for relayName in [ "H21.srel", "H31.srel" ]:
-			self.rr.AddOutput(relayName, RelayOutput(relayName))
-		self.verbose = self.rr.verbose
+		for n in toNames:
+			self.SetTurnoutPulseLen(n, 2)
 
 	def OutIn(self):
 		outb = [0 for i in range(5)]
@@ -68,6 +71,7 @@ class Hyde(District):
 		op = self.rr.GetOutput("HSw21").GetOutPulse()
 		outb[3] = setBit(outb[3], 0, 1 if op > 0 else 0)
 		outb[3] = setBit(outb[3], 1, 1 if op < 0 else 0)
+		
 		outb[3] = setBit(outb[3], 2, self.rr.GetOutput("H30.ind").GetStatus())        # block indicators
 		outb[3] = setBit(outb[3], 3, self.rr.GetOutput("H10.ind").GetStatus())
 		outb[3] = setBit(outb[3], 4, self.rr.GetOutput("H23.ind").GetStatus())
@@ -84,14 +88,14 @@ class Hyde(District):
 		if not self.verbose:
 			print("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
-		inb, inbc = self.rrbus.sendRecv(self.address, outb, 5, swap=True)
-		if inb is None:
-			if self.verbose:
-				print("No data received from Hyde")
-			return
+		# inb, inbc = self.rrbus.sendRecv(self.address, outb, 5, swap=True)
+		# if inb is None:
+		# 	if self.verbose:
+		# 		print("No data received from Hyde")
+		# 	return
 
-		if self.verbose:
-			print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
+		# if self.verbose:
+		# 	print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 
 	# HOut[0].bit.b0 = HSw1.NO;			//Switch outputs
 	# HOut[0].bit.b1 = HSw1.RO;

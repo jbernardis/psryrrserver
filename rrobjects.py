@@ -9,6 +9,12 @@ class Output:
 		self.value = 0
 		self.objName = type(self).__name__
 
+	def SetRailRoad(self, rr):
+		self.rr = rr
+
+	def GetName(self):
+		return self.name
+
 class IndicatorOutput(Output):
 	def __init__(self, name):
 		Output.__init__(self, name)
@@ -17,7 +23,7 @@ class IndicatorOutput(Output):
 	def SetStatus(self, flag=True):
 		if self.status != flag:
 			self.status = flag
-			self.rr.railroadEvent({self.objName: {self.name: flag}})
+			#self.rr.railroadEvent({self.objName: {self.name: flag}})
 
 	def GetStatus(self):
 		return self.status
@@ -31,28 +37,34 @@ class SignalOutput(Output):
 		Output.__init__(self, name)
 		self.aspect = 0
 
-	def SetAspect(self, av=1):
-		if av != self.aspect:
-			self.aspect = av
-			self.rr.railroadEvent({self.objName: {self.name: av}})
+	def SetAspect(self, aspect):
+		if aspect != self.aspect:
+			self.aspect = aspect
+			#self.rr.railroadEvent({"signal": [self.name, aspect]})
 		return True
 
 	def IsAspectNonZero(self):
 		return self.aspect != 0
 
-	def GetAspect(self, abit):
+	def GetAspect(self):
+		return self.aspect
+
+	def GetAspectBit(self, abit):
 		mask = (1 << abit) & 0xff
 		rv = mask & self.aspect
 		return 1 if rv != 0 else 0
 
 class PulsedOutput(Output):
-	def __init__(self, name, pulseLen):
+	def __init__(self, name, pulseLen=1):
 		Output.__init__(self, name)
 		self.pulseLen = pulseLen
 
+	def SetPulseLen(self, pulseLen):
+		self.pulseLen = pulseLen
+
 class TurnoutOutput(PulsedOutput):
-	def __init__(self, name, pulselen):
-		PulsedOutput.__init__(self, name, pulselen)
+	def __init__(self, name, pulseLen=1):
+		PulsedOutput.__init__(self, name, pulseLen)
 		self.normal = False;
 		self.reverse = False;
 		self.normalPulses = 0;
@@ -69,12 +81,22 @@ class TurnoutOutput(PulsedOutput):
 			self.normalPulses = 0
 			self.reversePulses = 0
 
+	def GetOutPulseValue(self):
+		if self.normalPulses > 0:
+			return self.normalPulses
+		elif self.reversePulses > 0:
+			return -self.reversePulses
+		else:
+			return 0
+
 	def GetOutPulse(self):
 		if self.normalPulses > 0:
 			self.normalPulses -= 1
+			self.rr.RailroadEvent({"cmd": "refreshturnout", "name": self.name, "normal": self.normalPulses})
 			return 1
 		elif self.reversePulses > 0:
 			self.reversePulses -= 1
+			self.rr.RailroadEvent({"cmd": "refreshturnout", "name": self.name, "reverse": self.reversePulses})
 			return -1
 		else:
 			return 0
