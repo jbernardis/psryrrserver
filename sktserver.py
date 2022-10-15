@@ -50,6 +50,7 @@ class SktServer (threading.Thread):
 		with self.socketLock:
 			for i in range(len(self.sockets)):
 				if self.sockets[i][1] == addr:
+					self.cbEvent({"delclient": {"addr": addr}})
 					del(self.sockets[i])
 					print("Disconnecting socket client at %s" % str(addr))
 					return

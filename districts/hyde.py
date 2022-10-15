@@ -1,13 +1,14 @@
 import wx
 
-from district import District
-from rrobjects import Output, SignalOutput, TurnoutOutput, PulsedOutput, RelayOutput, IndicatorOutput
+from district import District, HYDE
+from rrobjects import Output, SignalOutput, TurnoutOutput, PulsedOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput
 from bus import setBit
 
 class Hyde(District):
-	def __init__(self, parent, name, address):
-		District.__init__(self, parent, name, address)
+	def __init__(self, parent, name):
+		District.__init__(self, parent, name)
 
+		# OUTPUTS
 		sigNames = [
 				"H4LA", "H4LB", "H4LC",  "H4LD",  "H4R", 
 				"H6LA", "H6LB", "H6LC", "H6LD", "H6R",  
@@ -26,6 +27,52 @@ class Hyde(District):
 
 		for n in toNames:
 			self.SetTurnoutPulseLen(n, 2)
+
+		# INPUTS
+		routeNames = sorted([ "H12W", "H34W", "H33W", "H30E", "H31W", "H32W", "H22W", "H43W",
+				"H42W", "H41W", "H41E", "H42E", "H43E", "H22E", "H40E", "H12E",
+				"H34E", "H33E", "H32E", "H31E" ])
+		self.routeMap = {
+				"H12W": [ {"name": "HSw1", "state": "N"}, {"name": "HSw3", "state": "N"} ], 
+				"H34W": [ {"name": "HSw1", "state": "N"}, {"name": "HSw3", "state": "R"} ],
+				"H33W": [ {"name": "HSw1", "state": "R"}, {"name": "HSw3", "state": "N"}, {"name": "HSw5", "state": "N"} ], 
+				"H32W": [ {"name": "HSw1", "state": "R"}, {"name": "HSw3", "state": "R"}, {"name": "HSw5", "state": "R"}, {"name": "HSw7", "state": "N"} ], 
+				"H31W": [ {"name": "HSw1", "state": "R"}, {"name": "HSw3", "state": "R"}, {"name": "HSw5", "state": "R"}, {"name": "HSw7", "state": "R"} ], 
+
+				"H12E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "N"} ], 
+				"H34E": [ {"name": "HSw15", "state": "R"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "N"} ], 
+				"H33E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "R"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "N"} ], 
+				"H32E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "R"}, {"name": "HSw21", "state": "N"} ], 
+				"H31E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "R"} ], 
+				"H30E": [ {"name": "HSw1", "state": "N"} ],
+
+				"H22W": [ {"name": "HSw9", "state": "N"}, {"name": "HSw11", "state": "N"}, {"name": "HSw13", "state": "N"} ], 
+				"H43W": [ {"name": "HSw9", "state": "N"}, {"name": "HSw11", "state": "R"}, {"name": "HSw13", "state": "R"} ], 
+				"H42W": [ {"name": "HSw9", "state": "R"}, {"name": "HSw11", "state": "N"}, {"name": "HSw13", "state": "N"} ], 
+				"H41W": [ {"name": "HSw9", "state": "R"}, {"name": "HSw11", "state": "R"}, {"name": "HSw13", "state": "R"} ], 
+
+				"H22E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "N"}, {"name": "HSw29", "state": "N"} ], 
+				"H43E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "R"}, {"name": "HSw27", "state": "R"}, {"name": "HSw29", "state": "N"} ], 
+				"H42E": [ {"name": "HSw23", "state": "R"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "R"}, {"name": "HSw29", "state": "N"} ], 
+				"H41E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "R"}, {"name": "HSw29", "state": "N"} ], 
+				"H40E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "N"}, {"name": "HSw29", "state": "R"} ], 
+		}
+
+		blockNames = sorted([ "H21", "H21.E", "H23", "HOSWW2", "HOSWW",
+				"HOSWE", "H31", "H33", "H34", "H12", "H22", "H43",
+				"H42", "H41", "H40", "HOSEW", "HOSEE", "H13.W", "H13" ])
+
+		ix = 0
+		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
+		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
+
+	def MapRouteToTurnouts(self, rname):
+		try:
+			return({"turnout": self.routeMap[rname]})
+		except Exception as e:
+			print("Unknown route name: %s" % rname)
+			print(str(e))
+			return None
 
 	def OutIn(self):
 		outb = [0 for i in range(5)]
@@ -88,7 +135,7 @@ class Hyde(District):
 		if not self.verbose:
 			print("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
-		# inb, inbc = self.rrbus.sendRecv(self.address, outb, 5, swap=True)
+		# inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=True)
 		# if inb is None:
 		# 	if self.verbose:
 		# 		print("No data received from Hyde")
@@ -164,10 +211,10 @@ class Hyde(District):
 		# H31E = HIn[2].bit.b3;
 		# H21.M = HIn[2].bit.b4;		//Detection
 		# H21.E = HIn[2].bit.b5;
-		# HOS4  = HIn[2].bit.b6;
-		# HOS5  = HIn[2].bit.b7;
+		# HOSWW2 HOS4  = HIn[2].bit.b6;
+		# HOSWW HOS5  = HIn[2].bit.b7;
 
-		# HOS6  = HIn[3].bit.b0;
+		# HOSWE HOS6  = HIn[3].bit.b0;
 		# H31.M = HIn[3].bit.b1;
 		# H32.M = HIn[3].bit.b2;
 		# H33.M = HIn[3].bit.b3;
@@ -179,8 +226,8 @@ class Hyde(District):
 		# H42.M = HIn[4].bit.b0;
 		# H41.M = HIn[4].bit.b1;
 		# H40.M = HIn[4].bit.b2;
-		# HOS7  = HIn[4].bit.b3;
-		# HOS8  = HIn[4].bit.b4;
+		# HOSEW  HOS7  = HIn[4].bit.b3;
+		# HOSEE  HOS8  = HIn[4].bit.b4;
 		# H13.W = HIn[4].bit.b5;
 		# H13.M = HIn[4].bit.b6;
 

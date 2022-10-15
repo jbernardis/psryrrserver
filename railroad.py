@@ -7,30 +7,7 @@ from districts.yard import Yard
 from districts.latham import Latham
 
 # tower addresses
-YARD      = 0x11;
-KALE      = 0x12;
-EASTJCT   = 0x13;
-CORNELL   = 0x14;
-YARDSW    = 0x15;
-PARSONS   = 0x21;
-PORTA     = 0x22;
-PORTB     = 0x23;
-LATHAM    = 0x31;
-CARLTON   = 0x32;
-DELL      = 0x41;
-FOSS      = 0x42;
-HYDEJCT   = 0x51;
-HYDE      = 0x52;
-SHORE     = 0x61;
-KRULISH   = 0x71;
-NASSAUW   = 0x72;
-NASSAUE   = 0x73;
-NASSAUNX  = 0x74;
-BANK      = 0x81;
-CLIVEDEN  = 0x91;
-GREENMTN  = 0x92;
-CLIFF     = 0x93;
-SHEFFIELD = 0x95;
+
 
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent):
@@ -40,16 +17,17 @@ class Railroad(wx.Notebook):
 		self.verbose = False
 
 		districtList = [
-			[ "hyde", HYDE, Hyde ],
-			[ "yard", YARD, Yard ],
-			[ "latham", LATHAM, Latham ],
+			[ "hyde", Hyde ],
+			[ "yard", Yard ],
+			[ "latham", Latham ],
 		]
 
 		self.districts = {}
 		self.outputs = {}
 		self.inputs = {}
-		for dname, daddr, dclass in districtList:
-			p = dclass(self, dname, daddr)
+		
+		for dname, dclass in districtList:
+			p = dclass(self, dname)
 			self.AddPage(p, dname)
 			self.districts[dname] = p
 
@@ -62,14 +40,14 @@ class Railroad(wx.Notebook):
 
 		self.outputs[oname] = [output, district]
 
-	def AddInput(self, input):
+	def AddInput(self, input, district):
 		input.SetRailRoad(self)
 		iname = input.GetName()
 		if iname in self.inputs:
 			print("Input (%s) duplicate definitionb" % iname)
 			return
 
-		self.inputs[iname] = input
+		self.inputs[iname] = [input, district]
 
 	def GetOutput(self, oname):
 		try:
@@ -93,7 +71,6 @@ class Railroad(wx.Notebook):
 		op.SetAspect(aspect)
 		district.UpdateSignal(signame)
 
-
 	def SetIndicator(self, indname, state):
 		if indname not in self.outputs:
 			print("no output defined for indicator %s" % indname)
@@ -102,6 +79,22 @@ class Railroad(wx.Notebook):
 		op.SetStatus(state!=0)
 		district.UpdateIndicator(indname)
 
+	def SetHandSwitch(self, hsname, state):
+		if hsname not in self.outputs:
+			print("no output defined for handswitch %s" % hsname)
+			return
+		op, district = self.outputs[hsname]
+		op.SetStatus(state!=0)
+		district.UpdateHandSwitch(hsname)
+
+	def SetSwitchLock(self, toname, state):
+		if toname not in self.outputs:
+			print("no output defined for turnout %s" % toname)
+			return
+		op, district = self.outputs[toname]
+		print("setting lock on switch %s to %d" % (toname, state))
+		op.SetLock(state)
+		district.UpdateTurnout(toname)
 
 	def SetOutPulse(self, toname, state):
 		if toname not in self.outputs:
@@ -110,7 +103,6 @@ class Railroad(wx.Notebook):
 		op, district = self.outputs[toname]
 		op.SetOutPulse(state)
 		district.UpdateTurnout(toname)
-
 
 	def RefreshTurnout(self, toname):
 		if toname not in self.outputs:

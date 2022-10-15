@@ -11,6 +11,7 @@ import pprint
 
 (HTTPMessageEvent, EVT_HTTPMESSAGE) = wx.lib.newevent.NewEvent()  
 (RailroadEvent, EVT_RAILROAD) = wx.lib.newevent.NewEvent()  
+(SocketEvent, EVT_SOCKET) = wx.lib.newevent.NewEvent()  
 
 
 
@@ -18,6 +19,8 @@ class MainFrame(wx.Frame):
 	def __init__(self):
 		wx.Frame.__init__(self, None, size=(900, 800), style=wx.DEFAULT_FRAME_STYLE)
 		self.Bind(wx.EVT_CLOSE, self.onClose)
+
+		self.clients = {}
 
 		self.settings = Settings()
 
@@ -34,6 +37,7 @@ class MainFrame(wx.Frame):
 		self.dispServer = HTTPServer(self.settings.ip, self.settings.serverport, self.dispCommandReceipt)
 		self.Bind(EVT_HTTPMESSAGE, self.onHTTPMessageEvent)
 		self.Bind(EVT_RAILROAD, self.onRailroadEvent)
+		self.Bind(EVT_SOCKET, self.onSocketEvent)
 
 		print("Starting Socket server at address: %s:%d" % (self.settings.ip, self.settings.socketport))
 		self.socketServer = SktServer(self.settings.ip, self.settings.socketport, self.socketEventReceipt)
@@ -55,8 +59,32 @@ class MainFrame(wx.Frame):
 		self.Fit()
 
 	def socketEventReceipt(self, cmd):
-		print("socket event")
-		pprint.pprint(cmd)
+		#print("socket event")
+		#pprint.pprint(cmd)
+		evt = SocketEvent(data=cmd)
+		wx.QueueEvent(self, evt)
+
+	def onSocketEvent(self, evt):
+		print("socket event handler")
+		pprint.pprint(evt.data)
+		for cmd, parms in evt.data.items():
+			if cmd == "newclient":
+				addr = parms["addr"]
+				skt = parms["socket"]
+				print("adding new client at address %s" % str(addr))
+				self.clients[addr] = skt
+				self.sendAllData(addr, skt)
+
+			elif cmd == "delclient":
+				addr = parms["addr"]
+				print("removing client at address %s" % str(addr))
+				try:
+					del self.clients[addr]
+				except KeyError:
+					pass
+
+	def sendAllData(self, addr, skt):
+		print("sending all data to client at %s" % str(addr))
 
 	def rrEventReceipt(self, cmd):
 		#print("Main Frame Received railroad event")
@@ -67,10 +95,16 @@ class MainFrame(wx.Frame):
 	def onRailroadEvent(self, evt):
 		print("Railroad event handler")
 		pprint.pprint(evt.data)
-		cmd = evt.data["cmd"]
-		if cmd == "refreshturnout":
-			toname = evt.data["name"]
-			self.rr.RefreshTurnout(toname)
+
+		for cmd, parms in evt.data.items():
+			if cmd == "refreshturnout":
+				for pa in parms:
+					toname = pa["name"]
+					self.rr.RefreshTurnout(toname)
+			elif cmd == "turnout":
+				self.socketServer.sendToAll(evt.data)
+			elif cmd == "block":
+				self.socketServer.sendToAll(evt.data)
 
 	def dispCommandReceipt(self, cmd):
 		print("Received display command")
@@ -97,7 +131,7 @@ class MainFrame(wx.Frame):
 			except:
 				trn = None
 			try:
-				loco = evt["loco"][0]
+				loco = evt.data["loco"][0]
 			except:
 				loco = None
 			block = evt.data["block"][0]
@@ -105,14 +139,14 @@ class MainFrame(wx.Frame):
 			resp = {"settrain": [{"name": trn, "loco": loco, "block": block}]}
 			self.socketServer.sendToAll(resp)
 
-		elif verb == "lock":
-			lkname = evt.data["name"][0]
+		elif verb == "handswitch":
+			hsname = evt.data["name"][0]
 			stat = int(evt.data["status"][0])
-			resp = {"lock": [{"name": lkname, "state": stat}]}
+			resp = {"handswitch": [{"name": hsname, "state": stat}]}
 
-			if self.settings.echoLock:
+			if self.settings.echoHandSwitch:
 				self.socketServer.sendToAll(resp)
-			self.rr.SetIndicator(lkname, stat)
+			self.rr.SetHandSwitch(hsname, stat)
 
 		elif verb == "turnout":
 			swname = evt.data["name"][0]
@@ -122,6 +156,16 @@ class MainFrame(wx.Frame):
 
 			if self.settings.echoTurnout:
 				resp = {"turnout": [{ "name": swname, "state": status}]}
+				self.socketServer.sendToAll(resp)
+
+		elif verb == "turnoutlock":
+			swname = evt.data["name"][0]
+			status = int(evt.data["status"][0])
+
+			self.rr.SetSwitchLock(swname, status)
+
+			if self.settings.echoTurnoutLock:
+				resp = {"turnoutlock": [{ "name": swname, "state": status}]}
 				self.socketServer.sendToAll(resp)
 
 		elif verb == "quit":
@@ -140,7 +184,7 @@ class MainFrame(wx.Frame):
 
 		print("closing bus to railroad...")
 		try:
-			self.rr.kill()
+			self.rrMonitor.kill()
 		except:
 			pass
 		try:
