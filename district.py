@@ -74,21 +74,30 @@ class District(wx.Panel):
 
 		iname = self.ilist.GetItemText(index, 0)
 		itype = self.inputTypes[index]
-		cval = int(self.ilist.GetItemText(index, 1))
-		nval = 1 - cval
-		self.ilist.SetItem(index, 1, "%d" % nval)
+		if itype == District.turnout:
+			cval = self.ilist.GetItemText(index, 1)
+			nval = "R" if cval == "N" else "N"
+		else:
+			cval = int(self.ilist.GetItemText(index, 1))
+			nval = 1 - cval
+		
+		# update the display with the new value
+		self.ilist.SetItem(index, 1, "%s" % str(nval))
+		ip = self.rr.GetInput(iname)
+		if ip is None:
+			print("Unable to identify input by name: %s" % iname)
+			return
 
-		print("send rr event: %s %s %d" % (District.typeLabels[itype], iname, nval))
+		# apply change to input objects and through there to the listeners
 		if itype == District.route:
-			if nval != 0:
-				rrevt = self.MapRouteToTurnouts(iname)
-				if rrevt is None:
-					print("Unable to map route name %s to turnouts")
-				else:
-					self.RailroadEvent(rrevt)
+			ip.SetValue(nval)
 
 		elif itype == District.block:
-			self.RailroadEvent({"block": [{"name": iname, "state": nval}]})
+			ip.SetValue(nval)
+
+		elif itype == District.turnout:
+			ip.SetState(nval)
+
 		else:
 			print("No handling of input type %s(%s)" % (District.typeLabels[itype], itype))
 
@@ -116,9 +125,13 @@ class District(wx.Panel):
 		first = True
 		for iname in ilist:
 			ic = iclass(iname)
+			ic.SetDistrict(self)
 			self.rr.AddInput(ic, self)
 			self.ilist.InsertItem(ix, iname)
-			self.ilist.SetItem(ix, 1, "0")
+			if itype == District.turnout:
+				self.ilist.SetItem(ix, 1, "N")
+			else:
+				self.ilist.SetItem(ix, 1, "0")
 			if first:
 				first = False
 				self.ilist.SetItem(ix, 2, District.typeLabels[itype])
@@ -126,6 +139,21 @@ class District(wx.Panel):
 			self.inputTypes[ix] = itype
 			ix += 1
 		return ix
+
+	def MapRouteToTurnouts(self, rname):
+		try:
+			tolist = self.routeMap[rname]
+		except KeyError:
+			print("Unknown route name: %s" % rname)
+			return False
+
+		for toname, tostate in tolist:
+			ip = self.rr.GetInput(toname)
+			if ip is None:
+				print("Unable to determine turnout input from name: %s" % toname)
+			else:
+				ip.SetState(tostate)
+		return True
 
 	def SetTurnoutPulseLen(self, to, pl):
 		if (to, District.turnout) not in self.outputMap:

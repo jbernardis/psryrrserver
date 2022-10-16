@@ -2,13 +2,14 @@ import threading
 import time
 
 from district import District, CORNELL, EASTJCT, KALE, YARD, YARDSW
-from rrobjects import Output, SignalOutput, TurnoutOutput, PulsedOutput, RelayOutput, IndicatorOutput
-from bus import setBit
+from rrobjects import TurnoutInput, BlockInput, RouteInput, SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput
+from bus import setBit, getBit
 
 class Yard(District):
 	def __init__(self, parent, name):
 		District.__init__(self, parent, name)
 
+		#OUTPUTS
 		sigNames = sorted([
 				"Y2L", "Y2R", 
 				"Y4L", "Y4RA", "Y4RB",
@@ -20,8 +21,7 @@ class Yard(District):
                 "Y34L", "Y34RA", "Y34RB" ])
 		toNames = sorted([ "YSw1", "YSw3",
                     "YSw7", "YSw9", "YSw11",
-                    "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33",
-                    "YSw113", "YSw115", "YSw116", "YSw131", "YSw132", "YSw134" ])
+                    "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"])
 		relayNames = sorted([ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ])
 		indNames = sorted([ "CBKale", "CBEastEnd", "CBCornell", "CBEngineYard", "CBWaterman" ])
 
@@ -33,6 +33,35 @@ class Yard(District):
 
 		for n in toNames:
 			self.SetTurnoutPulseLen(n, 2)
+
+		# INPUTS (also using toNames from above)
+		blockNames = sorted([
+			"Y21.W", "Y21", "Y21.E", "YOSCJW", "YOSCJE", "L10.W", "L10",
+			"Y20", "Y20.E", "YOSEJW", "YOSEJE", "Y11.W", "Y11",
+			"Y30", "YOSKL4", "Y53", "Y52", "Y51", "Y50", "YOSKL3", "YOSKL1", "YOSKL2", "Y10",
+			"Y70", "Y87", "Y81", "Y82", "Y83", "Y84", "YOSWYE", "YOSWYW",
+		])
+		
+		routeNames = sorted(["Y81W", "Y82W", "Y83W", "Y84W", "Y81E", "Y82E", "Y83E", "Y84E" ])
+		self.routeMap = {
+				"Y81W": [ ["YSw113", "N"], ["YSw115","N"], ["YSw116", "N"] ], 
+				"Y82W": [ ["YSw113", "N"], ["YSw115","R"], ["YSw116", "R"] ],
+				"Y83W": [ ["YSw113", "N"], ["YSw115","R"], ["YSw116", "N"] ],
+				"Y84W": [ ["YSw113", "R"], ["YSw115","N"], ["YSw116", "N"] ],
+				"Y81E": [ ["YSw131", "N"], ["YSw132","N"], ["YSw134", "N"] ], 
+				"Y82E": [ ["YSw131", "R"], ["YSw132","R"], ["YSw134", "N"] ],
+				"Y83E": [ ["YSw131", "N"], ["YSw132","R"], ["YSw134", "N"] ],
+				"Y84E": [ ["YSw131", "N"], ["YSw132","N"], ["YSw134", "R"] ],
+		}
+
+		ix = 0
+		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
+		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
+		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		hiddenToNames = sorted([ "YSw113", "YSw115", "YSw116", "YSw131", "YSw132", "YSw134" ])
+		# add "proxy" inputs for the waterman turnouts.  These will not be addressed directly, but through the  route table
+		for t in hiddenToNames:
+			self.rr.AddInput(TurnoutInput(t), self)
 
 	def OutIn(self):
 		#Cornell Jct
@@ -68,21 +97,32 @@ class Yard(District):
 
 		# if self.verbose:
 		# 	print("Yard:Cornell Jct: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
+		inb = []
+		inbc = 0
+		if inbc == 2:
+			ip = self.rr.GetInput("YSw1")  #Switches
+			nb = getBit(inb[0], 0)
+			rb = getBit(inb[0], 1)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw3")
+			nb = getBit(inb[0], 2)
+			rb = getBit(inb[0], 3)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("Y21.W")  # Block detection
+			ip.SetValue(getBit(inb[0], 4))
+			ip = self.rr.GetInput("Y21")
+			ip.SetValue(getBit(inb[0], 5))
+			ip = self.rr.GetInput("Y21.E")
+			ip.SetValue(getBit(inb[0], 6))
+			ip = self.rr.GetInput("YOSCJW") # CJOS1
+			ip.SetValue(getBit(inb[0], 7))
 
-
-#    		YSw1.NI = CJIn[0].bit.b0;	//Switch positions
-#    		YSw1.RI = CJIn[0].bit.b1;
-#    		YSw3.NI = CJIn[0].bit.b2;
-# 		YSw3.RI = CJIn[0].bit.b3;
-#    		Y21.W  = CJIn[0].bit.b4;	//Detection
-#    		Y21.M  = CJIn[0].bit.b5;
-#  		Y21.E  = CJIn[0].bit.b6;
-#    		CJOS1  = CJIn[0].bit.b7;
-
-#    		CJOS2  = CJIn[1].bit.b0;
-#    		L10.W  = CJIn[1].bit.b1;
-#    		L10.M  = CJIn[1].bit.b2;
-
+			ip = self.rr.GetInput("YOSCJE") # CJOS2
+			ip.SetValue(getBit(inb[1], 0))
+			ip = self.rr.GetInput("L10.W")
+			ip.SetValue(getBit(inb[1], 1))
+			ip = self.rr.GetInput("L10")
+			ip.SetValue(getBit(inb[1], 2))
 
 		# East Junction-----------------------------------------------------------------
 		outb = [0 for i in range(2)]
@@ -118,22 +158,34 @@ class Yard(District):
 		# if self.verbose:
 		# 	print("Yard:East Jct: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
 
+		inb = []
+		inbc = 0
+		if inbc == 2:
+			ip = self.rr.GetInput("YSw7")  #Switch positions
+			nb = getBit(inb[0], 0)
+			rb = getBit(inb[0], 1)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw9") 
+			nb = getBit(inb[0], 2)
+			rb = getBit(inb[0], 3)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw11")  
+			nb = getBit(inb[0], 4)
+			rb = getBit(inb[0], 5)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("Y20")  # Detection
+			ip.SetValue(getBit(inb[0], 6))
+			ip = self.rr.GetInput("Y20.E") 
+			ip.SetValue(getBit(inb[0], 7))
 
-#    		YSw7.NI  = EJIn[0].bit.b0;		//Switch positions
-#    		YSw7.RI  = EJIn[0].bit.b1;
-#    		YSw9.NI  = EJIn[0].bit.b2;
-#    		YSw9.RI  = EJIn[0].bit.b3;
-#    		YSw11.NI = EJIn[0].bit.b4;
-#    		YSw11.RI = EJIn[0].bit.b5;
-#    		Y20.M = EJIn[0].bit.b6;			//Detection
-#    		Y20.E = EJIn[0].bit.b7;
-
-#    		EJOS1 = EJIn[1].bit.b0;
-#    		EJOS2 = EJIn[1].bit.b1;
-#    		Y11.W = EJIn[1].bit.b2;
-#    		Y11.M = EJIn[1].bit.b3;
-
-
+			ip = self.rr.GetInput("YOSEJW")  # EJOS1
+			ip.SetValue(getBit(inb[1], 0))
+			ip = self.rr.GetInput("YOSEJE")  # EJOS2
+			ip.SetValue(getBit(inb[1], 1))
+			ip = self.rr.GetInput("Y11.W")
+			ip.SetValue(getBit(inb[1], 2))
+			ip = self.rr.GetInput("Y11") 
+			ip.SetValue(getBit(inb[1], 3))
 
 		# Kale-----------------------------------------------------------------------
 		outb = [0 for i in range(4)]
@@ -170,39 +222,61 @@ class Yard(District):
 		# 	print("Yard:Kale: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
 
 
-#     	YSw17.NI = KAIn[0].bit.b0;		//Switch positions
-#     	YSw17.RI = KAIn[0].bit.b1;
-#     	YSw19.NI = KAIn[0].bit.b2;
-#     	YSw19.RI = KAIn[0].bit.b3;
-#     	YSw21.NI = KAIn[0].bit.b4;
-#     	YSw21.RI = KAIn[0].bit.b5;
-#     	YSw23.NI = KAIn[0].bit.b6;
-#     	YSw23.RI = KAIn[0].bit.b7;
+		inb = []
+		inbc = 0
+		if inbc == 4:
+			ip = self.rr.GetInput("YSw17")  #Switch positions
+			nb = getBit(inb[0], 0)
+			rb = getBit(inb[0], 1)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw19") 
+			nb = getBit(inb[0], 2)
+			rb = getBit(inb[0], 3)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw21") 
+			nb = getBit(inb[0], 4)
+			rb = getBit(inb[0], 5)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw23") 
+			nb = getBit(inb[0], 6)
+			rb = getBit(inb[0], 7)
+			ip.SetState(nb, rb)
 
-#     	YSw25.NI = KAIn[1].bit.b0;
-#     	YSw25.RI = KAIn[1].bit.b1;
-#     	YSw27.NI = KAIn[1].bit.b2;
-#     	YSw27.RI = KAIn[1].bit.b3;
-#     	YSw29.NI = KAIn[1].bit.b4;
-#     	YSw29.RI = KAIn[1].bit.b5;
-#     	Y30.M = KAIn[1].bit.b6;       //Detection
-#     	KAOS1 = KAIn[1].bit.b7;
+			ip = self.rr.GetInput("YSw25") 
+			nb = getBit(inb[1], 0)
+			rb = getBit(inb[1], 1)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw27") 
+			nb = getBit(inb[1], 2)
+			rb = getBit(inb[1], 3)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("YSw29") 
+			nb = getBit(inb[1], 4)
+			rb = getBit(inb[1], 5)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("Y30") 
+			ip.SetValue(getBit(inb[1], 6))   #detection
+			ip = self.rr.GetInput("YOSKL4")  # KAOS1
+			ip.SetValue(getBit(inb[1], 7)) 
 
-#     	Y53.M = KAIn[2].bit.b0;
-#     	Y52.M = KAIn[2].bit.b1;
-#     	Y51.M = KAIn[2].bit.b2;
-#     	Y50.M = KAIn[2].bit.b3;
-#     	KAOS3 = KAIn[2].bit.b4;
-#     	KAOS4 = KAIn[2].bit.b5;
-#     	KAOS2 = KAIn[2].bit.b6;
-#     	Y10.M = KAIn[2].bit.b7;
-
-
-
-
+			ip = self.rr.GetInput("Y53") 
+			ip.SetValue(getBit(inb[2], 0))
+			ip = self.rr.GetInput("Y52") 
+			ip.SetValue(getBit(inb[2], 1))
+			ip = self.rr.GetInput("Y51") 
+			ip.SetValue(getBit(inb[2], 2))
+			ip = self.rr.GetInput("Y50") 
+			ip.SetValue(getBit(inb[2], 3))
+			ip = self.rr.GetInput("YOSKL2")   #KAOS3
+			ip.SetValue(getBit(inb[2], 4))
+			ip = self.rr.GetInput("YOSKL1")   #KAOS4
+			ip.SetValue(getBit(inb[2], 5))
+			ip = self.rr.GetInput("YOSKL3")   #KAOS2
+			ip.SetValue(getBit(inb[2], 6))
+			ip = self.rr.GetInput("Y10") 
+			ip.SetValue(getBit(inb[2], 7))
 
 		# Yard-----------------------------------------------------------------------
-
 		outb = [0 for i in range(6)]
 		sigL2 = self.DetermineSignalLever(["Y2L"], ["Y2R"])
 		outb[0] = setBit(outb[0], 0, 1 if sigL2 == "L" else 0)       # Signal Indicators
@@ -239,8 +313,6 @@ class Yard(District):
 		outb[2] = setBit(outb[2], 6, 1 if sigL34 == "R" else 0)
 		asp = self.rr.GetOutput("Y34RA").GetAspect()
 		outb[2] = setBit(outb[2], 7, 1 if asp != 0 else 0)
-
-		print("signal levers 2:%s 4:%s 8:%s 10:%s 22:%s 24:%s 26:%s 34:%s" % (sigL2, sigL4, sigL8, sigL10, sigL22, sigL24, sigL26, sigL34))
 
 		asp = self.rr.GetOutput("Y34RB").GetAspect()
 		outb[3] = setBit(outb[3], 0, 1 if asp != 0 else 0)
@@ -282,11 +354,13 @@ class Yard(District):
 		# 	print("Yard:Yard: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
 
 
-
-#     if(Match)
-#     {
-#     	YSw33.NI = YDIn[0].bit.b0;		//Switch position
-# 		YSw33.RI = YDIn[0].bit.b1;
+		inb = []
+		inbc = 0
+		if inbc == 5:
+			ip = self.rr.GetInput("YSw33")  #Switch positions
+			nb = getBit(inb[0], 0)
+			rb = getBit(inb[0], 1)
+			ip.SetState(nb, rb)
 
 # 		if(RBYard->Checked)
 # 		{
@@ -320,42 +394,25 @@ class Yard(District):
 
 # 		YRelease = YDIn[3].bit.b1;
 # 		WOS1Norm = YDIn[3].bit.b2;      //switches normal for WOS1 into Y70
-# 		Y81W = YDIn[3].bit.b3;
-# 		Y82W = YDIn[3].bit.b4;
-# 		Y83W = YDIn[3].bit.b5;
-# 		Y84W = YDIn[3].bit.b6;
-# 		Y81E = YDIn[3].bit.b7;
+			self.rr.GetInput("Y81W").SetValue(getBit(inb[3], 3)) 
+			self.rr.GetInput("Y82W").SetValue(getBit(inb[3], 4)) 
+			self.rr.GetInput("Y83W").SetValue(getBit(inb[3], 5)) 
+			self.rr.GetInput("Y84W").SetValue(getBit(inb[3], 6)) 
+			self.rr.GetInput("Y81E").SetValue(getBit(inb[3], 7)) 
 
-# 		Y82E = YDIn[4].bit.b0;
-# 		Y83E = YDIn[4].bit.b1;
-# 		Y84E = YDIn[4].bit.b2;
-# 		Y70.M = YDIn[4].bit.b3;         //Waterman detection
-# 		WOS1 = YDIn[4].bit.b4;
-# 	//	Y81.M = YDIn[4].bit.b5;
-# 		Y82.M = YDIn[4].bit.b6;         //bad bit
-# 		Y83.M = YDIn[4].bit.b7;
+			self.rr.GetInput("Y82E").SetValue(getBit(inb[4], 0)) 
+			self.rr.GetInput("Y83E").SetValue(getBit(inb[4], 1)) 
+			self.rr.GetInput("Y84E").SetValue(getBit(inb[4], 2))  
+			self.rr.GetInput("Y70").SetValue(getBit(inb[4], 3))   # Waterman detection
+			self.rr.GetInput("YOSWYW").SetValue(getBit(inb[4], 4))  # WOS1
+			# bit 5 is bad
+			self.rr.GetInput("Y82").SetValue(getBit(inb[4], 6))  
+			self.rr.GetInput("Y83").SetValue(getBit(inb[4], 7))  
 
-# 		Y84.M = YDIn[5].bit.b0;
-# 		WOS2 = YDIn[5].bit.b1;
-# 		Y87.M = YDIn[5].bit.b2;
-# 		Y81.M = YDIn[5].bit.b3;
-# 		// = YDIn[5].bit.b4;
-# 		// = YDIn[5].bit.b5;
-# 		// = YDIn[5].bit.b6;
-# 		// = YDIn[5].bit.b7;
-# 	}
-
-
-
-
-
-
-
-
-
-
-
-
+			self.rr.GetInput("Y84").SetValue(getBit(inb[5], 0))  
+			self.rr.GetInput("YOSWYE").SetValue(getBit(inb[5], 1))  # WOS2
+			self.rr.GetInput("Y87").SetValue(getBit(inb[5], 2))  
+			self.rr.GetInput("Y81").SetValue(getBit(inb[5], 3))  
 
 		# Yard and Waterman switch control by dispatcher
 		outb = [0 for i in range(5)]

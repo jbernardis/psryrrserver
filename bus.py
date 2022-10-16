@@ -13,6 +13,13 @@ def setBit(obyte, obit, val):
 	else:
 		return obyte
 
+def getBit(ibyte, ibit):
+	if ibit < 0 or ibit > 7:
+		#bit out of range
+		return 0
+	mask = 1 << ibit
+	return 1 if ibyte&mask != 0 else 0
+
 class Bus:
 	def __init__(self, tty):
 		self.initialized = False

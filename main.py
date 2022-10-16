@@ -144,9 +144,10 @@ class MainFrame(wx.Frame):
 			stat = int(evt.data["status"][0])
 			resp = {"handswitch": [{"name": hsname, "state": stat}]}
 
+			self.rr.SetHandSwitch(hsname, stat)
+
 			if self.settings.echoHandSwitch:
 				self.socketServer.sendToAll(resp)
-			self.rr.SetHandSwitch(hsname, stat)
 
 		elif verb == "turnout":
 			swname = evt.data["name"][0]

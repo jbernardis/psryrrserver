@@ -6,6 +6,9 @@ class Input:
 	def SetRailRoad(self, rr):
 		self.rr = rr
 
+	def SetDistrict(self, d):
+		self.district = d
+
 	def GetName(self):
 		return self.name
 
@@ -19,9 +22,49 @@ class RouteInput(Input):
 	def __init__(self, name):
 		Input.__init__(self, name)
 
+	def SetValue(self, nv):
+		if nv == self.value:
+			return
+		print("setting turnouts based on route %s" % self.name)
+		self.value = nv
+		if nv == 1:
+			self.district.MapRouteToTurnouts(self.name)
+
 class BlockInput(Input):
 	def __init__(self, name):
 		Input.__init__(self, name)
+
+	def SetValue(self, nv):
+		if nv == self.value:
+			return
+		print("setting block value to %d" % nv)
+		self.rr.RailroadEvent({"block": [{ "name": self.name, "state": nv}]})
+		self.value = nv
+
+class TurnoutInput(Input):
+	def __init__(self, name):
+		Input.__init__(self, name)
+		self.state = "N"  # assume normal switch position to start
+
+	def SetState(self, nb, rb):
+		if nb != 0 and rb == 0:
+			ns = 'N'
+		elif rb != 0 and nb == 0:
+			ns = 'R'
+		else:
+			# erroneous case - just assume normal
+			ns = 'N'
+		self.SetState(ns)
+
+	def SetState(self, ns):
+		if ns == self.state:
+			return
+		print("setting turnout state to %s" % ns)
+		self.rr.RailroadEvent({"turnout": [{ "name": self.name, "state": ns}]})
+		self.state = ns
+
+	def GetState(self):
+		return self.state
 
 class Output:
 	def __init__(self, name):

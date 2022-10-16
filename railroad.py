@@ -17,9 +17,9 @@ class Railroad(wx.Notebook):
 		self.verbose = False
 
 		districtList = [
-			[ "hyde", Hyde ],
 			[ "yard", Yard ],
 			[ "latham", Latham ],
+			[ "hyde", Hyde ],
 		]
 
 		self.districts = {}
@@ -58,7 +58,7 @@ class Railroad(wx.Notebook):
 
 	def GetInput(self, iname):
 		try:
-			return self.inputs[iname]
+			return self.inputs[iname][0]
 		except KeyError:
 			print("No input found for name \"%s\"" % iname)
 			return None

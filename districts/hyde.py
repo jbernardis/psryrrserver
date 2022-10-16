@@ -1,8 +1,8 @@
 import wx
 
 from district import District, HYDE
-from rrobjects import Output, SignalOutput, TurnoutOutput, PulsedOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput
-from bus import setBit
+from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput, TurnoutInput
+from bus import setBit, getBit
 
 class Hyde(District):
 	def __init__(self, parent, name):
@@ -33,29 +33,29 @@ class Hyde(District):
 				"H42W", "H41W", "H41E", "H42E", "H43E", "H22E", "H40E", "H12E",
 				"H34E", "H33E", "H32E", "H31E" ])
 		self.routeMap = {
-				"H12W": [ {"name": "HSw1", "state": "N"}, {"name": "HSw3", "state": "N"} ], 
-				"H34W": [ {"name": "HSw1", "state": "N"}, {"name": "HSw3", "state": "R"} ],
-				"H33W": [ {"name": "HSw1", "state": "R"}, {"name": "HSw3", "state": "N"}, {"name": "HSw5", "state": "N"} ], 
-				"H32W": [ {"name": "HSw1", "state": "R"}, {"name": "HSw3", "state": "R"}, {"name": "HSw5", "state": "R"}, {"name": "HSw7", "state": "N"} ], 
-				"H31W": [ {"name": "HSw1", "state": "R"}, {"name": "HSw3", "state": "R"}, {"name": "HSw5", "state": "R"}, {"name": "HSw7", "state": "R"} ], 
+				"H12W": [ ["HSw1", "N"], ["HSw3","N"] ], 
+				"H34W": [ ["HSw1", "N"], ["HSw3", "R"] ],
+				"H33W": [ ["HSw1", "R"], ["HSw3", "N"], ["HSw5", "N"] ], 
+				"H32W": [ ["HSw1", "R"], ["HSw3", "R"], ["HSw5", "R"], ["HSw7","N"] ], 
+				"H31W": [ ["HSw1", "R"], ["HSw3", "R"], ["HSw5", "R"], ["HSw7","R"] ], 
 
-				"H12E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "N"} ], 
-				"H34E": [ {"name": "HSw15", "state": "R"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "N"} ], 
-				"H33E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "R"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "N"} ], 
-				"H32E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "R"}, {"name": "HSw21", "state": "N"} ], 
-				"H31E": [ {"name": "HSw15", "state": "N"}, {"name": "HSw17", "state": "N"}, {"name": "HSw19", "state": "N"}, {"name": "HSw21", "state": "R"} ], 
-				"H30E": [ {"name": "HSw1", "state": "N"} ],
+				"H12E": [ ["HSw15", "N"], ["HSw17", "N"], ["HSw19", "N"], ["HSw21", "N"] ], 
+				"H34E": [ ["HSw15", "R"], ["HSw17", "N"], ["HSw19", "N"], ["HSw21", "N"] ], 
+				"H33E": [ ["HSw15", "N"], ["HSw17", "R"], ["HSw19", "N"], ["HSw21", "N"] ], 
+				"H32E": [ ["HSw15", "N"], ["HSw17", "N"], ["HSw19", "R"], ["HSw21", "N"] ], 
+				"H31E": [ ["HSw15", "N"], ["HSw17", "N"], ["HSw19", "N"], ["HSw21", "R"] ], 
+				"H30E": [ ["HSw1", "N"] ],
 
-				"H22W": [ {"name": "HSw9", "state": "N"}, {"name": "HSw11", "state": "N"}, {"name": "HSw13", "state": "N"} ], 
-				"H43W": [ {"name": "HSw9", "state": "N"}, {"name": "HSw11", "state": "R"}, {"name": "HSw13", "state": "R"} ], 
-				"H42W": [ {"name": "HSw9", "state": "R"}, {"name": "HSw11", "state": "N"}, {"name": "HSw13", "state": "N"} ], 
-				"H41W": [ {"name": "HSw9", "state": "R"}, {"name": "HSw11", "state": "R"}, {"name": "HSw13", "state": "R"} ], 
+				"H22W": [ ["HSw9", "N"], ["HSw11", "N"], ["HSw13", "N"] ], 
+				"H43W": [ ["HSw9", "N"], ["HSw11", "R"], ["HSw13", "R"] ], 
+				"H42W": [ ["HSw9", "R"], ["HSw11", "N"], ["HSw13", "N"] ], 
+				"H41W": [ ["HSw9", "R"], ["HSw11", "R"], ["HSw13", "R"] ], 
 
-				"H22E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "N"}, {"name": "HSw29", "state": "N"} ], 
-				"H43E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "R"}, {"name": "HSw27", "state": "R"}, {"name": "HSw29", "state": "N"} ], 
-				"H42E": [ {"name": "HSw23", "state": "R"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "R"}, {"name": "HSw29", "state": "N"} ], 
-				"H41E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "R"}, {"name": "HSw29", "state": "N"} ], 
-				"H40E": [ {"name": "HSw23", "state": "N"}, {"name": "HSw25", "state": "N"}, {"name": "HSw27", "state": "N"}, {"name": "HSw29", "state": "R"} ], 
+				"H22E": [ ["HSw23", "N"], ["HSw25", "N"], ["HSw27", "N"], ["HSw29", "N"] ], 
+				"H43E": [ ["HSw23", "N"], ["HSw25", "R"], ["HSw27", "R"], ["HSw29", "N"] ], 
+				"H42E": [ ["HSw23", "R"], ["HSw25", "N"], ["HSw27", "R"], ["HSw29", "N"] ], 
+				"H41E": [ ["HSw23", "N"], ["HSw25", "N"], ["HSw27", "R"], ["HSw29", "N"] ], 
+				"H40E": [ ["HSw23", "N"], ["HSw25", "N"], ["HSw27", "N"], ["HSw29", "R"] ], 
 		}
 
 		blockNames = sorted([ "H21", "H21.E", "H23", "HOSWW2", "HOSWW",
@@ -66,13 +66,10 @@ class Hyde(District):
 		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 
-	def MapRouteToTurnouts(self, rname):
-		try:
-			return({"turnout": self.routeMap[rname]})
-		except Exception as e:
-			print("Unknown route name: %s" % rname)
-			print(str(e))
-			return None
+		# add "proxy" inputs for the turnouts.  These will not be addressed directly, but through the  route table
+		for t in toNames:
+			self.rr.AddInput(TurnoutInput(t), self)
+
 
 	def OutIn(self):
 		outb = [0 for i in range(5)]
@@ -144,90 +141,49 @@ class Hyde(District):
 		# if self.verbose:
 		# 	print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 
-	# HOut[0].bit.b0 = HSw1.NO;			//Switch outputs
-	# HOut[0].bit.b1 = HSw1.RO;
-	# HOut[0].bit.b2 = HSw3.NO;
-	# HOut[0].bit.b3 = HSw3.RO;
-	# HOut[0].bit.b4 = HSw7.NO;
-	# HOut[0].bit.b5 = HSw7.RO;
-	# HOut[0].bit.b6 = HSw9.NO;
-	# HOut[0].bit.b7 = HSw9.RO;
+		inb = []
+		inbc = 0
+		if inbc == 5:
+			self.rr.GetInput("H12W").SetValue(getBit(inb[0], 0))   #Routes
+			self.rr.GetInput("H34W").SetValue(getBit(inb[0], 1))
+			self.rr.GetInput("H33W").SetValue(getBit(inb[0], 2))
+			self.rr.GetInput("H30E").SetValue(getBit(inb[0], 3))
+			self.rr.GetInput("H31W").SetValue(getBit(inb[0], 4))
+			self.rr.GetInput("H32W").SetValue(getBit(inb[0], 5))
+			self.rr.GetInput("H22W").SetValue(getBit(inb[0], 6))
+			self.rr.GetInput("H43W").SetValue(getBit(inb[0], 7))
 
-	# HOut[1].bit.b0 = HSw11.NO;
-	# HOut[1].bit.b1 = HSw11.RO;
-	# HOut[1].bit.b2 = HSw23.NO;
-	# HOut[1].bit.b3 = HSw23.RO;
-	# HOut[1].bit.b4 = HSw25.NO;
-	# HOut[1].bit.b5 = HSw25.RO;
-	# HOut[1].bit.b6 = HSw27.NO;
-	# HOut[1].bit.b7 = HSw27.RO;
+			self.rr.GetInput("H42W").SetValue(getBit(inb[1], 0))  
+			self.rr.GetInput("H41W").SetValue(getBit(inb[1], 1))
+			self.rr.GetInput("H41E").SetValue(getBit(inb[1], 2))
+			self.rr.GetInput("H42E").SetValue(getBit(inb[1], 3))
+			self.rr.GetInput("H43E").SetValue(getBit(inb[1], 4))
+			self.rr.GetInput("H22E").SetValue(getBit(inb[1], 5))
+			self.rr.GetInput("H40E").SetValue(getBit(inb[1], 6))
+			self.rr.GetInput("H12E").SetValue(getBit(inb[1], 7))
 
-	# HOut[2].bit.b0 = HSw29.NO;
-	# HOut[2].bit.b1 = HSw29.RO;
-	# HOut[2].bit.b2 = HSw15.NO;
-	# HOut[2].bit.b3 = HSw15.RO;
-	# HOut[2].bit.b4 = HSw17.NO;
-	# HOut[2].bit.b5 = HSw17.RO;
-	# HOut[2].bit.b6 = HSw19.NO;
-	# HOut[2].bit.b7 = HSw19.RO;
+			self.rr.GetInput("H34E").SetValue(getBit(inb[2], 0))  
+			self.rr.GetInput("H33E").SetValue(getBit(inb[2], 1))
+			self.rr.GetInput("H32E").SetValue(getBit(inb[2], 2))
+			self.rr.GetInput("H31E").SetValue(getBit(inb[2], 3))
+			self.rr.GetInput("H21").SetValue(getBit(inb[2], 4))   #detection
+			self.rr.GetInput("H21.E").SetValue(getBit(inb[2], 5))
+			self.rr.GetInput("HOSWW2").SetValue(getBit(inb[2], 6)) #HOS4
+			self.rr.GetInput("HOSWW").SetValue(getBit(inb[2], 7)) #HOS5
 
-	# HOut[3].bit.b0 = HSw21.NO;
-	# HOut[3].bit.b1 = HSw21.RO;
-	# HOut[3].bit.b2 = H30.Blk;		//Block indicators
-	# HOut[3].bit.b3 = H10.Blk;
-	# HOut[3].bit.b4 = H23.Blk;
-	# HOut[3].bit.b5 = N25.Blk;
-	# HOut[3].bit.b6 = H21.Srel;		//Stopping relays
-	# HOut[3].bit.b7 = H13.Srel;
+			self.rr.GetInput("HOSWE").SetValue(getBit(inb[3], 0))  #HOS6
+			self.rr.GetInput("H31").SetValue(getBit(inb[3], 1))
+			self.rr.GetInput("H32").SetValue(getBit(inb[3], 2))
+			self.rr.GetInput("H33").SetValue(getBit(inb[3], 3))
+			self.rr.GetInput("H34").SetValue(getBit(inb[3], 4))  
+			self.rr.GetInput("H12").SetValue(getBit(inb[3], 5))
+			self.rr.GetInput("H22").SetValue(getBit(inb[3], 6))
+			self.rr.GetInput("H43").SetValue(getBit(inb[3], 7))
 
-	# HOut[4].bit.b0 = CBHydeJct;	//Circuit breakers
-	# HOut[4].bit.b1 = CBHydeWest;
-	# HOut[4].bit.b2 = CBHydeEast;
-	# HOut[4].bit.b3 = HydeWestPower;		//Power control
-	# HOut[4].bit.b4 = HydeEastPower;
-
-
-		# H12W = HIn[0].bit.b0;	//Switch positions
-		# H34W = HIn[0].bit.b1;
-		# H33W = HIn[0].bit.b2;
-		# H30E = HIn[0].bit.b3;
-		# H31W = HIn[0].bit.b4;
-		# H32W = HIn[0].bit.b5;
-		# H22W = HIn[0].bit.b6;
-		# H43W = HIn[0].bit.b7;
-
-		# H42W = HIn[1].bit.b0;
-		# H41W = HIn[1].bit.b1;
-		# H41E = HIn[1].bit.b2;
-		# H42E = HIn[1].bit.b3;
-		# H43E = HIn[1].bit.b4;
-		# H22E = HIn[1].bit.b5;
-		# H40E = HIn[1].bit.b6;
-		# H12E = HIn[1].bit.b7;
-
-		# H34E = HIn[2].bit.b0;
-		# H33E = HIn[2].bit.b1;
-		# H32E = HIn[2].bit.b2;
-		# H31E = HIn[2].bit.b3;
-		# H21.M = HIn[2].bit.b4;		//Detection
-		# H21.E = HIn[2].bit.b5;
-		# HOSWW2 HOS4  = HIn[2].bit.b6;
-		# HOSWW HOS5  = HIn[2].bit.b7;
-
-		# HOSWE HOS6  = HIn[3].bit.b0;
-		# H31.M = HIn[3].bit.b1;
-		# H32.M = HIn[3].bit.b2;
-		# H33.M = HIn[3].bit.b3;
-		# H34.M = HIn[3].bit.b4;
-		# H12.M = HIn[3].bit.b5;
-		# H22.M = HIn[3].bit.b6;
-		# H43.M = HIn[3].bit.b7;
-
-		# H42.M = HIn[4].bit.b0;
-		# H41.M = HIn[4].bit.b1;
-		# H40.M = HIn[4].bit.b2;
-		# HOSEW  HOS7  = HIn[4].bit.b3;
-		# HOSEE  HOS8  = HIn[4].bit.b4;
-		# H13.W = HIn[4].bit.b5;
-		# H13.M = HIn[4].bit.b6;
-
+			self.rr.GetInput("H42").SetValue(getBit(inb[4], 0))
+			self.rr.GetInput("H41").SetValue(getBit(inb[4], 1))
+			self.rr.GetInput("H40").SetValue(getBit(inb[4], 2))
+			self.rr.GetInput("HOSEW").SetValue(getBit(inb[4], 3))  #HOS7
+			self.rr.GetInput("HOSEE").SetValue(getBit(inb[4], 4))  #HOS8 
+			self.rr.GetInput("H13W").SetValue(getBit(inb[4], 5))
+			self.rr.GetInput("H13").SetValue(getBit(inb[4], 6))
