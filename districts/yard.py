@@ -6,8 +6,8 @@ from rrobjects import TurnoutInput, BlockInput, RouteInput, SignalOutput, Turnou
 from bus import setBit, getBit
 
 class Yard(District):
-	def __init__(self, parent, name):
-		District.__init__(self, parent, name)
+	def __init__(self, parent, name, settings):
+		District.__init__(self, parent, name, settings)
 
 		#OUTPUTS
 		sigNames = sorted([
@@ -58,8 +58,9 @@ class Yard(District):
 		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
-		hiddenToNames = sorted([ "YSw113", "YSw115", "YSw116", "YSw131", "YSw132", "YSw134" ])
+		
 		# add "proxy" inputs for the waterman turnouts.  These will not be addressed directly, but through the  route table
+		hiddenToNames = sorted([ "YSw113", "YSw115", "YSw116", "YSw131", "YSw132", "YSw134" ])
 		for t in hiddenToNames:
 			self.rr.AddInput(TurnoutInput(t), self)
 
@@ -86,7 +87,7 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 3, self.rr.GetOutput("Y21.srel").GetStatus())	      # Stop relays
 		outb[1] = setBit(outb[1], 4, self.rr.GetOutput("L10.srel").GetStatus())
 
-		if not self.verbose:
+		if self.verbose:
 			print("Yard:Cornell Jct: Output bytes: {0:08b}  {1:08b}".format(outb[0], outb[1]))
 
 		# inb, inbc = self.rrbus.sendRecv(CORNELL, outb, 2, swap=True)
@@ -146,7 +147,7 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 2, self.rr.GetOutput("Y20.srel").GetStatus())	      # Stop relays
 		outb[1] = setBit(outb[1], 3, self.rr.GetOutput("Y11.srel").GetStatus())
 
-		if not self.verbose:
+		if self.verbose:
 			print("Yard:East Jct: Output bytes: {0:08b}  {1:08b}".format(outb[0], outb[1]))
 
 		# inb, inbc = self.rrbus.sendRecv(EASTJCT, outb, 2, swap=True)
@@ -209,7 +210,7 @@ class Yard(District):
 #     KAOut[1].bit.b1 = Y22Ra;
 #     KAOut[1].bit.b2 = Y22Rb;
 
-		if not self.verbose:
+		if self.verbose:
 			print("Yard:Kale: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
 
 		# inb, inbc = self.rrbus.sendRecv(KALE, outb, 4, swap=True)
@@ -341,7 +342,7 @@ class Yard(District):
 		outb[5] = setBit(outb[5], 4, self.rr.GetOutput("YSw29").GetLock())
 		outb[5] = setBit(outb[5], 5, self.rr.GetOutput("YSw33").GetLock())
 
-		if not self.verbose:
+		if self.verbose:
 			print("Yard:Yard: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5]))
 
 		# inb, inbc = self.rrbus.sendRecv(YARD, outb, 6, swap=True)
@@ -455,6 +456,8 @@ class Yard(District):
 		outb[2] = setBit(outb[2], 6, 1 if op > 0 else 0)
 		outb[2] = setBit(outb[2], 7, 1 if op < 0 else 0)
 
+		if self.verbose:
+			print("Yard:Waterman: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
 
 
 # 	YSWOut[3].bit.b0 = SBY51W;

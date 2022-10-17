@@ -18,6 +18,17 @@ class Input:
 	def GetValue(self):
 		return self.value
 
+class BreakerInput(Input):
+	def __init__(self, name):
+		Input.__init__(self, name)
+
+	def SetValue(self, nv):
+		if nv == self.value:
+			return
+		print("setting breaker %s value to %d" % (self.name, nv))
+		self.rr.RailroadEvent({"breaker": [{ "name": self.name, "state": nv}]})
+		self.value = nv
+
 class RouteInput(Input):
 	def __init__(self, name):
 		Input.__init__(self, name)
@@ -37,7 +48,7 @@ class BlockInput(Input):
 	def SetValue(self, nv):
 		if nv == self.value:
 			return
-		print("setting block value to %d" % nv)
+		print("setting block %s value to %d" % (self.name, nv))
 		self.rr.RailroadEvent({"block": [{ "name": self.name, "state": nv}]})
 		self.value = nv
 

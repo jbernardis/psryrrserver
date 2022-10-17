@@ -10,10 +10,11 @@ from districts.latham import Latham
 
 
 class Railroad(wx.Notebook):
-	def __init__(self, frame, cbEvent):
+	def __init__(self, frame, cbEvent, settings):
 		wx.Notebook.__init__(self, frame, wx.ID_ANY, style=wx.BK_DEFAULT)
 		self.frame = frame
 		self.cbEvent = cbEvent
+		self.settings = settings
 		self.verbose = False
 
 		districtList = [
@@ -27,7 +28,7 @@ class Railroad(wx.Notebook):
 		self.inputs = {}
 		
 		for dname, dclass in districtList:
-			p = dclass(self, dname)
+			p = dclass(self, dname, self.settings)
 			self.AddPage(p, dname)
 			self.districts[dname] = p
 

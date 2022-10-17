@@ -5,8 +5,8 @@ from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput,
 from bus import setBit, getBit
 
 class Hyde(District):
-	def __init__(self, parent, name):
-		District.__init__(self, parent, name)
+	def __init__(self, parent, name, settings):
+		District.__init__(self, parent, name, settings)
 
 		# OUTPUTS
 		sigNames = [
@@ -129,7 +129,7 @@ class Hyde(District):
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  #Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 
-		if not self.verbose:
+		if self.verbose:
 			print("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
 		# inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=True)

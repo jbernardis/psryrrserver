@@ -7,6 +7,8 @@ from railroad import Railroad
 from httpserver import HTTPServer
 from sktserver import SktServer
 
+from clientlist import ClientList
+
 import pprint
 
 (HTTPMessageEvent, EVT_HTTPMESSAGE) = wx.lib.newevent.NewEvent()  
@@ -25,7 +27,7 @@ class MainFrame(wx.Frame):
 		self.settings = Settings()
 
 		print("Creating railroad object")
-		self.rr = Railroad(self, self.rrEventReceipt) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
+		self.rr = Railroad(self, self.rrEventReceipt, self.settings) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
 
 		print("Opening a railroad monitoring thread on device %s" % self.settings.tty)
 		self.rrMonitor = RailroadMonitor(self.settings.tty, self.rr)
@@ -43,18 +45,22 @@ class MainFrame(wx.Frame):
 		self.socketServer = SktServer(self.settings.ip, self.settings.socketport, self.socketEventReceipt)
 		self.socketServer.start()
 
+		self.clientList = ClientList(self)
+
 		vsz = wx.BoxSizer(wx.VERTICAL)
 		hsz = wx.BoxSizer(wx.HORIZONTAL)
 
-		vsz.AddSpacer(20)
-		vsz.Add(self.rr)
-		vsz.AddSpacer(20)
-
 		hsz.AddSpacer(20)
-		hsz.Add(vsz)
+		hsz.Add(self.rr)
+		hsz.AddSpacer(10)
+		hsz.Add(self.clientList)
 		hsz.AddSpacer(20)
 
-		self.SetSizer(hsz)
+		vsz.AddSpacer(20)
+		vsz.Add(hsz)
+		vsz.AddSpacer(20)
+
+		self.SetSizer(vsz)
 		self.Layout()
 		self.Fit()
 
@@ -72,8 +78,10 @@ class MainFrame(wx.Frame):
 				addr = parms["addr"]
 				skt = parms["socket"]
 				print("adding new client at address %s" % str(addr))
+				print(skt)
 				self.clients[addr] = skt
 				self.sendAllData(addr, skt)
+				self.clientList.AddClient(addr)
 
 			elif cmd == "delclient":
 				addr = parms["addr"]
@@ -82,6 +90,7 @@ class MainFrame(wx.Frame):
 					del self.clients[addr]
 				except KeyError:
 					pass
+				self.clientList.DelClient(addr)
 
 	def sendAllData(self, addr, skt):
 		print("sending all data to client at %s" % str(addr))
@@ -101,9 +110,7 @@ class MainFrame(wx.Frame):
 				for pa in parms:
 					toname = pa["name"]
 					self.rr.RefreshTurnout(toname)
-			elif cmd == "turnout":
-				self.socketServer.sendToAll(evt.data)
-			elif cmd == "block":
+			else:
 				self.socketServer.sendToAll(evt.data)
 
 	def dispCommandReceipt(self, cmd):
@@ -121,7 +128,7 @@ class MainFrame(wx.Frame):
 			signame = evt.data["name"][0]
 			aspect = int(evt.data["aspect"][0])
 			resp = {"signal": [{"name": signame, "aspect": aspect}]}
-			# signal changes are echoed back to all listeners
+			# signal changes are always echoed back to all listeners
 			self.socketServer.sendToAll(resp)
 			self.rr.SetAspect(signame, aspect)
 
@@ -135,19 +142,18 @@ class MainFrame(wx.Frame):
 			except:
 				loco = None
 			block = evt.data["block"][0]
-			# train information is echoed back to all listeners
+			# train information is always echoed back to all listeners
 			resp = {"settrain": [{"name": trn, "loco": loco, "block": block}]}
 			self.socketServer.sendToAll(resp)
 
 		elif verb == "handswitch":
 			hsname = evt.data["name"][0]
 			stat = int(evt.data["status"][0])
-			resp = {"handswitch": [{"name": hsname, "state": stat}]}
 
 			self.rr.SetHandSwitch(hsname, stat)
-
-			if self.settings.echoHandSwitch:
-				self.socketServer.sendToAll(resp)
+			# handswitch information is always echoed to all listeners
+			resp = {"handswitch": [{"name": hsname, "state": stat}]}
+			self.socketServer.sendToAll(resp)
 
 		elif verb == "turnout":
 			swname = evt.data["name"][0]
@@ -155,7 +161,10 @@ class MainFrame(wx.Frame):
 
 			self.rr.SetOutPulse(swname, status)
 
-			if self.settings.echoTurnout:
+			# turnouts are not normally echoed back to listeners.  Instead,
+			# the turnout information that the railroad reponds with is sent
+			# back to listeners to convey this information
+			if self.settings.echoTurnout and self.settings.simulation:
 				resp = {"turnout": [{ "name": swname, "state": status}]}
 				self.socketServer.sendToAll(resp)
 
@@ -164,10 +173,18 @@ class MainFrame(wx.Frame):
 			status = int(evt.data["status"][0])
 
 			self.rr.SetSwitchLock(swname, status)
+			# turnoutlock information is always echoed to all listeners
+			resp = {"turnoutlock": [{ "name": swname, "state": status}]}
+			self.socketServer.sendToAll(resp)
 
-			if self.settings.echoTurnoutLock:
-				resp = {"turnoutlock": [{ "name": swname, "state": status}]}
-				self.socketServer.sendToAll(resp)
+		elif verb == "indicator":
+			indname = evt.data["name"][0]
+			status = int(evt.data["status"][0])
+
+			self.rr.SetIndicator(indname, status)
+			# indicator information is always echoed to all listeners
+			resp = {"indicater": [{ "name": indname, "state": status}]}
+			self.socketServer.sendToAll(resp)
 
 		elif verb == "quit":
 			print("HTTP 'quit' command received - terminating")

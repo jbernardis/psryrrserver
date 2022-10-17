@@ -34,15 +34,18 @@ class District(wx.Panel):
 	handswitch = 4
 	route = 5
 	block = 6
-	typeLabels = [ "Signals", "Turnouts", "Indicators", "Stop Relays", "Handswitches", "Routes", "Blocks" ]
+	breaker = 7
+	typeLabels = [ "Signals", "Turnouts", "Indicators", "Stop Relays", "Handswitches", "Routes", "Blocks", "Breaker" ]
 
-	def __init__(self, parent, name):
+	def __init__(self, parent, name, settings):
 		wx.Panel.__init__(self, parent, wx.ID_ANY)
 		self.name = name
 		self.rr = parent
+		self.settings = settings
 		self.outputMap = {}
 		self.inputMap = {}
 		self.inputTypes = {}
+		print("District %s: %s" % (name, str(self.settings.simulation)))
 
 		self.verbose = self.rr.verbose
 
@@ -62,7 +65,8 @@ class District(wx.Panel):
 		self.ilist.InsertColumn(2, "Type", wx.LIST_FORMAT_CENTER)
 		self.ilist.SetColumnWidth(2, 90)
 
-		self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.inputDClick, self.ilist)
+		if self.settings.simulation:
+			self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.inputDClick, self.ilist)
 
 	def inputDClick(self, evt):
 		# TODO - only allow this in simulation mode
@@ -97,6 +101,9 @@ class District(wx.Panel):
 
 		elif itype == District.turnout:
 			ip.SetState(nval)
+
+		elif itype == District.breaker:
+			ip.SetValue(nval)
 
 		else:
 			print("No handling of input type %s(%s)" % (District.typeLabels[itype], itype))
