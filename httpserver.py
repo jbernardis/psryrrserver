@@ -57,7 +57,6 @@ class HTTPServer:
 		self.cbCommand = cbCommand
 		self.thread = Thread(target=self.server.serve_railroad)
 		self.thread.start()
-		print("HTTP Server started at address %s:%s" % (ip, port))
 
 	def getThread(self):
 		return self.thread

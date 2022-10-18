@@ -1,5 +1,4 @@
-import threading
-import time
+import logging
 
 from district import District, LATHAM
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
@@ -33,7 +32,8 @@ class Latham(District):
 
 		brkrNames = sorted([ "CBCliveden", 	"CBLatham",  "CBCornellJct", "CBParsonsJct", "CBSouthJct", "CBCircusJct", "CBSouthport",
 						"CBLavinYard", "CBReverserP31", "CBReverserP41", "CBReverserP50", "CBReverserC22C23" ])
-		blockNames = sorted([ "L20", "L20.E", "P21", "P21.E", "LOSLAW", "LOSLAM", "LOSLAE", "L11.W", "L11", "L21.W", "L21", "L21.E" ])
+		blockNames = sorted([ "L20", "L20.E", "LOSLAW", "LOSLAM", "LOSLAE", "L11.W", "L11", "L21.W", "L21", "L21.E",
+						"L31", "LOSCAE", "LOSCAM", "LOSCAW", "D10", "D20", "P21", "P21.E" ])
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
@@ -95,16 +95,13 @@ class Latham(District):
 		outb[4] = setBit(outb[4], 1, self.rr.GetOutput("L21.srel").GetStatus())
 		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("P50.srel").GetStatus())
 
-		if self.verbose:
-			print("Latham:Latham: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
+		logging.debug("Latham:Latham: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
 		# inb, inbc = self.rrbus.sendRecv(LATHAM, outb, 5, swap=True)
 		# if inb is None:
-		# 	if self.verbose:
 		# 		print("No data received from Latham:Latham")
 		# 	return
 
-		# if self.verbose:
 		# 	print("Latham:Latham: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 		inb = []
 		inbc = 0
@@ -206,16 +203,13 @@ class Latham(District):
 		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("S21.srel").GetStatus())	# Krulish West stopping relays
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("N25.srel").GetStatus())	
 
-		if self.verbose:
-			print("Latham:Carlton: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
+		logging.debug("Latham:Carlton: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
 		# inb, inbc = self.rrbus.sendRecv(CARLTON, outb, 5, swap=True)
 		# if inb is None:
-		# 	if self.verbose:
 		# 		print("No data received from Latham:Carlton")
 		# 	return
 
-		# if self.verbose:
 		# 	print("Latham:Latham: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 		inb = []
 		inbc = 0

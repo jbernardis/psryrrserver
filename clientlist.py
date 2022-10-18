@@ -1,4 +1,5 @@
 import wx
+import logging
 
 class ClientList(wx.ListCtrl):
 	def __init__(self, parent):
@@ -13,18 +14,18 @@ class ClientList(wx.ListCtrl):
 		if addr in self.clientList:
 			return
 
+		logging.info("Adding new client from %s:%s" % (addr[0], addr[1]))
 		index = len(self.clientList)
 		self.clientList.append(addr)
 		self.InsertItem(index, addr[0])
 		self.SetItem(index, 1, "%d" % addr[1])
 
 	def DelClient(self, addr):
+		logging.info("Removing client with address %s:%s" % (addr[0], addr[1]))
 		try:
 			index = self.clientList.index(addr)
 		except ValueError:
-			print("not in list")
 			return
 
-		print("Found as item %d in our list")
 		self.DeleteItem(index)
 		del(self.clientList[index])

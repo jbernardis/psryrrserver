@@ -50,14 +50,8 @@ class Bus:
 		if nb != 1:
 			print("expected 1 byte written, got %d" % nb)
 
-		# print("before")
-		# for b in outbuf:
-		# 	print("{0:08b}".format(b))
 		if swap:
 			outbuf = [swapbyte(x) for x in outbuf]
-		# print("after")
-		# for b in outbuf:
-		# 	print("{0:08b}".format(b))
 
 		nb = self.port.write(bytes(outbuf))
 		if nb != nbytes:
@@ -90,7 +84,6 @@ class RailroadMonitor(threading.Thread):
 		if not self.rrbus.initialized:
 			return
 
-		self.verbose = False
 		self.pollInterval = pollInterval * 1000000000 # convert s to ns
 		self.isRunning = False
 		self.initialized = True

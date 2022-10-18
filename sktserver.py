@@ -13,7 +13,6 @@ class SktServer (threading.Thread):
 		self.cbEvent = cbEvent
 		self.socketLock = threading.Lock()
 		self.sockets = []
-		print("Starting socket server at address: %s:%d" % (ip, port))
 
 	def getSockets(self):
 		return [x for x in self.sockets]
@@ -52,7 +51,6 @@ class SktServer (threading.Thread):
 				if self.sockets[i][1] == addr:
 					self.cbEvent({"delclient": {"addr": addr}})
 					del(self.sockets[i])
-					print("Disconnecting socket client at %s" % str(addr))
 					return
 
 	def run(self):
@@ -66,7 +64,6 @@ class SktServer (threading.Thread):
 			readable, _, _ = select.select(slist, [], [], 1)
 			if s in readable:
 				skt, addr = s.accept()
-				print("Subscription from address %s" % str(addr))
 				with self.socketLock:
 					self.sockets.append((skt, addr))
 					self.cbEvent({"newclient": {"socket": skt, "addr": addr}})

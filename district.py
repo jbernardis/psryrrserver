@@ -1,4 +1,5 @@
 import wx
+import logging
 
 # district node addresses
 YARD      = 0x11;
@@ -44,10 +45,6 @@ class District(wx.Panel):
 		self.settings = settings
 		self.outputMap = {}
 		self.inputMap = {}
-		self.inputTypes = {}
-		print("District %s: %s" % (name, str(self.settings.simulation)))
-
-		self.verbose = self.rr.verbose
 
 		self.olist = wx.ListCtrl(self, wx.ID_ANY, pos=(0, 0), size=(260, 300), style=wx.LC_REPORT)
 		self.olist.InsertColumn(0, "Output")
@@ -71,13 +68,12 @@ class District(wx.Panel):
 	def inputDClick(self, evt):
 		# TODO - only allow this in simulation mode
 		index = evt.Index
-		print("Double click item %d" % index)
+		logging.debug("Double click item %d" % index)
 		if index == wx.NOT_FOUND:
-			print("Not found - returning")
 			return
 
 		iname = self.ilist.GetItemText(index, 0)
-		itype = self.inputTypes[index]
+		itype = self.inputMap[iname][2]
 		if itype == District.turnout:
 			cval = self.ilist.GetItemText(index, 1)
 			nval = "R" if cval == "N" else "N"
@@ -89,7 +85,7 @@ class District(wx.Panel):
 		self.ilist.SetItem(index, 1, "%s" % str(nval))
 		ip = self.rr.GetInput(iname)
 		if ip is None:
-			print("Unable to identify input by name: %s" % iname)
+			logging.warning("Unable to identify input by name: %s" % iname)
 			return
 
 		# apply change to input objects and through there to the listeners
@@ -106,16 +102,13 @@ class District(wx.Panel):
 			ip.SetValue(nval)
 
 		else:
-			print("No handling of input type %s(%s)" % (District.typeLabels[itype], itype))
-
-	def SetVerbose(self, flag=True):
-		self.verbose = flag
+			logging.warning("No handling of input type %s(%s)" % (District.typeLabels[itype], itype))
 
 	def AddOutputs(self, olist, oclass, otype, ix=0):
 		first = True
 		for oname in olist:
-			oc = oclass(oname)
-			self.rr.AddOutput(oc, self)
+			oc = oclass(oname, self)
+			self.rr.AddOutput(oc, self, otype)
 			self.olist.InsertItem(ix, oname)
 			if otype == District.turnout:
 				self.olist.SetItem(ix, 1, "0,U")
@@ -124,16 +117,15 @@ class District(wx.Panel):
 			if first:
 				first = False
 				self.olist.SetItem(ix, 2, District.typeLabels[otype])
-			self.outputMap[(oname, otype)] = (ix, oc)
+			self.outputMap[oname] = (ix, oc, otype)
 			ix += 1
 		return ix
 
 	def AddInputs(self, ilist, iclass, itype, ix=0):
 		first = True
 		for iname in ilist:
-			ic = iclass(iname)
-			ic.SetDistrict(self)
-			self.rr.AddInput(ic, self)
+			ic = iclass(iname, self)
+			self.rr.AddInput(ic, self, itype)
 			self.ilist.InsertItem(ix, iname)
 			if itype == District.turnout:
 				self.ilist.SetItem(ix, 1, "N")
@@ -142,62 +134,88 @@ class District(wx.Panel):
 			if first:
 				first = False
 				self.ilist.SetItem(ix, 2, District.typeLabels[itype])
-			self.inputMap[(iname, itype)] = (ix, ic)
-			self.inputTypes[ix] = itype
+			self.inputMap[iname] = (ix, ic, itype)
 			ix += 1
 		return ix
+
+	def RefreshInput(self, iname, itype):
+		try:
+			ix, ic, dtype = self.inputMap[iname]
+		except KeyError:
+			logging.warning("Input for %s in district %s not found" % (iname, self.name))
+			return
+		
+		if itype != dtype:
+			logging.warning("Type mismatch refreshing input %s: %d != %d" % (iname, itype, dtype))
+			return
+
+		if itype == District.turnout:
+			state = ic.GetState()
+			self.ilist.SetItem(ix, 1, "%s" % state)
+		else:
+			logging.warning("Refresh input: no handling of type %s" % itype)
+
+	def RefreshOutput(self, oname, otype=None):
+		try:
+			ix, oc, dtype = self.outputMap[oname]
+		except KeyError:
+			logging.warning("Output for %s in district %s not found" % (oname, self.name))
+			return
+		
+		if otype is None:
+			otype = dtype
+		elif otype != dtype:
+			logging.warning("Type mismatch refreshing output %s: %d != %d" % (oname, otype, dtype))
+			return
+
+		if otype == District.turnout:
+			pulseval = oc.GetOutPulseValue()
+			state = oc.GetLock()
+			self.olist.SetItem(ix, 1, "%d,%s" % (pulseval, "L" if state != 0 else "U"))
+		else:
+			logging.warning("Refresh output: no handling of type %s" % otype)
 
 	def MapRouteToTurnouts(self, rname):
 		try:
 			tolist = self.routeMap[rname]
 		except KeyError:
-			print("Unknown route name: %s" % rname)
+			logging.warning("MapRouteToTurnouts: Unknown route name: %s" % rname)
 			return False
 
 		for toname, tostate in tolist:
 			ip = self.rr.GetInput(toname)
 			if ip is None:
-				print("Unable to determine turnout input from name: %s" % toname)
+				logging.warning("Unable to determine turnout input from name: %s" % toname)
 			else:
 				ip.SetState(tostate)
 		return True
 
 	def SetTurnoutPulseLen(self, to, pl):
-		if (to, District.turnout) not in self.outputMap:
-			print("Turnout %s not found - unable to change pulse length" % to)
+		if to not in self.outputMap:
+			logging.warning("Turnout %s not found - unable to change pulse length" % to)
 			return False
 
-		oc = self.outputMap[(to, District.turnout)][1]
+		oc = self.outputMap[to][1]
 		oc.SetPulseLen(pl)
 
 	def UpdateSignal(self, signame):
 		try:
-			ix, oc = self.outputMap[(signame, District.signal)]
+			ix, oc = self.outputMap[signame][0:2]
 		except KeyError:
-			print("Output for signal %s in district %s not found" % (signame, self.name))
+			logging.warning("Output for signal %s in district %s not found" % (signame, self.name))
 			return
 		
 		aspect = oc.GetAspect()
 		self.olist.SetItem(ix, 1, "%d" % aspect)
-
-	def UpdateTurnout(self, toname):
-		try:
-			ix, oc = self.outputMap[(toname, District.turnout)]
-		except KeyError:
-			print("Output for turnout %s in district %s not found" % (toname, self.name))
-			return
 		
-		pulseval = oc.GetOutPulseValue()
-		state = oc.GetLock()
-		self.olist.SetItem(ix, 1, "%d,%s" % (pulseval, "L" if state != 0 else "U"))
 
 	def DetermineSignalLever(self, lsigs, rsigs):
 		lval = 0
 		for sig in lsigs:
 			try:
-				_, oc = self.outputMap[(sig, District.signal)]
+				oc = self.outputMap[sig][1]
 			except KeyError:
-				print("Output for signal %s not found" % sig)
+				logging.warning("Output for signal %s not found" % sig)
 				oc = None
 			if oc:
 				lval += oc.GetAspect()
@@ -205,9 +223,9 @@ class District(wx.Panel):
 		rval = 0
 		for sig in rsigs:
 			try:
-				_, oc = self.outputMap[(sig, District.signal)]
+				oc = self.outputMap[sig][1]
 			except KeyError:
-				print("Output for signal %s not found" % sig)
+				logging.warning("Output for signal %s not found" % sig)
 				oc = None
 			if oc:
 				rval += oc.GetAspect()
@@ -226,9 +244,9 @@ class District(wx.Panel):
 
 	def UpdateIndicator(self, indname):
 		try:
-			ix, oc = self.outputMap[(indname, District.indicator)]
+			ix, oc = self.outputMap[indname][0:2]
 		except KeyError:
-			print("Output for indicator %s in district %s not found" % (indname, self.name))
+			logging.warning("Output for indicator %s in district %s not found" % (indname, self.name))
 			return
 		
 		state = oc.GetStatus()
@@ -236,9 +254,9 @@ class District(wx.Panel):
 
 	def UpdateHandSwitch(self, hsname):
 		try:
-			ix, oc = self.outputMap[(hsname, District.handswitch)]
+			ix, oc = self.outputMap[hsname][0:2]
 		except KeyError:
-			print("Output for handswitch %s in district %s not found" % (hsname, self.name))
+			logging.warning("Output for handswitch %s in district %s not found" % (hsname, self.name))
 			return
 		
 		state = oc.GetStatus()

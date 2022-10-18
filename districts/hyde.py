@@ -1,4 +1,5 @@
 import wx
+import logging
 
 from district import District, HYDE
 from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput, TurnoutInput
@@ -68,7 +69,7 @@ class Hyde(District):
 
 		# add "proxy" inputs for the turnouts.  These will not be addressed directly, but through the  route table
 		for t in toNames:
-			self.rr.AddInput(TurnoutInput(t), self)
+			self.rr.AddInput(TurnoutInput(t, self), self, District.turnout)
 
 
 	def OutIn(self):
@@ -129,16 +130,13 @@ class Hyde(District):
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  #Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 
-		if self.verbose:
-			print("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
+		logging.debug("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
 
 		# inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=True)
 		# if inb is None:
-		# 	if self.verbose:
 		# 		print("No data received from Hyde")
 		# 	return
 
-		# if self.verbose:
 		# 	print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 
 		inb = []
