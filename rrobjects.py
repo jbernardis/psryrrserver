@@ -56,6 +56,7 @@ class RouteInput(Input):
 class BlockInput(Input):
 	def __init__(self, name, district):
 		Input.__init__(self, name, district)
+		self.subBlocks = []
 
 	def SetValue(self, nv):
 		if nv == self.value:
@@ -64,8 +65,43 @@ class BlockInput(Input):
 		self.rr.RailroadEvent({"refreshinput": [self.name]})
 		self.rr.RailroadEvent(self.GetEventMessage())
 
+	def AddSubBlock(self, sub):
+		self.subBlocks.append(sub)
+
+	def EvaluateSubBlocks(self):
+		nv = 0
+		print("evaluate subblocks for %s" % self.name)
+		for sb in self.subBlocks:
+			print(  "Look at subblock %s" % sb.GetName())
+			sv = sb.GetValue()
+			if sv != 0:
+				print("its occupied")
+				nv = 1
+				break
+		print("setting block value to %s" % nv)
+		self.SetValue(nv)
+
 	def GetEventMessage(self):
 		return {"block": [{ "name": self.name, "state": self.value}]}
+
+class SubBlockInput(Input):
+	def __init__(self, name, district):
+		Input.__init__(self, name, district)
+		self.parent = None
+	
+	def SetParent(self, parent):
+		self.parent = parent
+		self.parent.AddSubBlock(self)
+
+	def SetValue(self, nv):
+		if nv == self.value:
+			return
+		self.value = nv
+		if self.parent:
+			self.parent.EvaluateSubBlocks()
+	
+	def GetEventMessage(self):
+		print("subblock geteventmessage")
 
 class TurnoutInput(Input):
 	def __init__(self, name, district):
@@ -83,6 +119,7 @@ class TurnoutInput(Input):
 		self.SetState(ns)
 
 	def SetState(self, ns):
+		print("inside turout setstate (%s) (%s)" % (str(self.state), str(ns)))
 		if ns == self.state:
 			return
 		self.state = ns

@@ -124,6 +124,7 @@ class Railroad(wx.Notebook):
 		district.RefreshOutput(toname)
 
 	def RefreshInput(self, iname):
+		print("in rr refreshinput")
 		if iname not in self.inputs:
 			logging.warning("No input defined for %s" % iname)
 			return

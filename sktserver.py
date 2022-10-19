@@ -26,6 +26,7 @@ class SktServer (threading.Thread):
 		return self.endOfLife
 
 	def sendToAll(self, msg):
+		print("send to all: %s" % json.dumps(msg))
 		with self.socketLock:
 			tl = [x for x in self.sockets]
 		for skt, addr in tl:

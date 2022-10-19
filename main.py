@@ -105,7 +105,9 @@ class MainFrame(wx.Frame):
 				for oname in parms:
 					self.rr.RefreshOutput(oname)
 			elif cmd == "refreshinput":
+				print("refreshinput %s" % str(parms))
 				for iname in parms:
+					print("refreshinput %s" % iname)
 					self.rr.RefreshInput(iname)
 			else:
 				self.socketServer.sendToAll(evt.data)
@@ -152,13 +154,16 @@ class MainFrame(wx.Frame):
 		elif verb == "turnout":
 			swname = evt.data["name"][0]
 			status = evt.data["status"][0]
+			print("handling turnout command for %s %s" % (swname, str(status)))
 
 			self.rr.SetOutPulse(swname, status)
+			print("updated pulse")
 
 			# turnouts are not normally echoed back to listeners.  Instead,
 			# the turnout information that the railroad reponds with is sent
 			# back to listeners to convey this information
 			if self.settings.echoTurnout and self.settings.simulation:
+				print("updating screen")
 				self.rr.GetInput(swname).SetState(status)
 				#resp = {"turnout": [{ "name": swname, "state": status}]}
 				#self.socketServer.sendToAll(resp)

@@ -36,7 +36,7 @@ class District(wx.Panel):
 	route = 5
 	block = 6
 	breaker = 7
-	typeLabels = [ "Signals", "Turnouts", "Indicators", "Stop Relays", "Handswitches", "Routes", "Blocks", "Breaker" ]
+	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker" ]
 
 	def __init__(self, parent, name, settings):
 		wx.Panel.__init__(self, parent, wx.ID_ANY)
@@ -105,7 +105,6 @@ class District(wx.Panel):
 			logging.warning("No handling of input type %s(%s)" % (District.typeLabels[itype], itype))
 
 	def AddOutputs(self, olist, oclass, otype, ix=0):
-		first = True
 		for oname in olist:
 			oc = oclass(oname, self)
 			self.rr.AddOutput(oc, self, otype)
@@ -114,15 +113,12 @@ class District(wx.Panel):
 				self.olist.SetItem(ix, 1, "0,U")
 			else:
 				self.olist.SetItem(ix, 1, "0")
-			if first:
-				first = False
-				self.olist.SetItem(ix, 2, District.typeLabels[otype])
+			self.olist.SetItem(ix, 2, District.typeLabels[otype])
 			self.outputMap[oname] = (ix, oc, otype)
 			ix += 1
 		return ix
 
 	def AddInputs(self, ilist, iclass, itype, ix=0):
-		first = True
 		for iname in ilist:
 			ic = iclass(iname, self)
 			self.rr.AddInput(ic, self, itype)
@@ -131,14 +127,13 @@ class District(wx.Panel):
 				self.ilist.SetItem(ix, 1, "N")
 			else:
 				self.ilist.SetItem(ix, 1, "0")
-			if first:
-				first = False
-				self.ilist.SetItem(ix, 2, District.typeLabels[itype])
+			self.ilist.SetItem(ix, 2, District.typeLabels[itype])
 			self.inputMap[iname] = (ix, ic, itype)
 			ix += 1
 		return ix
 
 	def RefreshInput(self, iname, itype):
+		print("in district refresh input")
 		try:
 			ix, ic, dtype = self.inputMap[iname]
 		except KeyError:
@@ -151,6 +146,8 @@ class District(wx.Panel):
 
 		if itype == District.turnout:
 			state = ic.GetState()
+			print("retrieved state: %s" % str(state))
+			print("retrieved index = %d" % ix)
 			self.ilist.SetItem(ix, 1, "%s" % state)
 		else:
 			logging.warning("Refresh input: no handling of type %s" % itype)

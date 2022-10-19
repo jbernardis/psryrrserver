@@ -1,7 +1,7 @@
 import logging
 
 from district import District, DELL
-from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
+from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, SubBlockInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
 class Dell(District):
@@ -30,13 +30,26 @@ class Dell(District):
 		for n in toNames:
 			self.SetTurnoutPulseLen(n, 2)
 
-		blockNames = sorted([ "D20", "D20.E", "H23", "H23.E", "DOS1", "DOS2", "D11.W", "D11A", "D11B", "D11.E",
-							"D21.W", "D21A", "D21B", "D21.E", "MFOS1", "MFOS2", "S10.W", "S10A", "S10B" "S10C",
-							"R10.E", "R10A", "R10B", "R10C", "R11", "R12"])
+		blockNames = sorted([ "D20", "D20.E", "H23", "H23.E", "DOSVJE", "DOSVJW", "D11.W", "D11.E",
+							"D21.W", "D21.E", "DOSFOE", "DOSFOW", "S10.W", "R10.E", "R11", "R12"])
+		subBlockNames = {
+			"D11": ["D11A", "D11B"],
+			"D21": ["D21A", "D21B"], 
+			"S10": ["S10A", "S10B", "S10C"],
+			"R10": ["R10A", "R10B", "R10C"],
+			}
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+
+		for bname, sblist in subBlockNames.items():
+			blkinp = BlockInput(bname, self)
+			self.rr.AddInput(blkinp, self, District.block)
+			ix = self.AddInputs(sblist, SubBlockInput, District.block, ix)
+			for sbname in sblist:
+				subinp = self.rr.GetInput(sbname)
+				subinp.SetParent(blkinp)
 
 	def OutIn(self):
 		#Dell
@@ -124,8 +137,8 @@ class Dell(District):
 			self.rr.GetInput("H23").SetValue(getBit(inb[1], 6)) 
 			self.rr.GetInput("H23.E").SetValue(getBit(inb[1], 7))
 
-			self.rr.GetInput("DOS1").SetValue(getBit(inb[2], 0)) #DOS1
-			self.rr.GetInput("DOS2").SetValue(getBit(inb[2], 1)) #DOS2
+			self.rr.GetInput("DOSVJW").SetValue(getBit(inb[2], 0)) #DOS1
+			self.rr.GetInput("DOSVJE").SetValue(getBit(inb[2], 1)) #DOS2
 			self.rr.GetInput("D11.W").SetValue(getBit(inb[2], 2))
 			self.rr.GetInput("D11A").SetValue(getBit(inb[2], 3))
 			self.rr.GetInput("D11B").SetValue(getBit(inb[2], 4))
@@ -173,14 +186,12 @@ class Dell(District):
 		inb = []
 		inbc = 0
 		if inbc == 5:
-			pass
-
 			self.rr.GetInput("D21.W").SetValue(getBit(inb[0], 0))  # Detection
 			self.rr.GetInput("D21A").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("D21B").SetValue(getBit(inb[0], 2))
 			self.rr.GetInput("D21.E").SetValue(getBit(inb[0], 3))
-			self.rr.GetInput("MFOS1").SetValue(getBit(inb[0], 4)) #MFOS1
-			self.rr.GetInput("MFOS2").SetValue(getBit(inb[0], 5)) #MFOS2
+			self.rr.GetInput("DOSFOW").SetValue(getBit(inb[0], 4)) #MFOS1
+			self.rr.GetInput("DOSFOE").SetValue(getBit(inb[0], 5)) #MFOS2
 			self.rr.GetInput("S10.W").SetValue(getBit(inb[0], 6))
 			self.rr.GetInput("S10A").SetValue(getBit(inb[0], 7))
 
@@ -195,6 +206,3 @@ class Dell(District):
 
 			self.rr.GetInput("R12").SetValue(getBit(inb[2], 0))
 
-# 		D21 = D21A || D21B;
-# 		S10 = S10A || S10B || S10C;
-# 		R10 = R10A || R10B || R10C;
