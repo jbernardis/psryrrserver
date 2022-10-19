@@ -13,6 +13,7 @@ class SktServer (threading.Thread):
 		self.cbEvent = cbEvent
 		self.socketLock = threading.Lock()
 		self.sockets = []
+		self.sessionID = 1
 
 	def getSockets(self):
 		return [x for x in self.sockets]
@@ -66,7 +67,9 @@ class SktServer (threading.Thread):
 				skt, addr = s.accept()
 				with self.socketLock:
 					self.sockets.append((skt, addr))
-					self.cbEvent({"newclient": {"socket": skt, "addr": addr}})
+					self.cbEvent({"newclient": {"socket": skt, "addr": addr, "SID": self.sessionID}})
+				self.sendToOne(skt, addr, {"sessionID": self.sessionID})
+				self.sessionID += 1
 
 		for skt in self.sockets:
 			skt[0].close()

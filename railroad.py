@@ -4,6 +4,7 @@ import logging
 from districts.hyde import Hyde
 from districts.yard import Yard
 from districts.latham import Latham
+from districts.dell import Dell
 
 # tower addresses
 
@@ -16,9 +17,10 @@ class Railroad(wx.Notebook):
 		self.settings = settings
 
 		districtList = [
-			[ "yard", Yard ],
-			[ "latham", Latham ],
-			[ "hyde", Hyde ],
+			[ "Yard", Yard ],
+			[ "Latham", Latham ],
+			[ "Dell", Dell ],
+			[ "Hyde", Hyde ],
 		]
 
 		self.districts = {}
@@ -63,16 +65,16 @@ class Railroad(wx.Notebook):
 			logging.warning("No input found for name \"%s\"" % iname)
 			return None
 
-	def SendCurrentValues(self):
+	def SendCurrentValues(self, addr=None, skt=None):
 		for ip,district,itype in self.inputs.values():
 			m = ip.GetEventMessage()
 			if m is not None:
-				self.RailroadEvent(m)
+				self.RailroadEvent(m, addr, skt)
 
 		for op,district,itype in self.outputs.values():
 			m = op.GetEventMessage()
 			if m is not None:
-				self.RailroadEvent(m)
+				self.RailroadEvent(m, addr, skt)
 
 	def SetAspect(self, signame, aspect):
 		if signame not in self.outputs:
@@ -132,5 +134,5 @@ class Railroad(wx.Notebook):
 		for d in self.districts.values():
 			d.OutIn()
 
-	def RailroadEvent(self, event):
-		self.cbEvent(event)
+	def RailroadEvent(self, event, addr=None, skt=None):
+		self.cbEvent(event, addr, skt)

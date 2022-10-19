@@ -74,10 +74,12 @@ class MainFrame(wx.Frame):
 			if cmd == "newclient":
 				addr = parms["addr"]
 				skt = parms["socket"]
+				sid = parms["SID"]
 				logging.info("New Client connecting from address: %s:%d" % (addr))
-				self.clients[addr] = skt
-				self.sendAllData(addr, skt)
-				self.clientList.AddClient(addr)
+				self.clients[addr] = [skt, sid]
+				print("send all data currently disabled")
+				#self.sendAllData(addr, skt)
+				self.clientList.AddClient(addr, sid)
 
 			elif cmd == "delclient":
 				addr = parms["addr"]
@@ -88,11 +90,11 @@ class MainFrame(wx.Frame):
 					pass
 				self.clientList.DelClient(addr)
 
-	def sendAllData(self, addr, skt):
-		self.rr.SendCurrentValues()
+	def sendAllData(self, addr=None, skt=None):
+		self.rr.SendCurrentValues(addr, skt)
 
-	def rrEventReceipt(self, cmd):
-		evt = RailroadEvent(data=cmd)
+	def rrEventReceipt(self, cmd, addr=None, skt=None):
+		evt = RailroadEvent(data=cmd, addr=addr, skt=skt)
 		wx.QueueEvent(self, evt)
 
 	def onRailroadEvent(self, evt):
@@ -178,6 +180,17 @@ class MainFrame(wx.Frame):
 			# indicator information is always echoed to all listeners
 			resp = {"indicater": [{ "name": indname, "state": status}]}
 			self.socketServer.sendToAll(resp)
+
+		elif verb == "refresh":
+			sid = int(evt.data["SID"][0])
+			for addr, data in self.clients.items():
+				if data[1] == sid:
+					skt = data[0]
+					break
+			else:
+				logging.info("session %s not found" % sid)
+				return
+			self.sendAllData(addr, skt)
 
 		elif verb == "quit":
 			logging.info("HTTP 'quit' command received - terminating")
