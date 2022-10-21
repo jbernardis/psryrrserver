@@ -9,7 +9,7 @@ class Yard(District):
 		District.__init__(self, parent, name, settings)
 
 		#OUTPUTS
-		sigNames = sorted([
+		sigNames = [
 				"Y2L", "Y2R", 
 				"Y4L", "Y4RA", "Y4RB",
                 "Y8LA", "Y8LB", "Y8LC", "Y8R",
@@ -17,12 +17,12 @@ class Yard(District):
                 "Y22L", "Y22R",
                 "Y24LA", "Y24LB", 
                 "Y26LA", "Y26LB", "Y26LC", "Y26R",
-                "Y34L", "Y34RA", "Y34RB" ])
-		toNames = sorted([ "YSw1", "YSw3",
+                "Y34L", "Y34RA", "Y34RB" ]
+		toNames = [ "YSw1", "YSw3",
                     "YSw7", "YSw9", "YSw11",
-                    "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"])
-		relayNames = sorted([ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ])
-		indNames = sorted([ "CBKale", "CBEastEnd", "CBCornell", "CBEngineYard", "CBWaterman" ])
+                    "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"]
+		relayNames = [ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ]
+		indNames = [ "CBKale", "CBEastEnd", "CBCornell", "CBEngineYard", "CBWaterman" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
@@ -34,14 +34,14 @@ class Yard(District):
 			self.SetTurnoutPulseLen(n, 2)
 
 		# INPUTS (also using toNames from above)
-		blockNames = sorted([
+		blockNames = [
 			"Y21.W", "Y21", "Y21.E", "YOSCJW", "YOSCJE", "L10.W", "L10",
 			"Y20", "Y20.E", "YOSEJW", "YOSEJE", "Y11.W", "Y11",
 			"Y30", "YOSKL4", "Y53", "Y52", "Y51", "Y50", "YOSKL3", "YOSKL1", "YOSKL2", "Y10",
 			"Y70", "Y87", "Y81", "Y82", "Y83", "Y84", "YOSWYE", "YOSWYW",
-		])
+		]
 		
-		routeNames = sorted(["Y81W", "Y82W", "Y83W", "Y84W", "Y81E", "Y82E", "Y83E", "Y84E" ])
+		routeNames = ["Y81W", "Y82W", "Y83W", "Y84W", "Y81E", "Y82E", "Y83E", "Y84E" ]
 		self.routeMap = {
 				"Y81W": [ ["YSw113", "N"], ["YSw115","N"], ["YSw116", "N"] ], 
 				"Y82W": [ ["YSw113", "N"], ["YSw115","R"], ["YSw116", "R"] ],
@@ -317,8 +317,8 @@ class Yard(District):
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("CBEngineYard").GetStatus()) 
 
 		outb[4] = setBit(outb[4], 0, self.rr.GetOutput("CBWaterman").GetStatus()) 
-#     YDOut[4].bit.b1 = L20.Blk;          //Adjacent block indicators
-#     YDOut[4].bit.b2 = P50.Blk;
+		outb[4] = setBit(outb[4], 1, self.rr.GetInput("L20").GetValue())  # adjacent block indicators
+		# outb[4] = setBit(outb[4], 2, self.rr.GetInput("P50").GetValue())  yard
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("YSw1").GetLock())  # Switch Locks
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("YSw3").GetLock())  
 		outb[4] = setBit(outb[4], 5, self.rr.GetOutput("YSw7").GetLock()) 

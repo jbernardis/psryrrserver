@@ -26,7 +26,7 @@ class SktServer (threading.Thread):
 		return self.endOfLife
 
 	def sendToAll(self, msg):
-		print("send to all: %s" % json.dumps(msg))
+		print(json.dumps(msg))
 		with self.socketLock:
 			tl = [x for x in self.sockets]
 		for skt, addr in tl:
@@ -69,7 +69,6 @@ class SktServer (threading.Thread):
 				with self.socketLock:
 					self.sockets.append((skt, addr))
 					self.cbEvent({"newclient": {"socket": skt, "addr": addr, "SID": self.sessionID}})
-				self.sendToOne(skt, addr, {"sessionID": self.sessionID})
 				self.sessionID += 1
 
 		for skt in self.sockets:

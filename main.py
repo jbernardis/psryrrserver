@@ -76,9 +76,9 @@ class MainFrame(wx.Frame):
 				skt = parms["socket"]
 				sid = parms["SID"]
 				logging.info("New Client connecting from address: %s:%d" % (addr))
+				self.socketServer.sendToOne(skt, addr, {"sessionID": sid})
 				self.clients[addr] = [skt, sid]
-				print("send all data currently disabled")
-				#self.sendAllData(addr, skt)
+				self.refreshClient(addr, skt)
 				self.clientList.AddClient(addr, sid)
 
 			elif cmd == "delclient":
@@ -90,8 +90,9 @@ class MainFrame(wx.Frame):
 					pass
 				self.clientList.DelClient(addr)
 
-	def sendAllData(self, addr=None, skt=None):
-		self.rr.SendCurrentValues(addr, skt)
+	def refreshClient(self, addr, skt):
+		for m in self.rr.GetCurrentValues():
+			self.socketServer.sendToOne(skt, addr, m)
 
 	def rrEventReceipt(self, cmd, addr=None, skt=None):
 		evt = RailroadEvent(data=cmd, addr=addr, skt=skt)
@@ -105,9 +106,7 @@ class MainFrame(wx.Frame):
 				for oname in parms:
 					self.rr.RefreshOutput(oname)
 			elif cmd == "refreshinput":
-				print("refreshinput %s" % str(parms))
 				for iname in parms:
-					print("refreshinput %s" % iname)
 					self.rr.RefreshInput(iname)
 			else:
 				self.socketServer.sendToAll(evt.data)
@@ -154,19 +153,14 @@ class MainFrame(wx.Frame):
 		elif verb == "turnout":
 			swname = evt.data["name"][0]
 			status = evt.data["status"][0]
-			print("handling turnout command for %s %s" % (swname, str(status)))
 
 			self.rr.SetOutPulse(swname, status)
-			print("updated pulse")
 
 			# turnouts are not normally echoed back to listeners.  Instead,
 			# the turnout information that the railroad reponds with is sent
 			# back to listeners to convey this information
 			if self.settings.echoTurnout and self.settings.simulation:
-				print("updating screen")
 				self.rr.GetInput(swname).SetState(status)
-				#resp = {"turnout": [{ "name": swname, "state": status}]}
-				#self.socketServer.sendToAll(resp)
 
 		elif verb == "turnoutlock":
 			swname = evt.data["name"][0]
@@ -186,6 +180,12 @@ class MainFrame(wx.Frame):
 			resp = {"indicater": [{ "name": indname, "state": status}]}
 			self.socketServer.sendToAll(resp)
 
+		elif verb == "relay":
+			relay = evt.data["block"][0]+".srel"
+			status = int(evt.data["status"][0])
+
+			self.rr.SetRelay(relay, status)
+
 		elif verb == "refresh":
 			sid = int(evt.data["SID"][0])
 			for addr, data in self.clients.items():
@@ -195,7 +195,7 @@ class MainFrame(wx.Frame):
 			else:
 				logging.info("session %s not found" % sid)
 				return
-			self.sendAllData(addr, skt)
+			self.refreshClient(addr, skt)
 
 		elif verb == "quit":
 			logging.info("HTTP 'quit' command received - terminating")

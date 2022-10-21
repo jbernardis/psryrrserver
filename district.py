@@ -133,7 +133,6 @@ class District(wx.Panel):
 		return ix
 
 	def RefreshInput(self, iname, itype):
-		print("in district refresh input")
 		try:
 			ix, ic, dtype = self.inputMap[iname]
 		except KeyError:
@@ -146,8 +145,6 @@ class District(wx.Panel):
 
 		if itype == District.turnout:
 			state = ic.GetState()
-			print("retrieved state: %s" % str(state))
-			print("retrieved index = %d" % ix)
 			self.ilist.SetItem(ix, 1, "%s" % state)
 		else:
 			logging.warning("Refresh input: no handling of type %s" % itype)
@@ -244,6 +241,16 @@ class District(wx.Panel):
 			ix, oc = self.outputMap[indname][0:2]
 		except KeyError:
 			logging.warning("Output for indicator %s in district %s not found" % (indname, self.name))
+			return
+		
+		state = oc.GetStatus()
+		self.olist.SetItem(ix, 1, "%d" % state)
+
+	def UpdateRelay(self, relayname):
+		try:
+			ix, oc = self.outputMap[relayname][0:2]
+		except KeyError:
+			logging.warning("Output for relay %s in district %s not found" % (relayname, self.name))
 			return
 		
 		state = oc.GetStatus()

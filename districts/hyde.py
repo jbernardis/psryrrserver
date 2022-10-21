@@ -17,8 +17,8 @@ class Hyde(District):
 				"H10L","H10RA", "H10RB", "H10RC", "H10RD", "H10RE", 
 				"H12RA", "H12RB", "H12RC", "H12RD", "H12RE", "H12L"]
 		toNames =[ "HSw1", "HSw3", "HSw7", "HSw9", "HSw11", "HSw15", "HSw17", "HSw19", "HSw21", "HSw23", "HSw25", "HSw27", "HSw29" ]
-		indNames = [ "CBHydeJct", "CBHydeEast", "CBHydeWest", "HydeEastPower", "HydeWestPower", "H30.ind", "H10.ind", "H23.ind", "N25.ind" ]
-		relayNames = [ "H21.srel", "H31.srel" ]
+		indNames = [ "CBHydeJct", "CBHydeEast", "CBHydeWest", "HydeEastPower", "HydeWestPower" ]
+		relayNames = [ "H13.srel", "H21.srel" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
@@ -30,9 +30,9 @@ class Hyde(District):
 			self.SetTurnoutPulseLen(n, 2)
 
 		# INPUTS
-		routeNames = sorted([ "H12W", "H34W", "H33W", "H30E", "H31W", "H32W", "H22W", "H43W",
-				"H42W", "H41W", "H41E", "H42E", "H43E", "H22E", "H40E", "H12E",
-				"H34E", "H33E", "H32E", "H31E" ])
+		routeNames = [ "H30E",
+				"H31E", "H32E", "H33E", "H34E", "H12E", "H22E", "H43E", "H42E", "H41E", "H40E",
+				"H31W", "H32W", "H33W", "H34W", "H12W", "H22W", "H43W", "H42W", "H41W"	]
 		self.routeMap = {
 				"H12W": [ ["HSw1", "N"], ["HSw3","N"] ], 
 				"H34W": [ ["HSw1", "N"], ["HSw3", "R"] ],
@@ -59,9 +59,11 @@ class Hyde(District):
 				"H40E": [ ["HSw23", "N"], ["HSw25", "N"], ["HSw27", "N"], ["HSw29", "R"] ], 
 		}
 
-		blockNames = sorted([ "H21", "H21.E", "H23", "HOSWW2", "HOSWW",
-				"HOSWE", "H31", "H33", "H34", "H12", "H22", "H43",
-				"H42", "H41", "H40", "HOSEW", "HOSEE", "H13.W", "H13" ])
+		blockNames = [ "H21", "H21.E",
+				"HOSWW2", "HOSWW", "HOSWE",
+				"H31", "H33", "H34", "H12", "H22", "H43", "H42", "H41", "H40",
+				"HOSEW", "HOSEE",
+				"H13.W", "H13", "H23" ]
 
 		ix = 0
 		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
@@ -117,10 +119,10 @@ class Hyde(District):
 		outb[3] = setBit(outb[3], 0, 1 if op > 0 else 0)
 		outb[3] = setBit(outb[3], 1, 1 if op < 0 else 0)
 		
-		outb[3] = setBit(outb[3], 2, self.rr.GetOutput("H30.ind").GetStatus())        # block indicators
-		outb[3] = setBit(outb[3], 3, self.rr.GetOutput("H10.ind").GetStatus())
-		outb[3] = setBit(outb[3], 4, self.rr.GetOutput("H23.ind").GetStatus())
-		outb[3] = setBit(outb[3], 5, self.rr.GetOutput("N25.ind").GetStatus())
+		# outb[3] = setBit(outb[3], 2, self.rr.GetInput("H30").GetValue())     shore   # block indicators
+		# outb[3] = setBit(outb[3], 3, self.rr.GetInput("H10").GetValue())     shore
+		outb[3] = setBit(outb[3], 4, self.rr.GetInput("H23").GetValue())
+		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("N25").GetValue())     nassau
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H21.srel").GetStatus())	      # Stop relays
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("H31.srel").GetStatus())
 

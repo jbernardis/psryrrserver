@@ -8,23 +8,21 @@ class Latham(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
 
-		sigNames =  sorted([ "L4R", "L4L",
+		sigNames =  [ "L4R", "L4L",
 						"L6RA", "L6RB", "L6L",
 						"L8R", "L8L",
 						"L14R", "L14L",
 						"L16R",
 						"L18R", "L18L",
-						"S21E", "N20W", "S11E", "N10W" ])
-		toNames = sorted([ "LSw1", "LSw3", "LSw5", "LSw7", "LSw9", "LSw15", "LSw17" ]) 
-		handswitchNames = sorted([ "LSw11.hand", "LSw13.hand" ]) 
-		relayNames = sorted([ "L11.srel", "L20.srel", "L21.srel", "P21.srel", "P50.srel", "L31.srel", "D10.srel", "S21.srel", "N25.srel" ])
-		indNames = sorted([ "L10.ind", "L31.ind", "P11.ind" ])
+						"S21E", "N20W", "S11E", "N10W" ]
+		toNames = [ "LSw1", "LSw3", "LSw5", "LSw7", "LSw9", "LSw15", "LSw17" ]
+		handswitchNames = [ "LSw11.hand", "LSw13.hand" ]
+		relayNames = [ "L11.srel", "L20.srel", "L21.srel", "P21.srel", "P50.srel", "L31.srel", "D10.srel", "S21.srel", "N25.srel" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
 		ix = self.AddOutputs(toNames, TurnoutOutput, District.turnout, ix)
 		ix = self.AddOutputs(handswitchNames, HandSwitchOutput, District.handswitch, ix)
-		ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in toNames:
@@ -32,8 +30,8 @@ class Latham(District):
 
 		brkrNames = sorted([ "CBCliveden", 	"CBLatham",  "CBCornellJct", "CBParsonsJct", "CBSouthJct", "CBCircusJct", "CBSouthport",
 						"CBLavinYard", "CBReverserP31", "CBReverserP41", "CBReverserP50", "CBReverserC22C23" ])
-		blockNames = sorted([ "L20", "L20.E", "LOSLAW", "LOSLAM", "LOSLAE", "L11.W", "L11", "L21.W", "L21", "L21.E",
-						"L31", "LOSCAE", "LOSCAM", "LOSCAW", "D10", "D10.W", "P21", "P21.E" ])
+		blockNames = [ "L20", "L20.E", "LOSLAW", "LOSLAM", "LOSLAE", "L11.W", "L11", "L21.W", "L21", "L21.E",
+						"L31", "LOSCAE", "LOSCAM", "LOSCAW", "D10", "D10.W", "P21", "P21.E" ]
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
@@ -85,9 +83,9 @@ class Latham(District):
 		outb[3] = setBit(outb[3], 0, 1 if asp in [1, 3, 5, 7] else 0)  # signals
 		outb[3] = setBit(outb[3], 1, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[3] = setBit(outb[3], 2, 1 if asp in [4, 5, 6, 7] else 0)
-		outb[3] = setBit(outb[3], 3, self.rr.GetOutput("L10.ind").GetStatus())  #block indicators
-		outb[3] = setBit(outb[3], 4, self.rr.GetOutput("L31.ind").GetStatus()) 
-		outb[3] = setBit(outb[3], 5, self.rr.GetOutput("P11.ind").GetStatus()) 
+		outb[3] = setBit(outb[3], 3, self.rr.GetInput("L10").GetValue())  #block indicators
+		outb[3] = setBit(outb[3], 4, self.rr.GetInput("L31").GetValue()) 
+		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("P11").GetValue().GetStatus())   port
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("L20.srel").GetStatus())	# Stop relays
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("P21.srel").GetStatus())
 

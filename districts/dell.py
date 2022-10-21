@@ -8,50 +8,86 @@ class Dell(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
 
-		sigNames =  sorted([ "D4RA", "D4RB", "D4L",
+		self.D1W = self.D1E = self.D2W = self.D2E = False
+		self.RXW = self.RXE = False
+
+		sigNames =  [ "D4RA", "D4RB", "D4L",
 						"D6RA", "D6RB", "D6L",
 						"DXO", 
 						"D10R", "D10L",
 						"D12R", "D12L",
 						"RXO", "R10W"
-						])
-		toNames = sorted([ "DSw1", "DSw3", "DSw5", "DSw7", "DSw11" ]) 
-		handswitchNames = sorted([ "DSw9.hand" ]) 
-		relayNames = sorted([ "D20.srel", "H23.srel", "D11.srel", "D21.srel", "S10.srel", "R10.srel" ])
-		indNames = sorted([ "H13.ind", "S20.ind", "D10.ind" ])
+						]
+		toNames = [ "DSw1", "DSw3", "DSw5", "DSw7", "DSw11" ]
+		handswitchNames = [ "DSw9.hand" ]
+		relayNames = [ "H23.srel", "D11.srel", "D20.srel", "D21.srel", "S10.srel", "R10.srel" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
 		ix = self.AddOutputs(toNames, TurnoutOutput, District.turnout, ix)
 		ix = self.AddOutputs(handswitchNames, HandSwitchOutput, District.handswitch, ix)
-		ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in toNames:
 			self.SetTurnoutPulseLen(n, 2)
 
-		blockNames = sorted([ "D20", "D20.E", "H23", "H23.E", "DOSVJE", "DOSVJW", "D11.W", "D11.E",
-							"D21.W", "D21.E", "DOSFOE", "DOSFOW", "S10.W", "R10.E", "R11", "R12"])
-		subBlockNames = {
-			"D11": ["D11A", "D11B"],
-			"D21": ["D21A", "D21B"], 
-			"S10": ["S10A", "S10B", "S10C"],
-			"R10": ["R10A", "R10B", "R10C"],
-			}
-
 		ix = 0
-		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
+		ix = self.AddInputs(["D20", "D20.E", "H23", "H23.E", "DOSVJW", "DOSVJE", "D11.W"], BlockInput, District.block, ix)
+		ix = self.addSubBlocks("D11", ["D11A", "D11B"], ix)
+		ix = self.AddInputs(["D11.E", "D21.W"], BlockInput, District.block, ix)
+		ix = self.addSubBlocks("D21", ["D21A", "D21B"], ix)
+		ix = self.AddInputs(["D21.E", "DOSFOW", "DOSFOE", "S10.W"], BlockInput, District.block, ix)
+		ix = self.addSubBlocks("S10", ["S10A", "S10B", "S10C"], ix)
+		ix = self.addSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)
+		ix = self.AddInputs(["R10.E", "R11", "R12"], BlockInput, District.block, ix)
+
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
 
-		for bname, sblist in subBlockNames.items():
-			blkinp = BlockInput(bname, self)
-			self.rr.AddInput(blkinp, self, District.block)
-			ix = self.AddInputs(sblist, SubBlockInput, District.block, ix)
-			for sbname in sblist:
-				subinp = self.rr.GetInput(sbname)
-				subinp.SetParent(blkinp)
+	def addSubBlocks(self, bname, sblist, ix):
+		blkinp = BlockInput(bname, self)
+		self.rr.AddInput(blkinp, self, District.block)
+		ix = self.AddInputs(sblist, SubBlockInput, District.block, ix)
+		for sbname in sblist:
+			subinp = self.rr.GetInput(sbname)
+			subinp.SetParent(blkinp)
+		return ix
 
 	def OutIn(self):
+		# determine the state of the crossing gate at laporte
+		dos1 = self.rr.GetInput("DOSVJW").GetValue() != 0
+		d11w = self.rr.GetInput("D11.W").GetValue() != 0
+		d11a = self.rr.GetInput("D11A").GetValue() != 0
+		if dos1 and not self.D1W:
+			self.D1E = True
+		if (d11w or d11a) and not self.D1E:
+			self.D1W = True
+		if not dos1 and not (d11w or d11a):
+			self.D1E = self.D1W = False
+
+		dos2 = self.rr.GetInput("DOSVJE").GetValue() != 0
+		d21w = self.rr.GetInput("D21.W").GetValue() != 0
+		d21a = self.rr.GetInput("D21A").GetValue() != 0
+		if dos2 and not self.D2W:
+			self.D2E = True
+		if (d21w or d21a) and not self.D2E:
+			self.D2W = True
+		if not dos2 and not (d21w or d21a):
+			self.D2E = self.D2W = False
+
+		DXO = (self.D1E and dos1) or (self.D1W and (d11w or d11a)) or (self.D2E and dos2) or (self.D2W and (d21w or d21a))
+
+		# determine the state of the crossing gate at rocky hill
+		r10b = self.rr.GetInput("R10B").GetValue() != 0
+		r10c = self.rr.GetInput("R10C").GetValue() != 0
+		if r10b and not self.RXW:
+			self.RXE = True
+		if r10c and not self.RXE:
+			self.RXW = True
+		if not r10b and not r10c:
+			self.RXE = self.RXW = False
+
+		RXO = (r10b and self.RXE) or (r10c and self.RXW)
+
 		#Dell
 		outb = [0 for i in range(4)]
 		asp = self.rr.GetOutput("D4RA").GetAspect()
@@ -75,12 +111,11 @@ class Dell(District):
 		outb[1] = setBit(outb[1], 3, 1 if asp in [1, 3, 5, 7] else 0) 
 		outb[1] = setBit(outb[1], 4, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[1] = setBit(outb[1], 5, 1 if asp in [4, 5, 6, 7] else 0)
-		asp = self.rr.GetOutput("DXO").GetAspect()
-		outb[1] = setBit(outb[1], 6, 1 if asp != 0 else 0) # laporte crossing signal
-		outb[1] = setBit(outb[1], 7, self.rr.GetOutput("H13.ind").GetStatus())  #block indicators
+		outb[1] = setBit(outb[1], 6, 1 if DXO else 0) # laporte crossing signal
+		outb[1] = setBit(outb[1], 7, self.rr.GetInput("H13").GetValue())  #block indicators
 
-		outb[2] = setBit(outb[2], 0, self.rr.GetOutput("D10.ind").GetStatus())
-		outb[2] = setBit(outb[2], 1, self.rr.GetOutput("S20.ind").GetStatus())
+		outb[2] = setBit(outb[2], 0, self.rr.GetInput("D10").GetValue())
+		#outb[2] = setBit(outb[2], 1, self.rr.GetInput("S20").GetValue()) uncomment after shore is implemented
 		outb[2] = setBit(outb[2], 2, 0 if self.rr.GetOutput("DSw9.hand").GetStatus() != 0 else 1) 
 		op = self.rr.GetOutput("DSw1").GetOutPulse()
 		outb[2] = setBit(outb[2], 3, 1 if op > 0 else 0)                   # switches
@@ -164,12 +199,11 @@ class Dell(District):
 		outb[1] = setBit(outb[1], 4, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[1] = setBit(outb[1], 5, 1 if asp in [4, 5, 6, 7] else 0)
 		outb[1] = setBit(outb[1], 6, self.rr.GetOutput("D21.srel").GetStatus())	# Stop relays
-		outb[1] = setBit(outb[1], 7, self.rr.GetOutput("D21.srel").GetStatus())
+		outb[1] = setBit(outb[1], 7, self.rr.GetOutput("S10.srel").GetStatus())
 
 		# bit 2:0 is bad
 		outb[2] = setBit(outb[2], 1, self.rr.GetOutput("R10.srel").GetStatus())
-		asp = self.rr.GetOutput("RXO").GetAspect()
-		outb[2] = setBit(outb[2], 2, 1 if asp != 0 else 0)  # rocky hill crossing signal
+		outb[2] = setBit(outb[2], 2, 1 if RXO else 0)  # rocky hill crossing signal
 		asp = self.rr.GetOutput("D10L").GetAspect()
 		outb[2] = setBit(outb[2], 3, 1 if asp in [1, 3, 5, 7] else 0)  # rocky hill distant for nassau
 		outb[2] = setBit(outb[2], 4, 1 if asp in [2, 3, 6, 7] else 0)

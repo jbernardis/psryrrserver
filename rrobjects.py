@@ -20,7 +20,6 @@ class Input:
 		return self.value
 
 	def GetEventMessage(self):
-		print("input %s has no GetEventMessage implemented" % self.name)
 		return None
 
 class BreakerInput(Input):
@@ -70,15 +69,11 @@ class BlockInput(Input):
 
 	def EvaluateSubBlocks(self):
 		nv = 0
-		print("evaluate subblocks for %s" % self.name)
 		for sb in self.subBlocks:
-			print(  "Look at subblock %s" % sb.GetName())
 			sv = sb.GetValue()
 			if sv != 0:
-				print("its occupied")
 				nv = 1
 				break
-		print("setting block value to %s" % nv)
 		self.SetValue(nv)
 
 	def GetEventMessage(self):
@@ -101,7 +96,7 @@ class SubBlockInput(Input):
 			self.parent.EvaluateSubBlocks()
 	
 	def GetEventMessage(self):
-		print("subblock geteventmessage")
+		return None
 
 class TurnoutInput(Input):
 	def __init__(self, name, district):
@@ -119,7 +114,6 @@ class TurnoutInput(Input):
 		self.SetState(ns)
 
 	def SetState(self, ns):
-		print("inside turout setstate (%s) (%s)" % (str(self.state), str(ns)))
 		if ns == self.state:
 			return
 		self.state = ns

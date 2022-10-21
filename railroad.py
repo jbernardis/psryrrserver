@@ -6,9 +6,6 @@ from districts.yard import Yard
 from districts.latham import Latham
 from districts.dell import Dell
 
-# tower addresses
-
-
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
 		wx.Notebook.__init__(self, frame, wx.ID_ANY, style=wx.BK_DEFAULT)
@@ -65,16 +62,16 @@ class Railroad(wx.Notebook):
 			logging.warning("No input found for name \"%s\"" % iname)
 			return None
 
-	def SendCurrentValues(self, addr=None, skt=None):
+	def GetCurrentValues(self):
 		for ip,district,itype in self.inputs.values():
 			m = ip.GetEventMessage()
 			if m is not None:
-				self.RailroadEvent(m, addr, skt)
+				yield m
 
 		for op,district,itype in self.outputs.values():
 			m = op.GetEventMessage()
 			if m is not None:
-				self.RailroadEvent(m, addr, skt)
+				yield m
 
 	def SetAspect(self, signame, aspect):
 		if signame not in self.outputs:
@@ -91,6 +88,14 @@ class Railroad(wx.Notebook):
 		op, district, otype = self.outputs[indname]
 		op.SetStatus(state!=0)
 		district.UpdateIndicator(indname)
+
+	def SetRelay(self, relayname, state):
+		if relayname not in self.outputs:
+			logging.warning("no output defined for relay %s" % relayname)
+			return
+		op, district, otype = self.outputs[relayname]
+		op.SetStatus(state!=0)
+		district.UpdateRelay(relayname)
 
 	def SetHandSwitch(self, hsname, state):
 		if hsname not in self.outputs:
@@ -124,7 +129,6 @@ class Railroad(wx.Notebook):
 		district.RefreshOutput(toname)
 
 	def RefreshInput(self, iname):
-		print("in rr refreshinput")
 		if iname not in self.inputs:
 			logging.warning("No input defined for %s" % iname)
 			return
@@ -135,5 +139,5 @@ class Railroad(wx.Notebook):
 		for d in self.districts.values():
 			d.OutIn()
 
-	def RailroadEvent(self, event, addr=None, skt=None):
-		self.cbEvent(event, addr, skt)
+	def RailroadEvent(self, event):
+		self.cbEvent(event)
