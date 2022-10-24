@@ -31,7 +31,7 @@ class MainFrame(wx.Frame):
 		self.rr = Railroad(self, self.rrEventReceipt, self.settings) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
 
 		logging.info("Opening a railroad monitoring thread on device %s" % self.settings.tty)
-		self.rrMonitor = RailroadMonitor(self.settings.tty, self.rr)
+		self.rrMonitor = RailroadMonitor(self.settings.tty, self.rr, self.settings)
 		if not self.rrMonitor.initialized:
 			logging.error("Failed to open railroad bus on device %s.  Exiting..." % self.settings.tty)
 			exit(1)
@@ -117,6 +117,7 @@ class MainFrame(wx.Frame):
 
 	def onHTTPMessageEvent(self, evt):
 		logging.info("HTTP Request: %s" % json.dumps(evt.data))
+		print("HTTP Request: %s" % json.dumps(evt.data))
 		verb = evt.data["cmd"][0]
 
 		if verb == "signal":
@@ -173,11 +174,11 @@ class MainFrame(wx.Frame):
 
 		elif verb == "indicator":
 			indname = evt.data["name"][0]
-			status = int(evt.data["status"][0])
+			value = int(evt.data["value"][0])
 
-			self.rr.SetIndicator(indname, status)
+			self.rr.SetIndicator(indname, value)
 			# indicator information is always echoed to all listeners
-			resp = {"indicater": [{ "name": indname, "state": status}]}
+			resp = {"indicator": [{ "name": indname, "value": value}]}
 			self.socketServer.sendToAll(resp)
 
 		elif verb == "relay":

@@ -33,24 +33,16 @@ class Dell(District):
 
 		ix = 0
 		ix = self.AddInputs(["D20", "D20.E", "H23", "H23.E", "DOSVJW", "DOSVJE", "D11.W"], BlockInput, District.block, ix)
-		ix = self.addSubBlocks("D11", ["D11A", "D11B"], ix)
+		ix = self.AddSubBlocks("D11", ["D11A", "D11B"], ix)
 		ix = self.AddInputs(["D11.E", "D21.W"], BlockInput, District.block, ix)
-		ix = self.addSubBlocks("D21", ["D21A", "D21B"], ix)
+		ix = self.AddSubBlocks("D21", ["D21A", "D21B"], ix)
 		ix = self.AddInputs(["D21.E", "DOSFOW", "DOSFOE", "S10.W"], BlockInput, District.block, ix)
-		ix = self.addSubBlocks("S10", ["S10A", "S10B", "S10C"], ix)
-		ix = self.addSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)
+		ix = self.AddSubBlocks("S10", ["S10A", "S10B", "S10C"], ix)
+		ix = self.AddInputs(["S10.E"], BlockInput, District.block, ix)
+		ix = self.AddSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)
 		ix = self.AddInputs(["R10.E", "R11", "R12"], BlockInput, District.block, ix)
 
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
-
-	def addSubBlocks(self, bname, sblist, ix):
-		blkinp = BlockInput(bname, self)
-		self.rr.AddInput(blkinp, self, District.block)
-		ix = self.AddInputs(sblist, SubBlockInput, District.block, ix)
-		for sbname in sblist:
-			subinp = self.rr.GetInput(sbname)
-			subinp.SetParent(blkinp)
-		return ix
 
 	def OutIn(self):
 		# determine the state of the crossing gate at laporte
@@ -204,7 +196,7 @@ class Dell(District):
 		# bit 2:0 is bad
 		outb[2] = setBit(outb[2], 1, self.rr.GetOutput("R10.srel").GetStatus())
 		outb[2] = setBit(outb[2], 2, 1 if RXO else 0)  # rocky hill crossing signal
-		asp = self.rr.GetOutput("D10L").GetAspect()
+		asp = self.rr.GetOutput("R10W").GetAspect()
 		outb[2] = setBit(outb[2], 3, 1 if asp in [1, 3, 5, 7] else 0)  # rocky hill distant for nassau
 		outb[2] = setBit(outb[2], 4, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 5, 1 if asp in [4, 5, 6, 7] else 0)

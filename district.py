@@ -27,6 +27,8 @@ GREENMTN  = 0x92;
 CLIFF     = 0x93;
 SHEFFIELD = 0x95;
 
+from rrobjects import BlockInput, SubBlockInput
+
 class District(wx.Panel):
 	signal = 0
 	turnout = 1
@@ -130,6 +132,15 @@ class District(wx.Panel):
 			self.ilist.SetItem(ix, 2, District.typeLabels[itype])
 			self.inputMap[iname] = (ix, ic, itype)
 			ix += 1
+		return ix
+
+	def AddSubBlocks(self, bname, sblist, ix):
+		blkinp = BlockInput(bname, self)
+		self.rr.AddInput(blkinp, self, District.block)
+		ix = self.AddInputs(sblist, SubBlockInput, District.block, ix)
+		for sbname in sblist:
+			subinp = self.rr.GetInput(sbname)
+			subinp.SetParent(blkinp)
 		return ix
 
 	def RefreshInput(self, iname, itype):

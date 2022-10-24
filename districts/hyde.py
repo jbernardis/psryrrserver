@@ -124,11 +124,11 @@ class Hyde(District):
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("H23").GetValue())
 		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("N25").GetValue())     nassau
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H21.srel").GetStatus())	      # Stop relays
-		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("H31.srel").GetStatus())
+		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("H13.srel").GetStatus())
 
-		outb[4] = setBit(outb[4], 0, self.rr.GetOutput("CBHydeJct").GetStatus())      #Circuit breakers
-		outb[4] = setBit(outb[4], 1, self.rr.GetOutput("CBHydeWest").GetStatus()) 
-		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("CBHydeEast").GetStatus()) 
+		#outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBHydeJct").GetValue())   Clivedon  #Circuit breakers
+		#outb[4] = setBit(outb[4], 1, self.rr.GetInput("CBHydeWest").GetValue())  Clivedon
+		#outb[4] = setBit(outb[4], 2, self.rr.GetInput("CBHydeEast").GetValue())  Clivedon
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  #Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 

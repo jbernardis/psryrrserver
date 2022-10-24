@@ -4,6 +4,7 @@ import logging
 from districts.hyde import Hyde
 from districts.yard import Yard
 from districts.latham import Latham
+from districts.shore import Shore
 from districts.dell import Dell
 
 class Railroad(wx.Notebook):
@@ -17,6 +18,7 @@ class Railroad(wx.Notebook):
 			[ "Yard", Yard ],
 			[ "Latham", Latham ],
 			[ "Dell", Dell ],
+			[ "Shore", Shore ],
 			[ "Hyde", Hyde ],
 		]
 

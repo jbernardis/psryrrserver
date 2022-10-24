@@ -22,7 +22,7 @@ class Yard(District):
                     "YSw7", "YSw9", "YSw11",
                     "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"]
 		relayNames = [ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ]
-		indNames = [ "CBKale", "CBEastEnd", "CBCornell", "CBEngineYard", "CBWaterman" ]
+		indNames = [ "CBKale", "CBEastEnd", "CBCornellJct", "CBEngineYard", "CBWaterman" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
@@ -311,14 +311,14 @@ class Yard(District):
 		outb[3] = setBit(outb[3], 1, 1 if asp in [1, 3, 5, 7] else 0)
 		outb[3] = setBit(outb[3], 2, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[3] = setBit(outb[3], 3, 1 if asp in [4, 5, 6, 7] else 0)
-		outb[3] = setBit(outb[3], 4, self.rr.GetOutput("CBKale").GetStatus())      #Circuit breakers
-		outb[3] = setBit(outb[3], 5, self.rr.GetOutput("CBEastEnd").GetStatus())
-		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("CBCornell").GetStatus())
-		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("CBEngineYard").GetStatus()) 
+		#outb[3] = setBit(outb[3], 4, self.rr.GetInput("CBKale").GetValue())  Bank    #Circuit breakers
+		#outb[3] = setBit(outb[3], 5, self.rr.GetInput("CBEastEnd").GetValue()) Bank
+		outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBCornellJct").GetValue())
+		#outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBEngineYard").GetValue())  Bank
 
-		outb[4] = setBit(outb[4], 0, self.rr.GetOutput("CBWaterman").GetStatus()) 
+		#outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBWaterman").GetValue()) Bank
 		outb[4] = setBit(outb[4], 1, self.rr.GetInput("L20").GetValue())  # adjacent block indicators
-		# outb[4] = setBit(outb[4], 2, self.rr.GetInput("P50").GetValue())  yard
+		# outb[4] = setBit(outb[4], 2, self.rr.GetInput("P50").GetValue())  port
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("YSw1").GetLock())  # Switch Locks
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("YSw3").GetLock())  
 		outb[4] = setBit(outb[4], 5, self.rr.GetOutput("YSw7").GetLock()) 
@@ -443,9 +443,6 @@ class Yard(District):
 		outb[2] = setBit(outb[2], 6, 1 if op > 0 else 0)
 		outb[2] = setBit(outb[2], 7, 1 if op < 0 else 0)
 
-		logging.debug("Yard:Waterman: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
-
-
 # 	YSWOut[3].bit.b0 = SBY51W;
 # 	YSWOut[3].bit.b1 = SBY50W;
 # //	YSWOut[3].bit.b2 = ;
@@ -466,4 +463,7 @@ class Yard(District):
 
 # 	SendPacket(YARDSW, &YardSWAborts, &YSWIn[0], &YSWOld[0], &YSWOut[0], 5, true);
 # 	YSWText = "YardSW\t" + OutText;
+
+		logging.debug("Yard:Waterman: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
+
 		# No inputs from this node

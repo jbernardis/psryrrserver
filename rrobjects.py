@@ -34,7 +34,7 @@ class BreakerInput(Input):
 		self.rr.RailroadEvent(self.GetEventMessage())
 
 	def GetEventMessage(self):
-		return {"breaker": [{ "name": self.name, "state": self.value}]}
+		return {"breaker": [{ "name": self.name, "value": self.value}]}
 
 class RouteInput(Input):
 	def __init__(self, name, district):
