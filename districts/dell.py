@@ -107,7 +107,7 @@ class Dell(District):
 		outb[1] = setBit(outb[1], 7, self.rr.GetInput("H13").GetValue())  #block indicators
 
 		outb[2] = setBit(outb[2], 0, self.rr.GetInput("D10").GetValue())
-		#outb[2] = setBit(outb[2], 1, self.rr.GetInput("S20").GetValue()) uncomment after shore is implemented
+		outb[2] = setBit(outb[2], 1, self.rr.GetInput("S20").GetValue())
 		outb[2] = setBit(outb[2], 2, 0 if self.rr.GetOutput("DSw9.hand").GetStatus() != 0 else 1) 
 		op = self.rr.GetOutput("DSw1").GetOutPulse()
 		outb[2] = setBit(outb[2], 3, 1 if op > 0 else 0)                   # switches
@@ -130,6 +130,7 @@ class Dell(District):
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("D11.srel").GetStatus())
 
 		logging.debug("Dell:Dell:: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
+		print("Dell:Dell:: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
 
 		# inb, inbc = self.rrbus.sendRecv(DELL, outb, 4, swap=True)
 		# if inb is None:

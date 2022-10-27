@@ -119,8 +119,8 @@ class Hyde(District):
 		outb[3] = setBit(outb[3], 0, 1 if op > 0 else 0)
 		outb[3] = setBit(outb[3], 1, 1 if op < 0 else 0)
 		
-		# outb[3] = setBit(outb[3], 2, self.rr.GetInput("H30").GetValue())     shore   # block indicators
-		# outb[3] = setBit(outb[3], 3, self.rr.GetInput("H10").GetValue())     shore
+		outb[3] = setBit(outb[3], 2, self.rr.GetInput("H30").GetValue())    # block indicators
+		outb[3] = setBit(outb[3], 3, self.rr.GetInput("H10").GetValue())
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("H23").GetValue())
 		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("N25").GetValue())     nassau
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H21.srel").GetStatus())	      # Stop relays
@@ -185,5 +185,5 @@ class Hyde(District):
 			self.rr.GetInput("H40").SetValue(getBit(inb[4], 2))
 			self.rr.GetInput("HOSEW").SetValue(getBit(inb[4], 3))  #HOS7
 			self.rr.GetInput("HOSEE").SetValue(getBit(inb[4], 4))  #HOS8 
-			self.rr.GetInput("H13W").SetValue(getBit(inb[4], 5))
+			self.rr.GetInput("H13.W").SetValue(getBit(inb[4], 5))
 			self.rr.GetInput("H13").SetValue(getBit(inb[4], 6))
