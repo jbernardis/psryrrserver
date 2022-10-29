@@ -12,6 +12,7 @@ from httpserver import HTTPServer
 from sktserver import SktServer
 
 from clientlist import ClientList
+from trainlist import TrainList
 
 (HTTPMessageEvent, EVT_HTTPMESSAGE) = wx.lib.newevent.NewEvent()  
 (RailroadEvent, EVT_RAILROAD) = wx.lib.newevent.NewEvent()  
@@ -47,6 +48,7 @@ class MainFrame(wx.Frame):
 		self.socketServer.start()
 
 		self.clientList = ClientList(self)
+		self.trainList = TrainList(self)
 
 		vsz = wx.BoxSizer(wx.VERTICAL)
 		hsz = wx.BoxSizer(wx.HORIZONTAL)
@@ -93,6 +95,9 @@ class MainFrame(wx.Frame):
 	def refreshClient(self, addr, skt):
 		for m in self.rr.GetCurrentValues():
 			self.socketServer.sendToOne(skt, addr, m)
+		#for m in self.trainList.GetSetTrainCmds():
+			#self.socketServer.sendToOne(skt, addr, m)
+
 
 	def rrEventReceipt(self, cmd, addr=None, skt=None):
 		evt = RailroadEvent(data=cmd, addr=addr, skt=skt)
@@ -139,8 +144,41 @@ class MainFrame(wx.Frame):
 				loco = None
 			block = evt.data["block"][0]
 			# train information is always echoed back to all listeners
+
+			if trn and trn.startswith("??"):
+				# this is an unknown train - see if we have a known train in the same block
+				ntrn, nloco = self.trainList.FindTrainInBlock(block)
+				if ntrn:
+					trn = ntrn
+				if nloco:
+					loco = nloco
+
 			resp = {"settrain": [{"name": trn, "loco": loco, "block": block}]}
 			self.socketServer.sendToAll(resp)
+
+			self.trainList.Update(trn, loco, block)
+
+		elif verb == "renametrain":
+			try:
+				oname = evt.data["oldname"][0]
+			except:
+				oname = None
+			try:
+				oloco = evt.data["oldloco"][0]
+			except:
+				oloco = None
+			try:
+				nname = evt.data["newname"][0]
+			except:
+				nname = None
+			try:
+				nloco = evt.data["newloco"][0]
+			except:
+				nloco = None
+
+			if self.trainList.RenameTrain(oname, nname, oloco, nloco):
+				for cmd in self.trainList.GetSetTrainCmds(nname):
+					self.socketServer.sendToAll(cmd)
 
 		elif verb == "handswitch":
 			hsname = evt.data["name"][0]

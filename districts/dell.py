@@ -130,7 +130,6 @@ class Dell(District):
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("D11.srel").GetStatus())
 
 		logging.debug("Dell:Dell:: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
-		print("Dell:Dell:: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
 
 		# inb, inbc = self.rrbus.sendRecv(DELL, outb, 4, swap=True)
 		# if inb is None:
