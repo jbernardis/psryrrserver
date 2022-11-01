@@ -4,6 +4,7 @@ import wx.lib.newevent
 import logging
 logging.basicConfig(filename='pydispatch.log', format='%(asctime)s %(message)s', level=logging.INFO)
 import json
+import socket
 
 from settings import Settings
 from bus import RailroadMonitor
@@ -24,6 +25,10 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		logging.info("pydispatch starting")
 
+		hostname = socket.gethostname()
+		self.ip = socket.gethostbyname(hostname)
+		print("retrieved IP adddress: %s" % self.ip)
+
 		self.clients = {}
 
 		self.settings = Settings()
@@ -38,13 +43,13 @@ class MainFrame(wx.Frame):
 			exit(1)
 		self.rrMonitor.start()
 
-		self.dispServer = HTTPServer(self.settings.ip, self.settings.serverport, self.dispCommandReceipt)
+		self.dispServer = HTTPServer(self.ip, self.settings.serverport, self.dispCommandReceipt)
 		self.Bind(EVT_HTTPMESSAGE, self.onHTTPMessageEvent)
 		self.Bind(EVT_RAILROAD, self.onRailroadEvent)
 		self.Bind(EVT_SOCKET, self.onSocketEvent)
 
-		logging.info("Starting Socket server at address: %s:%d" % (self.settings.ip, self.settings.socketport))
-		self.socketServer = SktServer(self.settings.ip, self.settings.socketport, self.socketEventReceipt)
+		logging.info("Starting Socket server at address: %s:%d" % (self.ip, self.settings.socketport))
+		self.socketServer = SktServer(self.ip, self.settings.socketport, self.socketEventReceipt)
 		self.socketServer.start()
 
 		self.clientList = ClientList(self)
