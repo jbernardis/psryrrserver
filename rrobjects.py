@@ -151,7 +151,7 @@ class IndicatorOutput(Output):
 			return
 
 		self.status = flag
-		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		# self.rr.RailroadEvent({"refreshinput": [self.name]})
 
 	def GetEventMessage(self):
 		pass

@@ -32,7 +32,7 @@ class Shore(District):
 		ix = self.AddSubBlocks("S20", ["S20A", "S20B", "S20C"], ix)
 		ix = self.AddInputs(["S20.E", "SOSW", "SOSE", "S11.W"], BlockInput, District.block, ix)
 		ix = self.AddSubBlocks("S11", ["S11A", "S11B"], ix)
-		ix = self.AddInputs(["S11.E", "H30.W"], BlockInput, District.block, ix)
+		ix = self.AddInputs(["S11.E", "S21", "H30.W"], BlockInput, District.block, ix)
 		ix = self.AddSubBlocks("H30", ["H30A", "H30B"], ix)
 		ix = self.AddInputs(["H10.W"], BlockInput, District.block, ix)
 		ix = self.AddSubBlocks("H10", ["H10A", "H10B"], ix)
@@ -41,171 +41,213 @@ class Shore(District):
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
 
 	def OutIn(self):
-		pass
-# 	SOut[0].bit.b0 = S4R.Aspect[0];		//Main signals
-# 	SOut[0].bit.b1 = S4R.Aspect[1];
-# 	SOut[0].bit.b2 = S4R.Aspect[2];
-# 	SOut[0].bit.b3 = S12R.Aspect[0];
-# 	SOut[0].bit.b4 = S12R.Aspect[1];
-# 	SOut[0].bit.b5 = S12R.Aspect[2];
-# 	SOut[0].bit.b6 = S4LA.Aspect[0];
-# 	SOut[0].bit.b7 = S4LB.Aspect[0];
+		SXL1 = SXL2 = False
+		BX = False
+		SXG = False
 
-# 	SOut[1].bit.b0 = S4LB.Aspect[1];
-# 	SOut[1].bit.b1 = S4LB.Aspect[2];
-# 	SOut[1].bit.b2 = S4LC.Aspect[0];
-# 	SOut[1].bit.b3 = S4LC.Aspect[1];
-# 	SOut[1].bit.b4 = S4LC.Aspect[2];
-# 	SOut[1].bit.b5 = S12LA.Aspect[0];
-#   	SOut[1].bit.b6 = S12LA.Aspect[1];
-# 	SOut[1].bit.b7 = S12LA.Aspect[2];
+		outb = [0 for i in range(7)]
+		asp = self.rr.GetOutput("S4R").GetAspect()
+		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # Main Signals
+		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[0] = setBit(outb[0], 2, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S12R").GetAspect()
+		outb[0] = setBit(outb[0], 3, 1 if asp in [1, 3, 5, 7] else 0)
+		outb[0] = setBit(outb[0], 4, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[0] = setBit(outb[0], 5, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S4LA").GetAspect()
+		outb[0] = setBit(outb[0], 6, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("S4LB").GetAspect()
+		outb[0] = setBit(outb[0], 7, 1 if asp in [1, 3, 5, 7] else 0)
 
-#   	SOut[2].bit.b0 = S12LB.Aspect[0];
-# 	SOut[2].bit.b1 = S12LC.Aspect[0];
-# 	SOut[2].bit.b2 = S12LC.Aspect[1];
-# 	SOut[2].bit.b3 = S12LC.Aspect[2];
-# 	SOut[2].bit.b4 = F10H;					//Branch signals
-# 	SOut[2].bit.b5 = F10D;
-# 	SOut[2].bit.b6 = S8R.Aspect[0];
-# 	SOut[2].bit.b7 = S8L.Aspect[0];
+		outb[1] = setBit(outb[1], 0, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[1] = setBit(outb[1], 1, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S4LC").GetAspect()
+		outb[1] = setBit(outb[1], 2, 1 if asp in [1, 3, 5, 7] else 0)
+		outb[1] = setBit(outb[1], 3, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[1] = setBit(outb[1], 4, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S12LA").GetAspect()
+		outb[1] = setBit(outb[1], 5, 1 if asp in [1, 3, 5, 7] else 0)
+		outb[1] = setBit(outb[1], 6, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[1] = setBit(outb[1], 7, 1 if asp in [4, 5, 6, 7] else 0)
 
-# 	SOut[3].bit.b0 = SXL1;				//Bortell crossing lights
-# 	SOut[3].bit.b1 = SXL2;
-# 	SOut[3].bit.b2 = S10.Blk;        	//Block occupancy indicators - see dell h13 for examples
-# 	SOut[3].bit.b3 = H20.Blk;
-# 	SOut[3].bit.b4 = S21.Blk;
-# 	SOut[3].bit.b5	= P32.Blk;
-# 	SOut[3].bit.b6 = !ShoreCB;				//Circuit breakers
-# 	SOut[3].bit.b7 = !HarpersCB;
+		asp = self.rr.GetOutput("S12LB").GetAspect()
+		outb[2] = setBit(outb[2], 0, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("S12LC").GetAspect()
+		outb[2] = setBit(outb[2], 1, 1 if asp in [1, 3, 5, 7] else 0)
+		outb[2] = setBit(outb[2], 2, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[2] = setBit(outb[2], 3, 1 if asp in [4, 5, 6, 7] else 0)
+		#outb[2] = setBit(outb[2], 4, self.rr.GetOutput("F10H").GetStatus())  # Branch signals
+		#outb[2] = setBit(outb[2], 5, self.rr.GetOutput("F10D").GetStatus())
+		asp = self.rr.GetOutput("S8R").GetAspect()
+		outb[2] = setBit(outb[2], 6, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("S8L").GetAspect()
+		outb[2] = setBit(outb[2], 7, 1 if asp != 0 else 0)
 
-# 	SOut[4].bit.b0 = !SSw1.Locked;	//Unlock for switch 1
-# 	SOut[4].bit.b1	= SSw3.NO;			//Switch outputs
-# 	SOut[4].bit.b2	= SSw3.RO;
-# 	SOut[4].bit.b3	= SSw5.NO;
-# 	SOut[4].bit.b4	= SSw5.RO;
-# 	SOut[4].bit.b5	= SSw7.NO;
-# 	SOut[4].bit.b6	= SSw7.RO;
-# 	SOut[4].bit.b7	= SSw9.NO;
+		outb[3] = setBit(outb[3], 0, 1 if SXL1 else 0)  # bortelll crossing signal
+		outb[3] = setBit(outb[3], 1, 1 if SXL2 else 0) 
+		outb[3] = setBit(outb[3], 2, self.rr.GetInput("S10").GetValue())  #block occupancy indicators
+		outb[3] = setBit(outb[3], 3, self.rr.GetInput("H20").GetValue())
+		outb[3] = setBit(outb[3], 4, self.rr.GetInput("S21").GetValue())
+		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("P32").GetValue())  port
+		#outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBShore").GetValue())
+		#outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBHarpers").GetValue())
 
-# 	SOut[5].bit.b0	= SSw9.RO;
-# 	SOut[5].bit.b1	= SSw11.NO;
-# 	SOut[5].bit.b2	= SSw11.RO;
-# 	SOut[5].bit.b3	= SSw13.NO;
-# 	SOut[5].bit.b4	= SSw13.RO;
-# 	SOut[5].bit.b5 = BX;                //Diamond crossing power relay
-# 	SOut[5].bit.b6 = S20.Srel;     		//Stop relays
-# 	SOut[5].bit.b7 = S11.Srel;
+		outb[4] = setBit(outb[4], 0, 0 if self.rr.GetOutput("SSw1.hand").GetStatus() != 0 else 1) # hand switch unlocks
+		op = self.rr.GetOutput("SSw3").GetOutPulse()
+		outb[4] = setBit(outb[4], 1, 1 if op > 0 else 0)   # Switch outputs
+		outb[4] = setBit(outb[4], 2, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw5").GetOutPulse()
+		outb[4] = setBit(outb[4], 3, 1 if op > 0 else 0) 
+		outb[4] = setBit(outb[4], 4, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw7").GetOutPulse()
+		outb[4] = setBit(outb[4], 5, 1 if op > 0 else 0) 
+		outb[4] = setBit(outb[4], 6, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw9").GetOutPulse()
+		outb[4] = setBit(outb[4], 7, 1 if op > 0 else 0) 
 
-# 	SOut[6].bit.b0 = H30Power && !H30.Srel;
-# 	SOut[6].bit.b1 = H10.Srel;
-# 	SOut[6].bit.b2 = F10.Srel;
-# 	SOut[6].bit.b3 = F11.Srel;
-# 	SOut[6].bit.b4 = CSw15.Locked;	//Unlock for switch at Spikes Peak
-# 	SOut[6].bit.b5 = SXG;           //Bortell crossing gates
+		outb[5] = setBit(outb[5], 0, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw11").GetOutPulse()
+		outb[5] = setBit(outb[5], 1, 1 if op > 0 else 0) 
+		outb[5] = setBit(outb[5], 2, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw13").GetOutPulse()
+		outb[5] = setBit(outb[5], 3, 1 if op > 0 else 0) 
+		outb[5] = setBit(outb[5], 4, 1 if op < 0 else 0)
+		outb[5] = setBit(outb[5], 5, 1 if BX else 0)  # Diamond crossing power relay
+		outb[5] = setBit(outb[5], 6, self.rr.GetOutput("S20.srel").GetStatus())	# Stop relays
+		outb[5] = setBit(outb[5], 7, self.rr.GetOutput("S11.srel").GetStatus())
+
+		outb[6] = setBit(outb[6], 0, self.rr.GetOutput("H30.srel").GetStatus()) # in conjunction with H30Power
+		outb[6] = setBit(outb[6], 1, self.rr.GetOutput("H10.srel").GetStatus())
+		outb[6] = setBit(outb[6], 2, self.rr.GetOutput("F10.srel").GetStatus())
+		outb[6] = setBit(outb[6], 3, self.rr.GetOutput("F11.srel").GetStatus())
+		outb[6] = setBit(outb[6], 4, 0 if self.rr.GetOutput("CSw15.hand").GetStatus() != 0 else 1) # spikes peak hand switch
+		outb[6] = setBit(outb[6], 5, 1 if SXG else 0)  # Bortell crossing gates
+
+		logging.debug("Shore: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(
+			outb[0], outb[1], outb[2], outb[3], outb[4], outb[6], outb[6]))
 
 # 	SendPacket(SHORE, &ShoreAborts, &SIn[0], &SOld[0], &SOut[0], 8, true);
 # 	SHText = "Shore\t" + OutText;
 
-# 	if(Match)
-# 	{
-# 		SSw1.NI	= SIn[0].bit.b0;			//Switch positions
-# 		SSw1.RI	= SIn[0].bit.b1;
-# 		SSw3.NI	= SIn[0].bit.b2;
-# 		SSw3.RI	= SIn[0].bit.b3;
-# 		SSw5.NI	= SIn[0].bit.b4;
-# 		SSw5.RI = SIn[0].bit.b5;
-# 		SSw7.NI	= SIn[0].bit.b6;
-# 		SSw7.RI	= SIn[0].bit.b7;
+		inb = []
+		inbc = 0
+		if inbc == 7:
+			nb = getBit(inb[0], 0)  # Switch positions
+			rb = getBit(inb[0], 1)
+			self.rr.GetInput("SSw1").SetState(nb, rb)
+			nb = getBit(inb[0], 2) 
+			rb = getBit(inb[0], 3)
+			self.rr.GetInput("SSw3").SetState(nb, rb)
+			nb = getBit(inb[0], 4) 
+			rb = getBit(inb[0], 5)
+			self.rr.GetInput("SSw5").SetState(nb, rb)
+			nb = getBit(inb[0], 6) 
+			rb = getBit(inb[0], 7)
+			self.rr.GetInput("SSw7").SetState(nb, rb)
 
-# 		SSw9.NI	= SIn[1].bit.b0;
-# 		SSw9.RI	= SIn[1].bit.b1;
-# 		SSw11.NI = SIn[1].bit.b2;
-# 		SSw11.RI = SIn[1].bit.b3;
-# 		SSw13.NI = SIn[1].bit.b4;
-# 		SSw13.RI = SIn[1].bit.b5;
-# 		S20.W = SIn[1].bit.b6;  	//Shore detection
-# 		S20A = SIn[1].bit.b7;
+			nb = getBit(inb[1], 0)
+			rb = getBit(inb[1], 1)
+			self.rr.GetInput("SSw9").SetState(nb, rb)
+			nb = getBit(inb[1], 2)
+			rb = getBit(inb[1], 3)
+			self.rr.GetInput("SSw11").SetState(nb, rb)
+			nb = getBit(inb[1], 4)
+			rb = getBit(inb[1], 5)
+			self.rr.GetInput("SSw13").SetState(nb, rb)
+			self.rr.GetInput("S20.W").SetValue(getBit(inb[1], 6))  # Shore Detection
+			self.rr.GetInput("S20A").SetValue(getBit(inb[1], 7))
 
-# 		S20B = SIn[2].bit.b0;
-# 		S20C = SIn[2].bit.b1;
-# 		S20.E = SIn[2].bit.b2;
-# 		SOS1 = SIn[2].bit.b3;  SOSW
-# 		SOS2 = SIn[2].bit.b4;  SOSE
-# 		S11.W = SIn[2].bit.b5;
-# 		S11B = SIn[2].bit.b6;
-# 		S11.E = SIn[2].bit.b7;
+			self.rr.GetInput("S20B").SetValue(getBit(inb[2], 0))
+			self.rr.GetInput("S20C").SetValue(getBit(inb[2], 1))
+			self.rr.GetInput("S20.E").SetValue(getBit(inb[2], 2))
+			self.rr.GetInput("SOSW").SetValue(getBit(inb[2], 3))
+			self.rr.GetInput("SOSE").SetValue(getBit(inb[2], 4))
+			self.rr.GetInput("S11.W").SetValue(getBit(inb[2], 5))
+			self.rr.GetInput("S11B").SetValue(getBit(inb[2], 6))
+			self.rr.GetInput("S11.E").SetValue(getBit(inb[2], 7))
 
-# 		H30.W = SIn[3].bit.b0;
-# 		H30B = SIn[3].bit.b1;
-# 		H10.W = SIn[3].bit.b2;
-# 		H10B = SIn[3].bit.b3;
-# 		F10.M = SIn[3].bit.b4;	//Harpers detection
-# 		F10.E = SIn[3].bit.b5;
-# 		SOS3  = SIn[3].bit.b6;  SOSHF
-# 		F11.W = SIn[3].bit.b7;
+			self.rr.GetInput("H30.W").SetValue(getBit(inb[3], 0))
+			self.rr.GetInput("H30B").SetValue(getBit(inb[3], 1))
+			self.rr.GetInput("H10.W").SetValue(getBit(inb[3], 2))
+			self.rr.GetInput("H10B").SetValue(getBit(inb[3], 3))
+			self.rr.GetInput("F10").SetValue(getBit(inb[3], 4))  # Harpers detection
+			self.rr.GetInput("F10.E").SetValue(getBit(inb[3], 5))
+			self.rr.GetInput("SOSHF").SetValue(getBit(inb[3], 6))
+			self.rr.GetInput("F11.W").SetValue(getBit(inb[3], 7))
 
-# 		F11.M = SIn[4].bit.b0;
+			self.rr.GetInput("F11").SetValue(getBit(inb[4], 0))
 # 		SXON  = SIn[4].bit.b1;	//Crossing gate off normal
-# 		CSw15.NI = SIn[4].bit.b2;  //Spikes Peak switch position
-# 		CSw15.RI = SIn[4].bit.b3;
-# 		S11A = SIn[4].bit.b4;  //Added approach cut sections
-# 		H30A = SIn[4].bit.b5;
-# 		H10A = SIn[4].bit.b6;
+			nb = getBit(inb[4], 2) 
+			rb = getBit(inb[4], 3)
+			# self.rr.GetInput("CSw15").SetState(nb, rb)  clivedon
+			self.rr.GetInput("S11A").SetValue(getBit(inb[4], 4))
+			self.rr.GetInput("H30A").SetValue(getBit(inb[4], 5))
+			self.rr.GetInput("H10A").SetValue(getBit(inb[4], 6))
 
-# 		S20.M = S20A || S20B || S20C;
-# 		S11.M = S11A || S11B;
-# 		H30.M = H30A || H30B;
-# 		H10.M = H10A || H10B;
-# 	}
+		#  Hyde Junction
+		outb = [0 for i in range(3)]
+		asp = self.rr.GetOutput("S16R").GetAspect()
+		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # signals
+		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[0] = setBit(outb[0], 2, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S18R").GetAspect()
+		outb[0] = setBit(outb[0], 3, 1 if asp in [1, 3, 5, 7] else 0)
+		outb[0] = setBit(outb[0], 4, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[0] = setBit(outb[0], 5, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S20R").GetAspect()
+		outb[0] = setBit(outb[0], 6, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("S16L").GetAspect()
+		outb[0] = setBit(outb[0], 7, 1 if asp in [1, 3, 5, 7] else 0)
 
-#    //Hyde Junction
+		outb[1] = setBit(outb[1], 0, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[1] = setBit(outb[1], 1, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("S18LB").GetAspect()
+		outb[1] = setBit(outb[1], 2, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("S18LA").GetAspect()
+		outb[1] = setBit(outb[1], 3, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("S20L").GetAspect()
+		outb[1] = setBit(outb[1], 4, 1 if asp in [1, 3, 5, 7] else 0)
+		outb[1] = setBit(outb[1], 5, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[1] = setBit(outb[1], 6, 1 if asp in [4, 5, 6, 7] else 0)
+		op = self.rr.GetOutput("SSw15").GetOutPulse()  # switches
+		outb[1] = setBit(outb[1], 7, 1 if op > 0 else 0)
 
-# 	HJOut[0].bit.b0 = S16R.Aspect[0];	//Eastbound signals
-# 	HJOut[0].bit.b1 = S16R.Aspect[1];
-# 	HJOut[0].bit.b2 = S16R.Aspect[2];
-# 	HJOut[0].bit.b3 = S18R.Aspect[0];
-# 	HJOut[0].bit.b4 = S18R.Aspect[1];
-# 	HJOut[0].bit.b5 = S18R.Aspect[2];
-# 	HJOut[0].bit.b6 = S20R.Aspect[0];
-# 	HJOut[0].bit.b7 = S16L.Aspect[0];	//Westbound signals
+		outb[2] = setBit(outb[2], 0, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw17").GetOutPulse()
+		outb[2] = setBit(outb[2], 1, 1 if op > 0 else 0)
+		outb[2] = setBit(outb[2], 2, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("SSw19").GetOutPulse()
+		outb[2] = setBit(outb[2], 3, 1 if op > 0 else 0)
+		outb[2] = setBit(outb[2], 4, 1 if op < 0 else 0)
+		outb[2] = setBit(outb[2], 5, self.rr.GetOutput("H20.srel").GetStatus())	# Stop relays
+		# outb[2] = setBit(outb[2], 6, self.rr.GetOutput("P42.srel").GetStatus())	port
+		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("H11.srel").GetStatus())	
 
-# 	HJOut[1].bit.b0 = S16L.Aspect[1];
-# 	HJOut[1].bit.b1 = S16L.Aspect[2];
-# 	HJOut[1].bit.b2 = S18LB.Aspect[0];
-# 	HJOut[1].bit.b3 = S18LA.Aspect[0];
-# 	HJOut[1].bit.b4 = S20L.Aspect[0];
-# 	HJOut[1].bit.b5 = S20L.Aspect[1];
-# 	HJOut[1].bit.b6 = S20L.Aspect[2];
-# 	HJOut[1].bit.b7 = SSw15.NO;			//Switch outputs
-
-# 	HJOut[2].bit.b0 = SSw15.RO;
-# 	HJOut[2].bit.b1 = SSw17.NO;
-# 	HJOut[2].bit.b2 = SSw17.RO;
-# 	HJOut[2].bit.b3 = SSw19.NO;
-# 	HJOut[2].bit.b4 = SSw19.RO;
-# 	HJOut[2].bit.b5 = H20.Srel;			//Stopping relays
-# 	HJOut[2].bit.b6 = P42.Srel;
-# 	HJOut[2].bit.b7 = H11.Srel;
+		logging.debug("Shore:HydeJct:: Output bytes: {0:08b}  {1:08b}  {2:08b} ".format(outb[0], outb[1], outb[2]))
 
 # 	SendPacket(HYDEJCT, &HydeJctAborts, &HJIn[0], &HJOld[0], &HJOut[0], 3, true);
 # 	HJctText = "Hyde Jct " + OutText;
 
-# 	if(Match)
-#    	{
-#    		SSw15.NI = HJIn[0].bit.b0;		//Switch positions
-#       	SSw15.RI = HJIn[0].bit.b1;
-#       	SSw17.NI = HJIn[0].bit.b2;
-#       	SSw17.RI = HJIn[0].bit.b3;
-#       	SSw19.NI = HJIn[0].bit.b4;
-#       	SSw19.RI = HJIn[0].bit.b5;
-#       	H20.M	 = HJIn[0].bit.b6;		//Detection
-#       	H20.E    = HJIn[0].bit.b7;
+		inb = []
+		inbc = 0
+		if inbc == 3:
+			nb = getBit(inb[0], 0)  # Switch positions
+			rb = getBit(inb[0], 1)
+			self.rr.GetInput("SSw15").SetState(nb, rb)
+			nb = getBit(inb[0], 2) 
+			rb = getBit(inb[0], 3)
+			self.rr.GetInput("SSw17").SetState(nb, rb)
+			nb = getBit(inb[0], 4) 
+			rb = getBit(inb[0], 5)
+			self.rr.GetInput("SSw19").SetState(nb, rb)
+			self.rr.GetInput("H20").SetValue(getBit(inb[0], 6))  # Detection
+			self.rr.GetInput("H20.E").SetValue(getBit(inb[0], 7)) 
 
-# 		P42.W		= HJIn[1].bit.b0;
-#       	P42.M		= HJIn[1].bit.b1;
-#       	P42.E		= HJIn[1].bit.b2;
-#       	HOS1		= HJIn[1].bit.b3; SOSBJW
-#       	HOS2		= HJIn[1].bit.b4; SOSHJM
-#       	HOS3		= HJIn[1].bit.b5; SOSHJE
-#       	H11.W		= HJIn[1].bit.b6;
-#       	H11.M		= HJIn[1].bit.b7;
+			self.rr.GetInput("P42.W").SetValue(getBit(inb[1], 0)) 
+			self.rr.GetInput("P42").SetValue(getBit(inb[1], 1)) 
+			self.rr.GetInput("P42.E").SetValue(getBit(inb[1], 2)) 
+			self.rr.GetInput("SOSHJW").SetValue(getBit(inb[1], 3)) # HOS1
+			self.rr.GetInput("SOSHJM").SetValue(getBit(inb[1], 4)) # HOS2
+			self.rr.GetInput("SOSHJE").SetValue(getBit(inb[1], 5)) # HOS3
+			self.rr.GetInput("H11.W").SetValue(getBit(inb[1], 6)) 
+			self.rr.GetInput("H11").SetValue(getBit(inb[1], 7)) 

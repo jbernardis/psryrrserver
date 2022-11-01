@@ -63,7 +63,7 @@ class Hyde(District):
 				"HOSWW2", "HOSWW", "HOSWE",
 				"H31", "H33", "H34", "H12", "H22", "H43", "H42", "H41", "H40",
 				"HOSEW", "HOSEE",
-				"H13.W", "H13", "H23" ]
+				"H13.W", "H13" ]
 
 		ix = 0
 		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
@@ -122,7 +122,8 @@ class Hyde(District):
 		outb[3] = setBit(outb[3], 2, self.rr.GetInput("H30").GetValue())    # block indicators
 		outb[3] = setBit(outb[3], 3, self.rr.GetInput("H10").GetValue())
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("H23").GetValue())
-		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("N25").GetValue())     nassau
+		N25occ = self.rr.GetInput("N25.W").GetValue() + self.rr.GetInput("N25").GetValue() + self.rr.GetInput("N25.E").GetValue()
+		outb[3] = setBit(outb[3], 5, 1 if N25occ != 0 else 0) 
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H21.srel").GetStatus())	      # Stop relays
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("H13.srel").GetStatus())
 

@@ -4,8 +4,9 @@ import logging
 from districts.hyde import Hyde
 from districts.yard import Yard
 from districts.latham import Latham
-from districts.shore import Shore
 from districts.dell import Dell
+from districts.shore import Shore
+from districts.krulish import Krulish
 
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
@@ -19,6 +20,7 @@ class Railroad(wx.Notebook):
 			[ "Latham", Latham ],
 			[ "Dell", Dell ],
 			[ "Shore", Shore ],
+			[ "Krulish", Krulish ],
 			[ "Hyde", Hyde ],
 		]
 

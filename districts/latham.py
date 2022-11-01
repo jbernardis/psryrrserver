@@ -31,7 +31,7 @@ class Latham(District):
 		brkrNames = sorted([ "CBCliveden", 	"CBLatham",  "CBCornellJct", "CBParsonsJct", "CBSouthJct", "CBCircusJct", "CBSouthport",
 						"CBLavinYard", "CBReverserP31", "CBReverserP41", "CBReverserP50", "CBReverserC22C23" ])
 		blockNames = [ "L20", "L20.E", "LOSLAW", "LOSLAM", "LOSLAE", "L11.W", "L11", "L21.W", "L21", "L21.E",
-						"L31", "L31.E", "LOSCAE", "LOSCAM", "LOSCAW", "D10", "D10.W", "P21", "P21.E" ]
+						"L31", "L31.E", "LOSCAE", "LOSCAM", "LOSCAW", "D10", "D10.W", "N25.W", "N25", "N25.E", "P21", "P21.E" ]
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
