@@ -29,9 +29,12 @@ class MainFrame(wx.Frame):
 		self.ip = socket.gethostbyname(hostname)
 		print("retrieved IP adddress: %s" % self.ip)
 
+
 		self.clients = {}
 
 		self.settings = Settings()
+		self.SetTitle("PSRY Railroad Server    IP:  %s   Listening on port:  %d    Broadcasting on port:  %d" % 
+				(self.ip, self.settings.serverport, self.settings.socketport))
 
 		logging.info("Creating railroad object")
 		self.rr = Railroad(self, self.rrEventReceipt, self.settings) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
