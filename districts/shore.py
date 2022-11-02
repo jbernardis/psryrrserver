@@ -42,7 +42,7 @@ class Shore(District):
 
 	def OutIn(self):
 		SXL1 = SXL2 = False
-		BX = False
+		BX = 0
 		SXG = False
 
 		outb = [0 for i in range(7)]
@@ -79,8 +79,10 @@ class Shore(District):
 		#outb[2] = setBit(outb[2], 4, self.rr.GetOutput("F10H").GetStatus())  # Branch signals
 		#outb[2] = setBit(outb[2], 5, self.rr.GetOutput("F10D").GetStatus())
 		asp = self.rr.GetOutput("S8R").GetAspect()
+		BX += asp
 		outb[2] = setBit(outb[2], 6, 1 if asp != 0 else 0)
 		asp = self.rr.GetOutput("S8L").GetAspect()
+		BX += asp
 		outb[2] = setBit(outb[2], 7, 1 if asp != 0 else 0)
 
 		outb[3] = setBit(outb[3], 0, 1 if SXL1 else 0)  # bortelll crossing signal
@@ -112,7 +114,8 @@ class Shore(District):
 		op = self.rr.GetOutput("SSw13").GetOutPulse()
 		outb[5] = setBit(outb[5], 3, 1 if op > 0 else 0) 
 		outb[5] = setBit(outb[5], 4, 1 if op < 0 else 0)
-		outb[5] = setBit(outb[5], 5, 1 if BX else 0)  # Diamond crossing power relay
+		print("BX: %d" % BX)
+		outb[5] = setBit(outb[5], 5, 1 if BX != 0 else 0)  # Diamond crossing power relay - power if EITHER S8L or S8L is not STOP
 		outb[5] = setBit(outb[5], 6, self.rr.GetOutput("S20.srel").GetStatus())	# Stop relays
 		outb[5] = setBit(outb[5], 7, self.rr.GetOutput("S11.srel").GetStatus())
 
@@ -124,7 +127,7 @@ class Shore(District):
 		outb[6] = setBit(outb[6], 5, 1 if SXG else 0)  # Bortell crossing gates
 
 		logging.debug("Shore: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(
-			outb[0], outb[1], outb[2], outb[3], outb[4], outb[6], outb[6]))
+			outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6]))
 
 # 	SendPacket(SHORE, &ShoreAborts, &SIn[0], &SOld[0], &SOut[0], 8, true);
 # 	SHText = "Shore\t" + OutText;
