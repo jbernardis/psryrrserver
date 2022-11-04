@@ -38,19 +38,23 @@ class TrainList:
 		return None, None
 
 	def RenameTrain(self, oname, nname, oloco, nloco):
-		if oname not in self.trains:
-			# we can't do anything if we can't find the original record
+		if oname == nname and oloco == nloco:
 			return False
+			
+		if oname != nname:
+			if oname not in self.trains:
+				# we can't do anything if we can't find the original record
+				return False
 
-		if nname in self.trains:
-			# in this case, we retain the old information, but merge the block lists
-			for b in self.trains[oname]["blocks"]:
-				if b not in self.trains[nname]["blocks"]:
-					self.trains[nname]["blocks"].append(b)
-		else:
-			self.trains[nname] = self.trains[oname]
+			if nname in self.trains:
+				# in this case, we retain the old information, but merge the block lists
+				for b in self.trains[oname]["blocks"]:
+					if b not in self.trains[nname]["blocks"]:
+						self.trains[nname]["blocks"].append(b)
+			else:
+				self.trains[nname] = self.trains[oname]
 
-		del(self.trains[oname])
+			del(self.trains[oname])
 
 		if nloco is not None:
 			self.trains[nname]["loco"] = nloco

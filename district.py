@@ -79,6 +79,9 @@ class District(wx.Panel):
 		if itype == District.turnout:
 			cval = self.ilist.GetItemText(index, 1)
 			nval = "R" if cval == "N" else "N"
+		elif itype == District.block:
+			cval = int(self.ilist.GetItemText(index, 1).split(",")[0])
+			nval = 1 - cval
 		else:
 			cval = int(self.ilist.GetItemText(index, 1))
 			nval = 1 - cval
@@ -157,12 +160,19 @@ class District(wx.Panel):
 		if itype == District.turnout:
 			state = ic.GetState()
 			self.ilist.SetItem(ix, 1, "%s" % state)
+
+		if itype == District.block:
+			east = ic.GetEast()
+			val = ic.GetValue()
+			self.ilist.SetItem(ix, 1, "%d,%s" % (val, "E" if east else "W"))
 		else:
 			logging.warning("Refresh input: no handling of type %s" % itype)
 
 	def RefreshOutput(self, oname, otype=None):
+		print("try to find out type %s %s" % (oname, str(otype)))
 		try:
 			ix, oc, dtype = self.outputMap[oname]
+			print("retrieved: %d %s %s" % (ix, str(oc), str(dtype)))
 		except KeyError:
 			logging.warning("Output for %s in district %s not found" % (oname, self.name))
 			return
@@ -177,6 +187,9 @@ class District(wx.Panel):
 			pulseval = oc.GetOutPulseValue()
 			state = oc.GetLock()
 			self.olist.SetItem(ix, 1, "%d,%s" % (pulseval, "L" if state != 0 else "U"))
+		elif otype == District.signal:
+			aspect = oc.GetAspect()
+			self.olist.SetItem(ix, 1, "%d" % aspect)
 		else:
 			logging.warning("Refresh output: no handling of type %s" % otype)
 

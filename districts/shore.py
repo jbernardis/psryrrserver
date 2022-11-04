@@ -8,6 +8,9 @@ class Shore(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
 
+		self.S1E = self.S1W = False
+		self.S2E = self.S2W = False
+
 		sigNames =  [ "S4LA", "S4LB", "S4LC", "S4R",
 						"S8L", "S8R",
 						"S12LA", "S12LB", "S12LC", "S12R",
@@ -41,9 +44,28 @@ class Shore(District):
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
 
 	def OutIn(self):
-		SXL1 = SXL2 = False
+		S10B = self.rr.GetInput("S10B").GetValue() != 0
+		S10C = self.rr.GetInput("S10C").GetValue() != 0
+		S20B = self.rr.GetInput("S20B").GetValue() != 0
+		S20C = self.rr.GetInput("S20C").GetValue() != 0
+		if S10B and  not self.S1W:
+			self.S1E = True
+		if S10C and not self.S1E:
+			self.S1W = True
+		if not S10B and not S10C:
+			self.S1E = self.S1W = False
+		if S20B and not self.S2W:
+			self.S2E = True
+		if S20C and not self.S2E:
+			self.S2W = True
+		if not S20B and not S20C:
+			self.S2E = self.S2W = False
+
+
+		SXG = (self.S1E and S10B) or (self.S1W and S10C) or (self.S2E and S20B) or (self.S2W and S20C)
+		print("crossing gate evaluates to %s" % str(SXG))
 		BX = 0
-		SXG = False
+
 
 		outb = [0 for i in range(7)]
 		asp = self.rr.GetOutput("S4R").GetAspect()
@@ -85,8 +107,8 @@ class Shore(District):
 		BX += asp
 		outb[2] = setBit(outb[2], 7, 1 if asp != 0 else 0)
 
-		outb[3] = setBit(outb[3], 0, 1 if SXL1 else 0)  # bortelll crossing signal
-		outb[3] = setBit(outb[3], 1, 1 if SXL2 else 0) 
+		# outb[3] = setBit(outb[3], 0, 1 if SXL1 else 0)  # bortelll crossing signal
+		# outb[3] = setBit(outb[3], 1, 1 if SXL2 else 0) 
 		outb[3] = setBit(outb[3], 2, self.rr.GetInput("S10").GetValue())  #block occupancy indicators
 		outb[3] = setBit(outb[3], 3, self.rr.GetInput("H20").GetValue())
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("S21").GetValue())
@@ -114,7 +136,6 @@ class Shore(District):
 		op = self.rr.GetOutput("SSw13").GetOutPulse()
 		outb[5] = setBit(outb[5], 3, 1 if op > 0 else 0) 
 		outb[5] = setBit(outb[5], 4, 1 if op < 0 else 0)
-		print("BX: %d" % BX)
 		outb[5] = setBit(outb[5], 5, 1 if BX != 0 else 0)  # Diamond crossing power relay - power if EITHER S8L or S8L is not STOP
 		outb[5] = setBit(outb[5], 6, self.rr.GetOutput("S20.srel").GetStatus())	# Stop relays
 		outb[5] = setBit(outb[5], 7, self.rr.GetOutput("S11.srel").GetStatus())

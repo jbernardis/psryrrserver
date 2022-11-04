@@ -56,6 +56,7 @@ class BlockInput(Input):
 	def __init__(self, name, district):
 		Input.__init__(self, name, district)
 		self.subBlocks = []
+		self.east = True
 
 	def SetValue(self, nv):
 		if nv == self.value:
@@ -63,6 +64,21 @@ class BlockInput(Input):
 		self.value = nv
 		self.rr.RailroadEvent({"refreshinput": [self.name]})
 		self.rr.RailroadEvent(self.GetEventMessage())
+
+	def SetDirection(self, direction):
+		if len(self.subBlocks) == 0:
+			self.east = direction == "E"
+			self.rr.RailroadEvent({"refreshinput": [self.name]})
+		else:
+			for sb in self.subBlocks:
+				print("doing subbloch %s" % sb.GetName())
+				sb.SetDirection(direction)
+
+	def GetValue(self):
+		return self.value
+
+	def GetEast(self):
+		return self.east
 
 	def AddSubBlock(self, sub):
 		self.subBlocks.append(sub)
@@ -83,10 +99,12 @@ class SubBlockInput(Input):
 	def __init__(self, name, district):
 		Input.__init__(self, name, district)
 		self.parent = None
+		self.east = True
 	
 	def SetParent(self, parent):
 		self.parent = parent
 		self.parent.AddSubBlock(self)
+		self.east = self.parent.GetEast()
 
 	def SetValue(self, nv):
 		if nv == self.value:
@@ -94,6 +112,17 @@ class SubBlockInput(Input):
 		self.value = nv
 		if self.parent:
 			self.parent.EvaluateSubBlocks()
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+
+	def SetDirection(self, direction):
+		self.east = direction == "E"
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+
+	def GetValue(self):
+		return self.value
+
+	def GetEast(self):
+		return self.east
 	
 	def GetEventMessage(self):
 		return None
@@ -184,7 +213,7 @@ class SignalOutput(Output):
 			return
 
 		self.aspect = aspect
-		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent({"refreshoutput": [self.name]})
 
 	def IsAspectNonZero(self):
 		return self.aspect != 0

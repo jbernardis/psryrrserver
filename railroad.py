@@ -85,6 +85,13 @@ class Railroad(wx.Notebook):
 		op.SetAspect(aspect)
 		district.UpdateSignal(signame)
 
+	def SetBlockDirection(self, block, direction):
+		if block not in self.inputs:
+			logging.warning("No input defined for block %s" % block)
+			return
+		ip, district, itype = self.inputs[block]
+		ip.SetDirection(direction)
+
 	def SetIndicator(self, indname, state):
 		if indname not in self.outputs:
 			logging.warning("no output defined for indicator %s" % indname)

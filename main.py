@@ -188,6 +188,12 @@ class MainFrame(wx.Frame):
 				for cmd in self.trainList.GetSetTrainCmds(nname):
 					self.socketServer.sendToAll(cmd)
 
+		elif verb == "blockdir":
+			pass  #"blockdir": {"block": "D20", "dir": "E"}
+			block = evt.data["block"][0]
+			direction = evt.data["dir"][0]
+			self.rr.SetBlockDirection(block, direction)
+
 		elif verb == "handswitch":
 			hsname = evt.data["name"][0]
 			stat = int(evt.data["status"][0])

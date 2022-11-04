@@ -38,6 +38,9 @@ class Latham(District):
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
+		self.rr.GetOutput("S21E").SetAspect(1)
+		self.rr.GetOutput("N10W").SetAspect(1)
+
 	def OutIn(self):
 		#Latham
 		outb = [0 for i in range(5)]
