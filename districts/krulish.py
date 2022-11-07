@@ -54,7 +54,7 @@ class Krulish(District):
 		outb[1] = setBit(outb[1], 6, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[1] = setBit(outb[1], 7, 1 if asp in [4, 5, 6, 7] else 0)
 
-		# outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBKrulishYard").GetValue())  nassau
+		outb[2] = setBit(outb[2], 4, self.rr.GetInput("CBKrulishYd").GetValue())
 		outb[2] = setBit(outb[2], 5, self.rr.GetOutput("N10.srel").GetStatus())	# Stop relays
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("N20.srel").GetStatus())	# Stop relays
 		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("N11.srel").GetStatus())	# Stop relays

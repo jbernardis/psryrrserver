@@ -12,15 +12,16 @@ class Nassau(District):
 			"N20R", "N20L",
 			"N18R", "N18LA", "N18LB",
 			"N16R", "N16L",
-			"N14L", "N14LA", "N14LB", "N14LC", "N14LD",
+			"N14R", "N14LA", "N14LB", "N14LC", "N14LD",
 			"N28R", "N28L",
 			"N26RA", "N26RB", "N26RC", "N26L",
-			"R24RA", "R24RB", "R24RC", "R24RD", "R24L"
+			"N24RA", "N24RB", "N24RC", "N24RD", "N24L",
+			"N11W", "N21W", "B20E"
 		]
 		toONames = ["NSw13", "NSw15", "NSw17"]
 		toNames = [ "NSw19", "NSw21", "NSw23", "NSw25", "NSw27", "NSw29", "NSw31", "NSw33", "NSw35",
 					"NSw39", "NSw41", "NSw43", "NSw45", "NSw47", "NSw51", "NSw53", "NSw55", "NSw57"]
-		relayNames = [ "N21.srel" ]
+		relayNames = [ "N21.srel", "B10.srel" ]
 
 		self.NXMap = {
 			"NNXBtnT12": {
@@ -100,148 +101,204 @@ class Nassau(District):
 			"NNXBtnR10", "NNXBtnB10", "NNXBtnB20",
 			"NNXBtnW11", "NNXBtnN32E", "NNXBtnN31E", "NNXBtnN12E", "NNXBtnN22E", "NNXBtnN41E", "NNXBtnN42E", "NNXBtnW20E"
 		]
-		ix = self.AddOutputs(nxButtons, NXButtonOutput, District.nxbutton, ix)
-		ix = self.AddOutputs(toONames, TurnoutOutput, District.turnout, ix)
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
+		ix = self.AddOutputs(toONames, TurnoutOutput, District.turnout, ix)
+		ix = self.AddOutputs(nxButtons, NXButtonOutput, District.nxbutton, ix)
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in nxButtons:
 			self.SetNXButtonPulseLen(n, 2)
 
-		brkrNames = [ "CBKrulish", "CBNassauW", "CBNassauE", "CBSptJct", "CBWilson", "CBThomas" ]
+		brkrNames = [ "CBKrulish", "CBKrulishYd", "CBNassauW", "CBNassauE", "CBSptJct", "CBWilson", "CBThomas", "CBFoss", "CBDell" ]
 		blockNames = [ "N21.W", "N21", "N21.E", "NWOSTY", "NWOSCY", "NWOSW", "NWOSE",
 						"N31", "N32", "N12", "N22", "N41", "N42",
-						"N60", "T12", "W10", "W20", "R10" ]
+						"N60", "T12", "W10", "W11", "W20", "R10.W" ]
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
-		ix = self.AddInputs(toNames+toONames, TurnoutInput, District.turnout, ix)
+		ix = self.AddSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)
+		ix = self.AddInputs(toONames+toNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def EvaluateNXButtons(self, bEntry, bExit):
 		if bEntry not in self.NXMap:
-			print("entry button not found")
 			return
 
 		if bExit not in self.NXMap[bEntry]:
-			print("exit button not found")
 			return
 
 		tolist = self.NXMap[bEntry][bExit]
 
 		for toName, status in tolist:
-			print("to: (%s)" % toName)
 			self.rr.GetInput(toName).SetState(status)
-			print("turnout: name: %s, state: %s" % (toName, status))
 
 	def OutIn(self):
-		#Latham
-		outb = [0 for i in range(5)]
+		#Nassau West
+		outb = [0 for i in range(8)]
 
-# 	NWOut[0].bit.b0 = N14LC.Aspect[0];	//Interlocking Signals
-# 	NWOut[0].bit.b1 = N14LB.Aspect[0];
-# 	NWOut[0].bit.b2 = N20R.Aspect[0];
-#     NWOut[0].bit.b3 = N20L.Aspect[0];
-#     NWOut[0].bit.b4 = N14LA.Aspect[0];
-#     NWOut[0].bit.b5 = N14LA.Aspect[1];
-# 	NWOut[0].bit.b6 = N16L.Aspect[0];
-# 	NWOut[0].bit.b7 = N16L.Aspect[1];
+		asp = self.rr.GetOutput("N14LC").GetAspect()     # signals
+		outb[0] = setBit(outb[0], 0, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N14LB").GetAspect()    
+		outb[0] = setBit(outb[0], 1, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N20R").GetAspect()    
+		outb[0] = setBit(outb[0], 2, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N20L").GetAspect()    
+		outb[0] = setBit(outb[0], 3, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N14LA").GetAspect()    
+		outb[0] = setBit(outb[0], 4, 1 if asp in [1, 3] else 0)
+		outb[0] = setBit(outb[0], 5, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N16L").GetAspect()    
+		outb[0] = setBit(outb[0], 6, 1 if asp in [1, 3] else 0)
+		outb[0] = setBit(outb[0], 7, 1 if asp in [2, 3] else 0)
 
-# 	NWOut[1].bit.b0 = N18LB.Aspect[0];
-#     NWOut[1].bit.b1 = N18LB.Aspect[1];
-# 	NWOut[1].bit.b2 = N18LA.Aspect[0];
-# 	NWOut[1].bit.b3 = N18LA.Aspect[1];
-# 	NWOut[1].bit.b4 = N16R.Aspect[0];
-# 	NWOut[1].bit.b5 = N16R.Aspect[1];
-# 	NWOut[1].bit.b6 = N14R.Aspect[0];
-# 	NWOut[1].bit.b7 = N14R.Aspect[1];    //Bad output?
+		asp = self.rr.GetOutput("N18LB").GetAspect()    
+		outb[1] = setBit(outb[1], 0, 1 if asp in [1, 3] else 0)
+		outb[1] = setBit(outb[1], 1, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N18LA").GetAspect()    
+		outb[1] = setBit(outb[1], 2, 1 if asp in [1, 3] else 0)
+		outb[1] = setBit(outb[1], 3, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N16R").GetAspect()    
+		outb[1] = setBit(outb[1], 4, 1 if asp in [1, 3] else 0)
+		outb[1] = setBit(outb[1], 5, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N14R").GetAspect()    
+		outb[1] = setBit(outb[1], 6, 1 if asp in [1, 3] else 0)
+		outb[7] = setBit(outb[7], 3, 1 if asp in [2, 3] else 0)  # Transferred to byte 7:3 because of 1:7 being a Bad output?
 
-# 	NWOut[2].bit.b0 = N18R.Aspect[0];
-#     NWOut[2].bit.b1 = N11W.Aspect[0];  	//Block signals
-#     NWOut[2].bit.b2 = N11W.Aspect[1];
-#     NWOut[2].bit.b3	= N11W.Aspect[2];
-#     NWOut[2].bit.b4 = N21W.Aspect[0];
-#     NWOut[2].bit.b5 = N21W.Aspect[1];
-#     NWOut[2].bit.b6 = N21W.Aspect[2];
-# 	NWOut[2].bit.b7 = S11.Blk;			//Shore approach indicator
+		asp = self.rr.GetOutput("N18R").GetAspect()    
+		outb[2] = setBit(outb[2], 0, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N11W").GetAspect()
+		outb[2] = setBit(outb[2], 1, 1 if asp in [1, 3, 5, 7] else 0)  # Block signals
+		outb[2] = setBit(outb[2], 2, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[2] = setBit(outb[2], 3, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("N21W").GetAspect()
+		outb[2] = setBit(outb[2], 4, 1 if asp in [1, 3, 5, 7] else 0) 
+		outb[2] = setBit(outb[2], 5, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[2] = setBit(outb[2], 6, 1 if asp in [4, 5, 6, 7] else 0)
+		outb[2] = setBit(outb[2], 6, self.rr.GetInput("S11").GetValue())  #	Shore approach indicator
 
-#    	NWOut[3].bit.b0 = R10.M || R10.W;  	//Rocky Hill approach indicator
-#    	NWOut[3].bit.b1 = B20.Blk;       	//Bank approach indicator
+		v = self.rr.GetInput("R10").GetValue() + self.rr.GetInput("R10.W").GetValue() 
+		outb[3] = setBit(outb[3], 0, 1 if v != 0 else 0 )  				# Rocky Hill approach indicator
+#		outb[3] = setBit(outb[3], 1, self.rr.GetInput("B20").GetValue())  bank #	Bank approach indicator
 # 	NWOut[3].bit.b2 = !NFltL12.R;		//Fleet indicator
 # 	NWOut[3].bit.b3 = NFltL12.R;
-# 	NWOut[3].bit.b4 = NSigL14.LI;      	//Signal indicators
-# 	NWOut[3].bit.b5 = NSigL14.NI;
-# 	NWOut[3].bit.b6 = NSigL14.RI;
-#     NWOut[3].bit.b7 = NSigL16.LI;
+		sigL = self.DetermineSignalLever(["N14LA", "N14LB", "N14LC"], ["N14R"])
+		outb[3] = setBit(outb[3], 4, 1 if sigL == "L" else 0)       # Signal Indicators
+		outb[3] = setBit(outb[3], 5, 1 if sigL == "N" else 0)
+		outb[3] = setBit(outb[3], 6, 1 if sigL == "R" else 0)
+		sigL = self.DetermineSignalLever(["N16L"], ["N16R"])
+		outb[3] = setBit(outb[3], 7, 1 if sigL == "L" else 0) 
 
-# 	NWOut[4].bit.b0 = NSigL16.NI;
-#     NWOut[4].bit.b1 = NSigL16.RI;
-#     NWOut[4].bit.b2 = NSigL18.LI;
-# 	NWOut[4].bit.b3 = NSigL18.NI;
-# 	NWOut[4].bit.b4 = NSigL18.RI;
-# 	NWOut[4].bit.b5 = NSigL20.LI;
-# 	NWOut[4].bit.b6 = NSigL20.NI;
-#     NWOut[4].bit.b7 = NSigL20.RI;
+		outb[4] = setBit(outb[4], 0, 1 if sigL == "N" else 0)
+		outb[4] = setBit(outb[4], 1, 1 if sigL == "R" else 0)
+		sigL = self.DetermineSignalLever(["N18LA", "N18LB"], ["N18R"])
+		outb[4] = setBit(outb[4], 2, 1 if sigL == "L" else 0) 
+		outb[4] = setBit(outb[4], 3, 1 if sigL == "N" else 0)
+		outb[4] = setBit(outb[4], 4, 1 if sigL == "R" else 0)
+		sigL = self.DetermineSignalLever(["N20L"], ["N20R"])
+		outb[4] = setBit(outb[4], 5, 1 if sigL == "L" else 0) 
+		outb[4] = setBit(outb[4], 6, 1 if sigL == "N" else 0)
+		outb[4] = setBit(outb[4], 7, 1 if sigL == "R" else 0)
 
-# 	NWOut[5].bit.b0 = KSw1.NO;			//Krulish switch outputs
-# 	NWOut[5].bit.b1 = KSw1.RO;
-# 	NWOut[5].bit.b2 = KSw3.NO;
-#     NWOut[5].bit.b3 = KSw3.RO;
-#     NWOut[5].bit.b4 = KSw5.NO;
-#     NWOut[5].bit.b5 = KSw5.RO;
-#     NWOut[5].bit.b6 = KSw7.NO;
-#     NWOut[5].bit.b7 = KSw7.RO;
+		op = self.rr.GetOutput("KSw1").GetOutPulse()
+		outb[5] = setBit(outb[5], 0, 1 if op > 0 else 0)             # Krulish switches
+		outb[5] = setBit(outb[5], 1, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("KSw3").GetOutPulse()
+		outb[5] = setBit(outb[5], 2, 1 if op > 0 else 0)  
+		outb[5] = setBit(outb[5], 3, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("KSw5").GetOutPulse()
+		outb[5] = setBit(outb[5], 4, 1 if op > 0 else 0)  
+		outb[5] = setBit(outb[5], 5, 1 if op < 0 else 0)
+		op = self.rr.GetOutput("KSw7").GetOutPulse()
+		outb[5] = setBit(outb[5], 6, 1 if op > 0 else 0)  
+		outb[5] = setBit(outb[5], 7, 1 if op < 0 else 0)
 
-# 	NWOut[6].bit.b0 = CBKrulish;      	//DCC Circuit Breakers
-# 	NWOut[6].bit.b1 = CBNassauW;
-# 	NWOut[6].bit.b2 = CBNassauE;
-# 	NWOut[6].bit.b3 = CBSptJct;
-# 	NWOut[6].bit.b4 = CBWilson;
-#     NWOut[6].bit.b5 = CBThomas;
+		outb[6] = setBit(outb[6], 0, self.rr.GetInput("CBKrulish").GetValue())   # Circuit breakers
+		outb[6] = setBit(outb[6], 1, self.rr.GetInput("CBNassauW").GetValue()) 
+		outb[6] = setBit(outb[6], 2, self.rr.GetInput("CBNassauE").GetValue())  
+		outb[6] = setBit(outb[6], 3, self.rr.GetInput("CBSptJct").GetValue())  
+		outb[6] = setBit(outb[6], 4, self.rr.GetInput("CBWilson").GetValue())   
+		outb[6] = setBit(outb[6], 5, self.rr.GetInput("CBThomas").GetValue())   
 # 	NWOut[6].bit.b6 = NWSL1;			//Switch locks
 # 	NWOut[6].bit.b7 = NWSL2;
 
 #     NWOut[7].bit.b0 = NWSL3;
 # 	NWOut[7].bit.b1 = NWSL4;
-#    	NWOut[7].bit.b2 = N21.Srel;			//Stop relay
-# 	NWOut[7].bit.b3 = N14R.Aspect[1];   //transferred bit
-# 	NWOut[7].bit.b4 = N14LD.Aspect[0];  //Dwarf signals for W20
-# 	NWOut[7].bit.b5 = N24RD.Aspect[0];
+		outb[7] = setBit(outb[7], 2, self.rr.GetOutput("N21.srel").GetStatus())	      # Stop relays
+																					# Bit 3 used for signal N14R above
+		asp = self.rr.GetOutput("N14LD").GetAspect()    							# dwarf signals for W20
+		outb[7] = setBit(outb[7], 4, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N24RD").GetAspect()   
+		outb[7] = setBit(outb[7], 5, 1 if asp != 0 else 0)
 
-# 	SendPacket(NASSAUW, &NassauWAborts, &NWIn[0], &NWOld[0], &NWOut[0], 8, true);
-# 		NWText = "NassauW\t" + OutText;
+		logging.debug("Nassau:NassauW: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:00b}  {5:00b}  {6:00b}  {7:00b}".format(
+						outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7]))
 
-# 	if(Match)
-# 	{
-# 		NSw19.NI = NWIn[0].bit.b0;	//Switch positions
-# 		NSw19.RI = NWIn[0].bit.b1;
-# 		NSw21.NI = NWIn[0].bit.b2;
-# 		NSw21.RI = NWIn[0].bit.b3;
-# 		NSw23.NI = NWIn[0].bit.b4;
-# 		NSw23.RI = NWIn[0].bit.b5;
-# 		NSw25.NI = NWIn[0].bit.b6;
-# 		NSw25.RI = NWIn[0].bit.b7;
+		# inb, inbc = self.rrbus.sendRecv(NASSAUW, outb, 4, swap=True)
+		# if inb is None:
+		# 		print("No data received from NASSAU:NASSAUW")
+		# 	return
 
-# 		NSw27.NI = NWIn[1].bit.b0;
-# 		NSw27.RI = NWIn[1].bit.b1;
-# 		NSw29.NI = NWIn[1].bit.b2;
-# 	   	NSw29.RI = NWIn[1].bit.b3;
-# 	   	NSw31.NI = NWIn[1].bit.b4;
-# 	   	NSw31.RI = NWIn[1].bit.b5;
-# 	   	NSw33.NI = NWIn[1].bit.b6;
-# 	   	NSw33.RI = NWIn[1].bit.b7;
+		# 	print("NASSAU_NASSAUE: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
 
-# 		N21.W = NWIn[2].bit.b0;   //Detection
-# 		N21.M = NWIn[2].bit.b1;
-# 		N21.E = NWIn[2].bit.b2;
-# 	   	NWOSTY  NWOS1 = NWIn[2].bit.b3;
-# 	   NWOSCY   NWOS2 = NWIn[2].bit.b4;
-# 	   	NWOSW   NWOS3 = NWIn[2].bit.b5;
-# 	   	NWOSE   NWOS4 = NWIn[2].bit.b6;
-# 	   	N32.M = NWIn[2].bit.b7;
 
-# 		N31.M 			= NWIn[3].bit.b0;
-# 	  	N12.M 			= NWIn[3].bit.b1;
+		inb = []
+		inbc = 0
+		if inbc == 8:
+			ip = self.rr.GetInput("NSw19")  #Switch positions
+			nb = getBit(inb[0], 0)
+			rb = getBit(inb[0], 1)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("NSw21") 
+			nb = getBit(inb[0], 2)
+			rb = getBit(inb[0], 3)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("NSw23") 
+			nb = getBit(inb[0], 4)
+			rb = getBit(inb[0], 5)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("NSw25")
+			nb = getBit(inb[0], 6)
+			rb = getBit(inb[0], 7)
+			ip.SetState(nb, rb)
+
+			ip = self.rr.GetInput("NSw27") 
+			nb = getBit(inb[1], 0)
+			rb = getBit(inb[1], 1)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("NSw29") 
+			nb = getBit(inb[1], 2)
+			rb = getBit(inb[1], 3)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("NSw31") 
+			nb = getBit(inb[1], 4)
+			rb = getBit(inb[1], 5)
+			ip.SetState(nb, rb)
+			ip = self.rr.GetInput("NSw33")
+			nb = getBit(inb[1], 6)
+			rb = getBit(inb[1], 7)
+			ip.SetState(nb, rb)
+
+			ip = self.rr.GetInput("N21.W") 
+			ip.SetValue(getBit(inb[2], 0))   #detection
+			ip = self.rr.GetInput("N21") 
+			ip.SetValue(getBit(inb[2], 1)) 
+			ip = self.rr.GetInput("N21.E") 
+			ip.SetValue(getBit(inb[2], 2)) 
+			ip = self.rr.GetInput("NWOSTY")  # NWOS1
+			ip.SetValue(getBit(inb[2], 3)) 
+			ip = self.rr.GetInput("NWOSCY")  # NWOS2
+			ip.SetValue(getBit(inb[2], 4)) 
+			ip = self.rr.GetInput("NWOSW")  # NWOS3
+			ip.SetValue(getBit(inb[2], 5)) 
+			ip = self.rr.GetInput("NWOSE")  # NWOS4
+			ip.SetValue(getBit(inb[2], 6)) 
+			ip = self.rr.GetInput("N32") 
+			ip.SetValue(getBit(inb[2], 7)) 
+
+			ip = self.rr.GetInput("N31") 
+			ip.SetValue(getBit(inb[3], 0)) 
+			ip = self.rr.GetInput("N12") 
+			ip.SetValue(getBit(inb[3], 1)) 
 # 		NRelease 		= NWIn[3].bit.b2; 	//Switch release
 # 		if(RBNassau->Checked)
 # 		{
@@ -273,183 +330,201 @@ class Nassau(District):
 # 			NSigL28.L   	= NWIn[6].bit.b0;
 # 		}
 
-#       	CktBkr[19]		= !NWIn[6].bit.b1;	//Krulish Yard circuit breaker
-# 	   	CktBkr[20]		= !NWIn[6].bit.b2;	//Thomas Yard
-# 		CktBkr[21]		= !NWIn[6].bit.b3;	//Wilson City
-# 		CktBkr[22]		= !NWIn[6].bit.b4; 	//Krulish
-# 		CktBkr[23] 		= !NWIn[6].bit.b5; 	//Nassau West
-# 	 	CktBkr[24]		= !NWIn[6].bit.b6; 	//Nassau East
-# 		CktBkr[25]		= !NWIn[6].bit.b7; 	//Foss
+			self.rr.GetInput("CBKrulishYd").SetValue(getBit(inb[6], 1)) # Breakers
+			self.rr.GetInput("CBThomas").SetValue(getBit(inb[6], 2))
+			self.rr.GetInput("CBWilson").SetValue(getBit(inb[6], 3))
+			self.rr.GetInput("CBKrulish").SetValue(getBit(inb[6], 4))
+			self.rr.GetInput("CBNassauW").SetValue(getBit(inb[6], 5))
+			self.rr.GetInput("CBNassauE").SetValue(getBit(inb[6], 6))
+			self.rr.GetInput("CBFoss").SetValue(getBit(inb[6], 7))
 
-# 		CktBkr[26]		= !NWIn[7].bit.b0; 	//Dell
-# 		NSw60A          = NWIn[7].bit.b1;   //Switches in coach yard
-# 		NSw60B          = NWIn[7].bit.b2;
-# 		NSw60C          = NWIn[7].bit.b3;
-# 		NSw60D          = NWIn[7].bit.b4;
-# 		NSw35.NI        = NWIn[7].bit.b5;   //additional switch in Nassau West NX
-# 		NSw35.RI        = NWIn[7].bit.b6;
-# 	}
+			self.rr.GetInput("CBDell").SetValue(getBit(inb[7], 0))
+			NSw60A = getBit(inb[7], 1) # Switches in coach yard
+			NSw60B = getBit(inb[7], 2)
+			NSw60C = getBit(inb[7], 3)
+			NSw60D = getBit(inb[7], 4)
+			ip13 = self.rr.GetInput("NSw13") 
+			ip15 = self.rr.GetInput("NSw15") 
+			ip17 = self.rr.GetInput("NSw17") 
+			if NSw60A != 0:
+				ip13.SetState(0, 1)
+				ip15.SetState(0, 1)
+				ip17.SetState(0, 1)
+			elif NSw60B != 0:
+				ip13.SetState(1, 0)
+				ip15.SetState(1, 0)
+				ip17.SetState(0, 1)
+			elif NSw60C != 0:
+				ip13.SetState(0, 1)
+				ip15.SetState(0, 1)
+				ip17.SetState(1, 0)
+			elif NSw60D != 0:
+				ip13.SetState(1, 0)
+				ip15.SetState(1, 0)
+				ip17.SetState(1, 0)
 
-# 	NFltL12.N = !NFltL12.R;
-# 	NSigL14.N = !(NSigL14.R || NSigL14.L);
-# 	NSigL16.N = !(NSigL16.R || NSigL16.L);
-# 	NSigL18.N = !(NSigL18.R || NSigL18.L);
-# 	NSigL20.N = !(NSigL20.R || NSigL20.L);
-# 	NSigL24.N = !(NSigL24.R || NSigL24.L);
-# 	NSigL26.N = !(NSigL26.R || NSigL26.L);
-# 	NSigL28.N = !(NSigL28.R || NSigL28.L);
+			ip = self.rr.GetInput("NSw35")
+			nb = getBit(inb[7], 5)
+			rb = getBit(inb[7], 6)
+			ip.SetState(nb, rb)
 
-# 	if(NSw60A)
-# 	{
-# 		NSw13.RI = NSw15.RI = NSw17.RI = true;
-# 		NSw13.NI = NSw15.NI = NSw17.NI = false;
-# 	}
-# 	else if(NSw60B)
-# 	{
-# 		NSw13.NI = NSw15.NI = NSw17.RI = true;
-# 		NSw13.RI = NSw15.RI = NSw17.NI = false;
-# 	}
-# 	else if(NSw60C)
-# 	{
-# 		NSw13.RI = NSw15.RI = NSw17.NI = true;
-# 		NSw13.NI = NSw15.NI = NSw17.RI = false;
-# 	}
-# 	else if(NSw60D)
-# 	{
-# 		NSw13.NI = NSw15.NI = NSw17.NI = true;
-# 		NSw13.RI = NSw15.RI = NSw17.RI = false;
-# 	}
+		# Nassau East
+		outb = [0 for i in range(4)]
 
+		asp = self.rr.GetOutput("N24RB").GetAspect()             # Signals
+		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3] else 0)
+		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N24RC").GetAspect()    
+		outb[0] = setBit(outb[0], 2, 1 if asp in [1, 3] else 0)
+		outb[0] = setBit(outb[0], 3, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N26RC").GetAspect()    
+		outb[0] = setBit(outb[0], 4, 1 if asp in [1, 3] else 0)
+		outb[0] = setBit(outb[0], 5, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N24RA").GetAspect()    
+		outb[0] = setBit(outb[0], 6, 1 if asp in [1, 3] else 0)
+		outb[0] = setBit(outb[0], 7, 1 if asp in [2, 3] else 0)
 
-# //NassauE-----------------------------------------------------------------------
+		asp = self.rr.GetOutput("N26RA").GetAspect()       
+		outb[1] = setBit(outb[1], 0, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N26RB").GetAspect()       
+		outb[1] = setBit(outb[1], 1, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N28R").GetAspect()       
+		outb[1] = setBit(outb[1], 2, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("B20E").GetAspect()
+		outb[1] = setBit(outb[1], 3, 1 if asp in [1, 3, 5, 7] else 0)  # block signal
+		outb[1] = setBit(outb[1], 4, 1 if asp in [2, 3, 6, 7] else 0)
+		outb[1] = setBit(outb[1], 5, 1 if asp in [4, 5, 6, 7] else 0)
+		asp = self.rr.GetOutput("N24L").GetAspect()       
+		outb[1] = setBit(outb[1], 6, 1 if asp != 0 else 0)
+		asp = self.rr.GetOutput("N26L").GetAspect()       
+		outb[1] = setBit(outb[1], 7, 1 if asp in [1, 3] else 0)
 
-# 	NEOut[0].bit.b0 = N24RB.Aspect[0];		//Signals
-# 	NEOut[0].bit.b1 = N24RB.Aspect[1];
-# 	NEOut[0].bit.b2 = N24RC.Aspect[0];
-# 	NEOut[0].bit.b3 = N24RC.Aspect[1];
-# 	NEOut[0].bit.b4 = N26RC.Aspect[0];
-# 	NEOut[0].bit.b5 = N26RC.Aspect[1];
-# 	NEOut[0].bit.b6 = N24RA.Aspect[0];
-#     NEOut[0].bit.b7 = N24RA.Aspect[1];
-
-#     NEOut[1].bit.b0 = N26RA.Aspect[0];
-#     NEOut[1].bit.b1 = N26RB.Aspect[0];
-# 	NEOut[1].bit.b2 = N28R.Aspect[0];
-#     NEOut[1].bit.b3 = B20E.Aspect[0];       //Block signal
-#     NEOut[1].bit.b4 = B20E.Aspect[1];
-#    	NEOut[1].bit.b5 = B20E.Aspect[2];
-# 	NEOut[1].bit.b6 = N24L.Aspect[0];
-# 	NEOut[1].bit.b7 = N26L.Aspect[0];
-
-#    	NEOut[2].bit.b0 = N26L.Aspect[1];
-#     NEOut[2].bit.b1 = N28L.Aspect[0];
-#     NEOut[2].bit.b2 = N28L.Aspect[1];
+		outb[2] = setBit(outb[2], 0, 1 if asp in [2, 3] else 0)
+		asp = self.rr.GetOutput("N28L").GetAspect()       
+		outb[2] = setBit(outb[2], 1, 1 if asp in [1, 3] else 0)
+		outb[2] = setBit(outb[2], 2, 1 if asp in [2, 3] else 0)
 #    	NEOut[2].bit.b3 = NESL1;                //Switch locks
 #     NEOut[2].bit.b4 = NESL2;
 #    	NEOut[2].bit.b5 = NESL3;
-#     NEOut[2].bit.b6 = B10.Srel;           	//Stop relay
-#     NEOut[2].bit.b7 = NSigL24.LI;           //Signal indicators
+		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("B10.srel").GetStatus())	# Stop relay
+		sigL = self.DetermineSignalLever(["N24L"], ["N24RA", "N24RB", "N24RC", "N24RD"])
+		outb[2] = setBit(outb[2], 7, 1 if sigL == "L" else 0)       # Signal Indicators
 
-#   	NEOut[3].bit.b0 = NSigL24.NI;
-#     NEOut[3].bit.b1 = NSigL24.RI;
-# 	NEOut[3].bit.b2 = NSigL26.LI;
-#     NEOut[3].bit.b3 = NSigL26.NI;
-#    	NEOut[3].bit.b4 = NSigL26.RI;
-#    	NEOut[3].bit.b5 = NSigL28.LI;
-#    	NEOut[3].bit.b6 = NSigL28.NI;
-#     NEOut[3].bit.b7 = NSigL28.RI;
+		outb[3] = setBit(outb[3], 0, 1 if sigL == "N" else 0)
+		outb[3] = setBit(outb[3], 1, 1 if sigL == "R" else 0)
+		sigL = self.DetermineSignalLever(["N26L"], ["N26RA", "N26RB", "N26RC"])
+		outb[3] = setBit(outb[3], 2, 1 if sigL == "L" else 0)  
+		outb[3] = setBit(outb[3], 3, 1 if sigL == "N" else 0)
+		outb[3] = setBit(outb[3], 4, 1 if sigL == "R" else 0)
+		sigL = self.DetermineSignalLever(["N28L"], ["N28R"])
+		outb[3] = setBit(outb[3], 5, 1 if sigL == "L" else 0)  
+		outb[3] = setBit(outb[3], 6, 1 if sigL == "N" else 0)
+		outb[3] = setBit(outb[3], 7, 1 if sigL == "R" else 0)
+
+		logging.debug("Nassau:NassauE: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
 
 # 	SendPacket(NASSAUE, &NassauEAborts, &NEIn[0], &NEOld[0], &NEOut[0], 4, true);
 # 		NEText = "NassauE\t" + OutText;
 
-# 	if(Match)
-#    	{
-#       	NSw41.NI = NEIn[0].bit.b0;    //Switch positions
-# 	   	NSw41.RI = NEIn[0].bit.b1;
-# 	   	NSw43.NI = NEIn[0].bit.b2;
-# 	   	NSw43.RI = NEIn[0].bit.b3;
-# 		NSw45.NI = NEIn[0].bit.b4;
-# 	   	NSw45.RI = NEIn[0].bit.b5;
-# 	   	NSw47.NI = NEIn[0].bit.b6;
-# 	   	NSw47.RI = NEIn[0].bit.b7;
+		inb = []
+		inbc = 0
+		if inbc == 4:
+			nb = getBit(inb[0], 0)  # Switch positions
+			rb = getBit(inb[0], 1)
+			self.rr.GetInput("NSw41").SetState(nb, rb)
+			nb = getBit(inb[0], 2) 
+			rb = getBit(inb[0], 3)
+			self.rr.GetInput("NSw43").SetState(nb, rb)
+			nb = getBit(inb[0], 4) 
+			rb = getBit(inb[0], 5)
+			self.rr.GetInput("NSw5").SetState(nb, rb)
+			nb = getBit(inb[0], 6) 
+			rb = getBit(inb[0], 7)
+			self.rr.GetInput("NSw47").SetState(nb, rb)
 
-# 	   	NSw51.NI = NEIn[1].bit.b0;
-# 	   	NSw51.RI = NEIn[1].bit.b1;
-#       	NSw53.NI = NEIn[1].bit.b2;
-# 	   	NSw53.RI = NEIn[1].bit.b3;
-# 	   	NSw55.NI = NEIn[1].bit.b4;
-# 	   	NSw55.RI = NEIn[1].bit.b5;
-# 	   	NSw57.NI = NEIn[1].bit.b6;
-# 	   	NSw57.RI = NEIn[1].bit.b7;
+			nb = getBit(inb[1], 0) 
+			rb = getBit(inb[1], 1)
+			self.rr.GetInput("NSw51").SetState(nb, rb)
+			nb = getBit(inb[1], 2) 
+			rb = getBit(inb[1], 3)
+			self.rr.GetInput("NSw53").SetState(nb, rb)
+			nb = getBit(inb[1], 4) 
+			rb = getBit(inb[1], 5)
+			self.rr.GetInput("NSw55").SetState(nb, rb)
+			nb = getBit(inb[1], 6) 
+			rb = getBit(inb[1], 7)
+			self.rr.GetInput("NSw57").SetState(nb, rb)
 
-# 	   	N22.M 	= NEIn[2].bit.b0;	//Detection
-# 	   	N41.M	= NEIn[2].bit.b1;
-# 	  	N42.M 	= NEIn[2].bit.b2;
-# 	   	NEOS1 	= NEIn[2].bit.b3;
-# 		NEOS2 	= NEIn[2].bit.b4;
-# 	   	NEOS3 	= NEIn[2].bit.b5;
-# 	   	B10.W	= NEIn[2].bit.b6;
-# 		B10.M 	= NEIn[2].bit.b7;
+			self.rr.GetInput("N22").SetValue(getBit(inb[2], 0))  # Detection
+			self.rr.GetInput("N41").SetValue(getBit(inb[2], 1))  
+			self.rr.GetInput("N42").SetValue(getBit(inb[2], 2)) 
+			self.rr.GetInput("NEOSRH").SetValue(getBit(inb[2], 3)) # NEOS1 
+			self.rr.GetInput("NEOSW").SetValue(getBit(inb[2], 4))  # NEOS2
+			self.rr.GetInput("NEOSE").SetValue(getBit(inb[2], 5))  # NEOS3 
+			self.rr.GetInput("B10.W").SetValue(getBit(inb[2], 6))  
+			self.rr.GetInput("B10").SetValue(getBit(inb[2], 7))  
 
-# 		NSw39.NI = NEIn[3].bit.b0;  //Additional switch in Nassau East NX
-# 		NSw39.RI = NEIn[3].bit.b1;
-# 	}
+			nb = getBit(inb[3], 0) 
+			rb = getBit(inb[3], 1)
+			self.rr.GetInput("NSw39").SetState(nb, rb)
 
-# 	//NASSAUNX Output only
+		# NX Buttons Output only
+		outb = [0 for i in range(3)]
 
-		op = self.rr.GetOutput("NNXBtnT12").GetOutPulse()
+		op = self.rr.GetOutput("NNXBtnT12").GetOutPulse() # Nassau West
+		outb[0] = setBit(outb[0], 0, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN60").GetOutPulse()
+		outb[0] = setBit(outb[0], 1, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN11").GetOutPulse()
+		outb[0] = setBit(outb[0], 2, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN21").GetOutPulse()
-
+		outb[0] = setBit(outb[0], 3, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnW10").GetOutPulse()
+		outb[0] = setBit(outb[0], 4, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN32W").GetOutPulse()
+		outb[0] = setBit(outb[0], 5, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN31W").GetOutPulse()
+		outb[0] = setBit(outb[0], 6, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN12W").GetOutPulse()
+		outb[0] = setBit(outb[0], 7, 1 if op != 0 else 0)
+
+
 		op = self.rr.GetOutput("NNXBtnN22W").GetOutPulse()
+		outb[1] = setBit(outb[1], 0, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN41W").GetOutPulse()
+		outb[1] = setBit(outb[1], 1, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN42W").GetOutPulse()
+		outb[1] = setBit(outb[1], 2, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnW20W").GetOutPulse()
-
-		op = self.rr.GetOutput("NNXBtnR10").GetOutPulse()
-		op = self.rr.GetOutput("NNXBtnB10").GetOutPulse()
-		op = self.rr.GetOutput("NNXBtnB20").GetOutPulse()
-
+		outb[1] = setBit(outb[1], 3, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnW11").GetOutPulse()
-		op = self.rr.GetOutput("NNXBtnN32E").GetOutPulse()
+		outb[1] = setBit(outb[1], 4, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("NNXBtnN32E").GetOutPulse()  # Nassau East
+		outb[1] = setBit(outb[1], 5, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN31E").GetOutPulse()
+		outb[1] = setBit(outb[1], 6, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN12E").GetOutPulse()
+		outb[1] = setBit(outb[1], 7, 1 if op != 0 else 0)
+
 		op = self.rr.GetOutput("NNXBtnN22E").GetOutPulse()
+		outb[2] = setBit(outb[2], 0, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN41E").GetOutPulse()
+		outb[2] = setBit(outb[2], 1, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN42E").GetOutPulse()
+		outb[2] = setBit(outb[2], 2, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnW20E").GetOutPulse()
+		outb[2] = setBit(outb[2], 3, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("NNXBtnR10").GetOutPulse()
+		outb[2] = setBit(outb[2], 4, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("NNXBtnB10").GetOutPulse()
+		outb[2] = setBit(outb[2], 5, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("NNXBtnB20").GetOutPulse()
+		outb[2] = setBit(outb[2], 6, 1 if op != 0 else 0)
 
 
-# 	NXOut[0].bit.b0 = NXBtnT12;       	//Nassau West
-# 	NXOut[0].bit.b1 = NXBtnN60;
-# 	NXOut[0].bit.b2 = NXBtnN11;
-# 	NXOut[0].bit.b3 = NXBtnN21;
-# 	NXOut[0].bit.b4 = NXBtnW10;
-# 	NXOut[0].bit.b5 = NXBtnN32W;
-# 	NXOut[0].bit.b6 = NXBtnN31W;
-# 	NXOut[0].bit.b7 = NXBtnN12W;
+		logging.debug("Nassau:NX: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
 
-# 	NXOut[1].bit.b0 = NXBtnN22W;
-# 	NXOut[1].bit.b1 = NXBtnN41W;
-# 	NXOut[1].bit.b2 = NXBtnN42W;
-# 	NXOut[1].bit.b3 = NXBtnW20W;
-# 	NXOut[1].bit.b4 = NXBtnW11;
-# 	NXOut[1].bit.b5 = NXBtnN32E;        //Nassau East
-# 	NXOut[1].bit.b6 = NXBtnN31E;
-# 	NXOut[1].bit.b7 = NXBtnN12E;
 
-# 	NXOut[2].bit.b0 = NXBtnN22E;
-# 	NXOut[2].bit.b1 = NXBtnN41E;
-# 	NXOut[2].bit.b2 = NXBtnN42E;
-# 	NXOut[2].bit.b3 = NXBtnW20E;
-# 	NXOut[2].bit.b4 = NXBtnR10;
-# 	NXOut[2].bit.b5 = NXBtnB10;
-# 	NXOut[2].bit.b6 = NXBtnB20;
 # // 	NXOut[2].bit.b7 =
 
 # 	SendPacket(NASSAUNX, &NassauNXAborts, &NXIn[0], &NXOld[0], &NXOut[0], 3, true);

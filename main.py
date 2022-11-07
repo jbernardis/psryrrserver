@@ -187,7 +187,6 @@ class MainFrame(wx.Frame):
 					self.socketServer.sendToAll(cmd)
 
 		elif verb == "blockdir":
-			pass  #"blockdir": {"block": "D20", "dir": "E"}
 			block = evt.data["block"][0]
 			direction = evt.data["dir"][0]
 			self.rr.SetBlockDirection(block, direction)

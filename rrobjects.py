@@ -66,8 +66,10 @@ class BlockInput(Input):
 		self.rr.RailroadEvent(self.GetEventMessage())
 
 	def SetDirection(self, direction):
+		print("set direction method for block %s" % self.GetName())
 		if len(self.subBlocks) == 0:
 			self.east = direction == "E"
+			print("sending refresh for block %s %s" % (self.GetName(), str(self.east)))
 			self.rr.RailroadEvent({"refreshinput": [self.name]})
 		else:
 			for sb in self.subBlocks:
@@ -288,7 +290,9 @@ class TurnoutOutput(PulsedOutput):
 		else:
 			return 0
 
-		self.rr.RailroadEvent({"refreshoutput": [self.name]})
+		if rv != 0:
+			self.rr.RailroadEvent({"refreshoutput": [self.name]})
+
 		return rv
 
 class NXButtonOutput(PulsedOutput):
@@ -314,5 +318,6 @@ class NXButtonOutput(PulsedOutput):
 		else:
 			rv = 0
 
-		self.rr.RailroadEvent({"refreshoutput": [self.name]})
+		if rv != 0:
+			self.rr.RailroadEvent({"refreshoutput": [self.name]})
 		return rv

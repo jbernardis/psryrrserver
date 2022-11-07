@@ -163,10 +163,13 @@ class District(wx.Panel):
 			self.ilist.SetItem(ix, 1, "%s" % state)
 
 		if itype == District.block:
+			print("refresh input for a block %s" % ic.GetName())
 			east = ic.GetEast()
 			val = ic.GetValue()
+			print("old values: %s %s" % (str(val), str(east)))
 			self.ilist.SetItem(ix, 1, "%d,%s" % (val, "E" if east else "W"))
 		else:
+			print("dont know type %s" % str(itype))
 			logging.warning("Refresh input: no handling of type %s" % itype)
 
 	def RefreshOutput(self, oname, otype=None):

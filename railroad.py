@@ -88,7 +88,9 @@ class Railroad(wx.Notebook):
 		district.UpdateSignal(signame)
 
 	def SetBlockDirection(self, block, direction):
+		print("in set block direction: %s %s" % (block, direction))
 		if block not in self.inputs:
+			print("not in inputs")
 			logging.warning("No input defined for block %s" % block)
 			return
 		ip, district, itype = self.inputs[block]
@@ -150,7 +152,9 @@ class Railroad(wx.Notebook):
 		district.RefreshOutput(oname)
 
 	def RefreshInput(self, iname):
+		print("in rr RefreshInput(%s)" % iname)
 		if iname not in self.inputs:
+			print("input not defined")
 			logging.warning("No input defined for %s" % iname)
 			return
 		district, itype = self.inputs[iname][1:3]
