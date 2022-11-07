@@ -38,7 +38,8 @@ class District(wx.Panel):
 	route = 5
 	block = 6
 	breaker = 7
-	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker" ]
+	nxbutton = 8
+	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker", "NX Button" ]
 
 	def __init__(self, parent, name, settings):
 		wx.Panel.__init__(self, parent, wx.ID_ANY)
@@ -169,10 +170,8 @@ class District(wx.Panel):
 			logging.warning("Refresh input: no handling of type %s" % itype)
 
 	def RefreshOutput(self, oname, otype=None):
-		print("try to find out type %s %s" % (oname, str(otype)))
 		try:
 			ix, oc, dtype = self.outputMap[oname]
-			print("retrieved: %d %s %s" % (ix, str(oc), str(dtype)))
 		except KeyError:
 			logging.warning("Output for %s in district %s not found" % (oname, self.name))
 			return
@@ -190,6 +189,9 @@ class District(wx.Panel):
 		elif otype == District.signal:
 			aspect = oc.GetAspect()
 			self.olist.SetItem(ix, 1, "%d" % aspect)
+		elif otype == District.nxbutton:
+			pulseval = oc.GetOutPulseValue()
+			self.olist.SetItem(ix, 1, "%d" % pulseval)
 		else:
 			logging.warning("Refresh output: no handling of type %s" % otype)
 
@@ -214,6 +216,14 @@ class District(wx.Panel):
 			return False
 
 		oc = self.outputMap[to][1]
+		oc.SetPulseLen(pl)
+
+	def SetNXButtonPulseLen(self, nxb, pl):
+		if nxb not in self.outputMap:
+			logging.warning("NX Button %s not found - unable to change pulse length" % nxb)
+			return False
+
+		oc = self.outputMap[nxb][1]
 		oc.SetPulseLen(pl)
 
 	def UpdateSignal(self, signame):

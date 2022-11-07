@@ -7,6 +7,7 @@ from districts.latham import Latham
 from districts.dell import Dell
 from districts.shore import Shore
 from districts.krulish import Krulish
+from districts.nassau import Nassau
 
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
@@ -21,6 +22,7 @@ class Railroad(wx.Notebook):
 			[ "Dell", Dell ],
 			[ "Shore", Shore ],
 			[ "Krulish", Krulish ],
+			[ "Nassau", Nassau ],
 			[ "Hyde", Hyde ],
 		]
 
@@ -124,20 +126,28 @@ class Railroad(wx.Notebook):
 		op.SetLock(state)
 		district.RefreshOutput(toname)
 
-	def SetOutPulse(self, toname, state):
-		if toname not in self.outputs:
-			logging.warning("no output defined for turnout %s" % toname)
+	def SetOutPulseTo(self, oname, state):
+		if oname not in self.outputs:
+			logging.warning("no pulsed output defined for %s" % oname)
 			return
-		op, district, otype = self.outputs[toname]
-		op.SetOutPulse(state)
-		district.RefreshOutput(toname)
+		op, district, otype = self.outputs[oname]
+		op.SetOutPulseTo(state)
+		district.RefreshOutput(oname)
 
-	def RefreshOutput(self, toname):
-		if toname not in self.outputs:
-			logging.warning("no output defined for turnout %s" % toname)
+	def SetOutPulseNXB(self, oname):
+		if oname not in self.outputs:
+			logging.warning("no pulsed output defined for %s" % oname)
 			return
-		district = self.outputs[toname][1]
-		district.RefreshOutput(toname)
+		op, district, otype = self.outputs[oname]
+		op.SetOutPulseNXB()
+		district.RefreshOutput(oname)
+
+	def RefreshOutput(self, oname):
+		if oname not in self.outputs:
+			logging.warning("no output defined for %s" % oname)
+			return
+		district = self.outputs[oname][1]
+		district.RefreshOutput(oname)
 
 	def RefreshInput(self, iname):
 		if iname not in self.inputs:
@@ -145,6 +155,13 @@ class Railroad(wx.Notebook):
 			return
 		district, itype = self.inputs[iname][1:3]
 		district.RefreshInput(iname, itype)
+
+	def EvaluateNXButtons(self, bEntry, bExit):
+		if bEntry not in self.outputs:
+			logging.warning("No output defined for %s" % bEntry)
+			return
+		district = self.outputs[bEntry][1]
+		district.EvaluateNXButtons(bEntry, bExit)
 
 	def allIO(self):
 		for d in self.districts.values():

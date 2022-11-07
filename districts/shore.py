@@ -63,7 +63,6 @@ class Shore(District):
 
 
 		SXG = (self.S1E and S10B) or (self.S1W and S10C) or (self.S2E and S20B) or (self.S2W and S20C)
-		print("crossing gate evaluates to %s" % str(SXG))
 		BX = 0
 
 

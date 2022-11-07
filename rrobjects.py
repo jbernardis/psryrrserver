@@ -71,7 +71,6 @@ class BlockInput(Input):
 			self.rr.RailroadEvent({"refreshinput": [self.name]})
 		else:
 			for sb in self.subBlocks:
-				print("doing subbloch %s" % sb.GetName())
 				sb.SetDirection(direction)
 
 	def GetValue(self):
@@ -256,7 +255,7 @@ class TurnoutOutput(PulsedOutput):
 	def GetLock(self):
 		return self.locked
 
-	def SetOutPulse(self, status):
+	def SetOutPulseTo(self, status):
 		if status == "N":
 			self.normalPulses = self.pulseLen
 			self.reversePulses = 0
@@ -288,6 +287,32 @@ class TurnoutOutput(PulsedOutput):
 			rv = -1
 		else:
 			return 0
+
+		self.rr.RailroadEvent({"refreshoutput": [self.name]})
+		return rv
+
+class NXButtonOutput(PulsedOutput):
+	def __init__(self, name, district, pulseLen=1):
+		PulsedOutput.__init__(self, name, district, pulseLen)
+		self.pulses = 0;
+		self.status = None
+
+	def GetStatus(self):
+		return self.status
+
+	def SetOutPulseNXB(self):
+		self.pulses = self.pulseLen
+		self.rr.RailroadEvent({"refreshoutput": [self.name]})
+
+	def GetOutPulseValue(self):
+		return self.pulses
+
+	def GetOutPulse(self):
+		if self.pulses > 0:
+			self.pulses -= 1
+			rv = 1
+		else:
+			rv = 0
 
 		self.rr.RailroadEvent({"refreshoutput": [self.name]})
 		return rv

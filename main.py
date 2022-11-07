@@ -27,8 +27,6 @@ class MainFrame(wx.Frame):
 
 		hostname = socket.gethostname()
 		self.ip = socket.gethostbyname(hostname)
-		print("retrieved IP adddress: %s" % self.ip)
-
 
 		self.clients = {}
 
@@ -207,13 +205,25 @@ class MainFrame(wx.Frame):
 			swname = evt.data["name"][0]
 			status = evt.data["status"][0]
 
-			self.rr.SetOutPulse(swname, status)
+			self.rr.SetOutPulseTo(swname, status)
 
 			# turnouts are not normally echoed back to listeners.  Instead,
 			# the turnout information that the railroad reponds with is sent
 			# back to listeners to convey this information
 			if self.settings.echoTurnout and self.settings.simulation:
 				self.rr.GetInput(swname).SetState(status)
+
+		elif verb == "nxbutton":
+			bentry = evt.data["entry"][0]
+			bexit = evt.data["exit"][0]
+			self.rr.SetOutPulseNXB(bentry)
+			self.rr.SetOutPulseNXB(bexit)
+
+			# nxbuttons are not normally echoed back to listeners.  Instead,
+			# the turnout information that the railroad reponds with is sent
+			# back to listeners to convey this information
+			if self.settings.echoTurnout and self.settings.simulation:
+				self.rr.EvaluateNXButtons(bentry, bexit)
 
 		elif verb == "turnoutlock":
 			swname = evt.data["name"][0]
