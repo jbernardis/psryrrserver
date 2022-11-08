@@ -11,7 +11,7 @@ class Krulish(District):
 		sigNames =  [ "K8R", "K4R", "K2R", "K8LA", "K8LB", "K2L" ]
 		toNames = [ "KSw1", "KSw3", "KSw5", "KSw7" ]
 		relayNames = [ "N10.srel", "N11.srel", "N20.srel" ]
-		indNames = [ "CBKrulishYard" ]
+		indNames = [ "CBKrulishYd" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)

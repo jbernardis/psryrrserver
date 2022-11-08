@@ -101,9 +101,8 @@ class MainFrame(wx.Frame):
 	def refreshClient(self, addr, skt):
 		for m in self.rr.GetCurrentValues():
 			self.socketServer.sendToOne(skt, addr, m)
-		#for m in self.trainList.GetSetTrainCmds():
-			#self.socketServer.sendToOne(skt, addr, m)
-
+		for m in self.trainList.GetSetTrainCmds():
+			self.socketServer.sendToOne(skt, addr, m)
 
 	def rrEventReceipt(self, cmd, addr=None, skt=None):
 		evt = RailroadEvent(data=cmd, addr=addr, skt=skt)

@@ -61,10 +61,16 @@ class Shore(District):
 		if not S20B and not S20C:
 			self.S2E = self.S2W = False
 
-
 		SXG = (self.S1E and S10B) or (self.S1W and S10C) or (self.S2E and S20B) or (self.S2W and S20C)
 		BX = 0
 
+		asp8l = self.rr.GetOutput("S8L").GetAspect()
+		asp8r = self.rr.GetOutput("S8R").GetAspect()
+		f10occ = self.rr.GetInput("F10").GetValue()
+		F10H = asp8l == 0 and f10occ == 0
+		F10D = F10H and (asp8r != 0)
+
+		print("F10H and F10D = %s %s" % (str(F10H), str(F10D)))
 
 		outb = [0 for i in range(7)]
 		asp = self.rr.GetOutput("S4R").GetAspect()
@@ -97,8 +103,8 @@ class Shore(District):
 		outb[2] = setBit(outb[2], 1, 1 if asp in [1, 3, 5, 7] else 0)
 		outb[2] = setBit(outb[2], 2, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 3, 1 if asp in [4, 5, 6, 7] else 0)
-		#outb[2] = setBit(outb[2], 4, self.rr.GetOutput("F10H").GetStatus())  # Branch signals
-		#outb[2] = setBit(outb[2], 5, self.rr.GetOutput("F10D").GetStatus())
+		outb[2] = setBit(outb[2], 4, 1 if F10H else 0)  # Branch signals
+		outb[2] = setBit(outb[2], 5, 1 if F10D else 0)
 		asp = self.rr.GetOutput("S8R").GetAspect()
 		BX += asp
 		outb[2] = setBit(outb[2], 6, 1 if asp != 0 else 0)
@@ -106,6 +112,7 @@ class Shore(District):
 		BX += asp
 		outb[2] = setBit(outb[2], 7, 1 if asp != 0 else 0)
 
+		# bortell crossing animation being managed by local circuit - these 2 outputs are unnecessary
 		# outb[3] = setBit(outb[3], 0, 1 if SXL1 else 0)  # bortelll crossing signal
 		# outb[3] = setBit(outb[3], 1, 1 if SXL2 else 0) 
 		outb[3] = setBit(outb[3], 2, self.rr.GetInput("S10").GetValue())  #block occupancy indicators
@@ -199,7 +206,7 @@ class Shore(District):
 			self.rr.GetInput("F11.W").SetValue(getBit(inb[3], 7))
 
 			self.rr.GetInput("F11").SetValue(getBit(inb[4], 0))
-# 		SXON  = SIn[4].bit.b1;	//Crossing gate off normal
+			# 		SXON  = SIn[4].bit.b1;	//Crossing gate off normal - no londer needed
 			nb = getBit(inb[4], 2) 
 			rb = getBit(inb[4], 3)
 			# self.rr.GetInput("CSw15").SetState(nb, rb)  clivedon

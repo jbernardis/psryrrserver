@@ -62,8 +62,10 @@ class TrainList:
 		return True
 
 	def GetSetTrainCmds(self, train=None):
+		print("GetSetTrainCmds %d items" % len(self.trains))
 		for tr, trinfo in self.trains.items():
 			if train is None or train == tr:
+				print("sending train %s" % tr)
 				loco = trinfo["loco"]
 				blocks = trinfo["blocks"]
 				clist = []

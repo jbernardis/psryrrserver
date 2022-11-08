@@ -22,7 +22,7 @@ class Yard(District):
                     "YSw7", "YSw9", "YSw11",
                     "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"]
 		relayNames = [ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ]
-		indNames = [ "CBKale", "CBEastEnd", "CBCornellJct", "CBEngineYard", "CBWaterman", "Y20H", "Y20D" ]
+		indNames = [ "Y20H", "Y20D" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
@@ -203,9 +203,9 @@ class Yard(District):
 		asp = self.rr.GetOutput("Y26R").GetAspect()
 		outb[1] = setBit(outb[1], 0, 1 if asp != 0 else 0)
 		asp = self.rr.GetOutput("Y22R").GetAspect()
-		outb[1] = setBit(outb[1], 1, 1 if asp == 5 else 0)  # Approach
-		outb[1] = setBit(outb[1], 2, 1 if asp == 4 else 0)  # Restricting
- 
+		outb[1] = setBit(outb[1], 1, 1 if asp == 0b101 else 0)  # Approach
+		outb[1] = setBit(outb[1], 2, 1 if asp == 0b001 else 0)  # Restricting
+
 		logging.debug("Yard:Kale: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
 
 		# inb, inbc = self.rrbus.sendRecv(KALE, outb, 4, swap=True)
