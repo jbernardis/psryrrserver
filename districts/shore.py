@@ -70,8 +70,6 @@ class Shore(District):
 		F10H = asp8l == 0 and f10occ == 0
 		F10D = F10H and (asp8r != 0)
 
-		print("F10H and F10D = %s %s" % (str(F10H), str(F10D)))
-
 		outb = [0 for i in range(7)]
 		asp = self.rr.GetOutput("S4R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # Main Signals
