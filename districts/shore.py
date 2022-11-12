@@ -117,8 +117,8 @@ class Shore(District):
 		outb[3] = setBit(outb[3], 3, self.rr.GetInput("H20").GetValue())
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("S21").GetValue())
 		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("P32").GetValue())  port
-		#outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBShore").GetValue())
-		#outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBHarpers").GetValue())
+		outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBShore").GetValue())
+		outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBHarpersFerry").GetValue())
 
 		outb[4] = setBit(outb[4], 0, 0 if self.rr.GetOutput("SSw1.hand").GetStatus() != 0 else 1) # hand switch unlocks
 		op = self.rr.GetOutput("SSw3").GetOutPulse()
@@ -144,15 +144,19 @@ class Shore(District):
 		outb[5] = setBit(outb[5], 6, self.rr.GetOutput("S20.srel").GetStatus())	# Stop relays
 		outb[5] = setBit(outb[5], 7, self.rr.GetOutput("S11.srel").GetStatus())
 
-		outb[6] = setBit(outb[6], 0, self.rr.GetOutput("H30.srel").GetStatus()) # in conjunction with H30Power
+		outb[6] = setBit(outb[6], 0, self.rr.GetOutput("H30.srel").GetStatus())
 		outb[6] = setBit(outb[6], 1, self.rr.GetOutput("H10.srel").GetStatus())
 		outb[6] = setBit(outb[6], 2, self.rr.GetOutput("F10.srel").GetStatus())
 		outb[6] = setBit(outb[6], 3, self.rr.GetOutput("F11.srel").GetStatus())
 		outb[6] = setBit(outb[6], 4, 0 if self.rr.GetOutput("CSw15.hand").GetStatus() != 0 else 1) # spikes peak hand switch
 		outb[6] = setBit(outb[6], 5, 1 if SXG else 0)  # Bortell crossing gates
 
-		logging.debug("Shore: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(
-			outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6]))
+		inb = [0, 0, 0, 0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6])
+		logging.debug("Shore: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 2)
 
 # 	SendPacket(SHORE, &ShoreAborts, &SIn[0], &SOld[0], &SOut[0], 8, true);
 # 	SHText = "Shore\t" + OutText;
@@ -207,7 +211,7 @@ class Shore(District):
 			# 		SXON  = SIn[4].bit.b1;	//Crossing gate off normal - no londer needed
 			nb = getBit(inb[4], 2) 
 			rb = getBit(inb[4], 3)
-			# self.rr.GetInput("CSw15").SetState(nb, rb)  clivedon
+			self.rr.GetInput("CSw15").SetState(nb, rb)
 			self.rr.GetInput("S11A").SetValue(getBit(inb[4], 4))
 			self.rr.GetInput("H30A").SetValue(getBit(inb[4], 5))
 			self.rr.GetInput("H10A").SetValue(getBit(inb[4], 6))
@@ -251,7 +255,12 @@ class Shore(District):
 		# outb[2] = setBit(outb[2], 6, self.rr.GetOutput("P42.srel").GetStatus())	port
 		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("H11.srel").GetStatus())	
 
-		logging.debug("Shore:HydeJct:: Output bytes: {0:08b}  {1:08b}  {2:08b} ".format(outb[0], outb[1], outb[2]))
+		inb = [0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
+		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
+		logging.debug("Shore:HydeJct: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 1, 2)
 
 # 	SendPacket(HYDEJCT, &HydeJctAborts, &HJIn[0], &HJOld[0], &HJOut[0], 3, true);
 # 	HJctText = "Hyde Jct " + OutText;

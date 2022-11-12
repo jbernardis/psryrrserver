@@ -3,13 +3,13 @@ import logging
 
 class ClientList(wx.ListCtrl):
 	def __init__(self, parent):
-		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(300, 330), style=wx.LC_REPORT)
+		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(300, 160), style=wx.LC_REPORT)
 		self.InsertColumn(0, "IP")
 		self.SetColumnWidth(0, 100)
 		self.InsertColumn(1, "Port")
 		self.SetColumnWidth(1, 100)
 		self.InsertColumn(2, "SID")
-		self.SetColumnWidth(1, 100)
+		self.SetColumnWidth(2, 100)
 		self.clientList = []
 
 	def AddClient(self, addr, sid):

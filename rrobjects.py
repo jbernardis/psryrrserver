@@ -66,10 +66,8 @@ class BlockInput(Input):
 		self.rr.RailroadEvent(self.GetEventMessage())
 
 	def SetDirection(self, direction):
-		print("set direction method for block %s" % self.GetName())
 		if len(self.subBlocks) == 0:
 			self.east = direction == "E"
-			print("sending refresh for block %s %s" % (self.GetName(), str(self.east)))
 			self.rr.RailroadEvent({"refreshinput": [self.name]})
 		else:
 			for sb in self.subBlocks:

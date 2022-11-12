@@ -48,6 +48,7 @@ class District(wx.Panel):
 		self.settings = settings
 		self.outputMap = {}
 		self.inputMap = {}
+		self.sendIO = False
 
 		self.olist = wx.ListCtrl(self, wx.ID_ANY, pos=(0, 0), size=(260, 300), style=wx.LC_REPORT)
 		self.olist.InsertColumn(0, "Output")
@@ -67,6 +68,11 @@ class District(wx.Panel):
 
 		if self.settings.simulation:
 			self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.inputDClick, self.ilist)
+
+	def SendIO(self, flag):
+		self.sendIO = flag
+		if not flag:
+			self.rr.ClearIO()
 
 	def inputDClick(self, evt):
 		# TODO - only allow this in simulation mode
@@ -163,13 +169,10 @@ class District(wx.Panel):
 			self.ilist.SetItem(ix, 1, "%s" % state)
 
 		if itype == District.block:
-			print("refresh input for a block %s" % ic.GetName())
 			east = ic.GetEast()
 			val = ic.GetValue()
-			print("old values: %s %s" % (str(val), str(east)))
 			self.ilist.SetItem(ix, 1, "%d,%s" % (val, "E" if east else "W"))
 		else:
-			print("dont know type %s" % str(itype))
 			logging.warning("Refresh input: no handling of type %s" % itype)
 
 	def RefreshOutput(self, oname, otype=None):

@@ -8,21 +8,26 @@ from districts.dell import Dell
 from districts.shore import Shore
 from districts.krulish import Krulish
 from districts.nassau import Nassau
+from districts.bank import Bank
+from districts.cliveden import Cliveden
 
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
 		wx.Notebook.__init__(self, frame, wx.ID_ANY, style=wx.BK_DEFAULT)
+		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.pageChanged)
 		self.frame = frame
 		self.cbEvent = cbEvent
 		self.settings = settings
 
-		districtList = [
+		self.districtList = [
 			[ "Yard", Yard ],
 			[ "Latham", Latham ],
 			[ "Dell", Dell ],
 			[ "Shore", Shore ],
 			[ "Krulish", Krulish ],
 			[ "Nassau", Nassau ],
+			[ "Bank", Bank ],
+			[ "Cliveden", Cliveden ],
 			[ "Hyde", Hyde ],
 		]
 
@@ -30,11 +35,33 @@ class Railroad(wx.Notebook):
 		self.outputs = {}
 		self.inputs = {}
 		
-		for dname, dclass in districtList:
+		for dname, dclass in self.districtList:
 			logging.debug("Creating district %s" % dname)
 			p = dclass(self, dname, self.settings)
 			self.AddPage(p, dname)
 			self.districts[dname] = p
+
+	def Initialize(self):
+		for dname, dobj in self.districts.items():
+			dobj.SendIO(False)
+
+		self.districts["Yard"].SendIO(True)
+
+	def pageChanged(self, evt):
+		opx = evt.GetOldSelection()
+		if opx != wx.NOT_FOUND:
+			odistrict = self.districts[self.districtList[opx][0]]
+			odistrict.SendIO(False)
+		px = evt.GetSelection()
+		if px != wx.NOT_FOUND:
+			district = self.districts[self.districtList[px][0]]
+			district.SendIO(True)
+
+	def ClearIO(self):
+		self.frame.ClearIO()
+
+	def ShowText(self, otext, itext, line, lines):
+		self.frame.ShowText(otext, itext, line, lines)
 
 	def AddOutput(self, output, district, otype):
 		output.SetRailRoad(self)
@@ -88,9 +115,7 @@ class Railroad(wx.Notebook):
 		district.UpdateSignal(signame)
 
 	def SetBlockDirection(self, block, direction):
-		print("in set block direction: %s %s" % (block, direction))
 		if block not in self.inputs:
-			print("not in inputs")
 			logging.warning("No input defined for block %s" % block)
 			return
 		ip, district, itype = self.inputs[block]
@@ -152,9 +177,7 @@ class Railroad(wx.Notebook):
 		district.RefreshOutput(oname)
 
 	def RefreshInput(self, iname):
-		print("in rr RefreshInput(%s)" % iname)
 		if iname not in self.inputs:
-			print("input not defined")
 			logging.warning("No input defined for %s" % iname)
 			return
 		district, itype = self.inputs[iname][1:3]

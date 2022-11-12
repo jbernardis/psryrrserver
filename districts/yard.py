@@ -86,7 +86,12 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 3, self.rr.GetOutput("Y21.srel").GetStatus())	      # Stop relays
 		outb[1] = setBit(outb[1], 4, self.rr.GetOutput("L10.srel").GetStatus())
 
-		logging.debug("Yard:Cornell Jct: Output bytes: {0:08b}  {1:08b}".format(outb[0], outb[1]))
+		inb = [0, 0]
+		otext = "{0:08b}  {1:08b}".format(outb[0], outb[1])
+		itext = "{0:08b}  {1:08b}".format(inb[0], inb[1])
+		logging.debug("Yard:Cornell Jct: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 5)
 
 		# inb, inbc = self.rrbus.sendRecv(CORNELL, outb, 2, swap=True)
 		# if inb is None:
@@ -94,9 +99,8 @@ class Yard(District):
 		# 	return
 
 		# 	print("Yard:Cornell Jct: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
-		inb = []
-		inbc = 0
-		if inbc == 2:
+		inbc = len(inb)
+		if inbc == 20:
 			ip = self.rr.GetInput("YSw1")  #Switches
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -143,7 +147,12 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 2, self.rr.GetOutput("Y20.srel").GetStatus())	      # Stop relays
 		outb[1] = setBit(outb[1], 3, self.rr.GetOutput("Y11.srel").GetStatus())
 
-		logging.debug("Yard:East Jct: Output bytes: {0:08b}  {1:08b}".format(outb[0], outb[1]))
+		inb = [0, 0]
+		otext = "{0:08b}  {1:08b}".format(outb[0], outb[1])
+		itext = "{0:08b}  {1:08b}".format(inb[0], inb[1])
+		logging.debug("Yard:East Jct: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 1, 5)
 
 		# inb, inbc = self.rrbus.sendRecv(EASTJCT, outb, 2, swap=True)
 		# if inb is None:
@@ -154,7 +163,7 @@ class Yard(District):
 
 		inb = []
 		inbc = 0
-		if inbc == 2:
+		if inbc == 20:
 			ip = self.rr.GetInput("YSw7")  #Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -206,7 +215,12 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 1, 1 if asp == 0b101 else 0)  # Approach
 		outb[1] = setBit(outb[1], 2, 1 if asp == 0b001 else 0)  # Restricting
 
-		logging.debug("Yard:Kale: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
+		inb = [0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		logging.debug("Yard:Kale: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 2, 5)
 
 		# inb, inbc = self.rrbus.sendRecv(KALE, outb, 4, swap=True)
 		# if inb is None:
@@ -216,7 +230,6 @@ class Yard(District):
 		# 	print("Yard:Kale: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
 
 
-		inb = []
 		inbc = 0
 		if inbc == 4:
 			ip = self.rr.GetInput("YSw17")  #Switch positions
@@ -314,12 +327,12 @@ class Yard(District):
 		outb[3] = setBit(outb[3], 1, 1 if asp in [1, 3, 5, 7] else 0)
 		outb[3] = setBit(outb[3], 2, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[3] = setBit(outb[3], 3, 1 if asp in [4, 5, 6, 7] else 0)
-		#outb[3] = setBit(outb[3], 4, self.rr.GetInput("CBKale").GetValue())  Bank    #Circuit breakers
-		#outb[3] = setBit(outb[3], 5, self.rr.GetInput("CBEastEnd").GetValue()) Bank
+		outb[3] = setBit(outb[3], 4, self.rr.GetInput("CBKale").GetValue())     #Circuit breakers
+		outb[3] = setBit(outb[3], 5, self.rr.GetInput("CBEastEndJct").GetValue())
 		outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBCornellJct").GetValue())
-		#outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBEngineYard").GetValue())  Bank
+		outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBEngineYard").GetValue())
 
-		#outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBWaterman").GetValue()) Bank
+		outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBWaterman").GetValue())
 		outb[4] = setBit(outb[4], 1, self.rr.GetInput("L20").GetValue())  # adjacent block indicators
 		# outb[4] = setBit(outb[4], 2, self.rr.GetInput("P50").GetValue())  port
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("YSw1").GetLock())  # Switch Locks
@@ -335,7 +348,12 @@ class Yard(District):
 		outb[5] = setBit(outb[5], 4, self.rr.GetOutput("YSw29").GetLock())
 		outb[5] = setBit(outb[5], 5, self.rr.GetOutput("YSw33").GetLock())
 
-		logging.debug("Yard:Yard: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5]))
+		inb = [0, 0, 0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4], inb[5])
+		logging.debug("Yard:Yard: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 3, 5)
 
 		# inb, inbc = self.rrbus.sendRecv(YARD, outb, 6, swap=True)
 		# if inb is None:
@@ -347,7 +365,7 @@ class Yard(District):
 
 		inb = []
 		inbc = 0
-		if inbc == 5:
+		if inbc == 6:
 			ip = self.rr.GetInput("YSw33")  #Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -467,6 +485,9 @@ class Yard(District):
 # 	SendPacket(YARDSW, &YardSWAborts, &YSWIn[0], &YSWOld[0], &YSWOut[0], 5, true);
 # 	YSWText = "YardSW\t" + OutText;
 
-		logging.debug("Yard:Waterman: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
+		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
+		logging.debug("Yard:Waterman: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, "", 4, 5)
 
 		# No inputs from this node

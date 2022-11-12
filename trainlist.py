@@ -1,12 +1,32 @@
+import wx
 import json
 
-class TrainList:
-	def __init__(self, frame):
-		self.frame = frame
+class TrainList(wx.ListCtrl):
+	def __init__(self, parent):
+		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(300, 160), style=wx.LC_REPORT + wx.LC_VIRTUAL)
+		self.parent = parent
 		self.trains = {}
+		self.order = []
 		self.count = 0
+		self.InsertColumn(0, "Train")
+		self.SetColumnWidth(0, 50)
+		self.InsertColumn(1, "Loco")
+		self.SetColumnWidth(1, 50)
+		self.InsertColumn(2, "Blocks")
+		self.SetColumnWidth(2, 200)
+		self.SetItemCount(0)
+
+	def OnGetItemText(self, item, col):
+		train = self.order[item]
+		if col == 0:
+			return train
+		elif col == 1:
+			return self.trains[train]["loco"]
+		elif col == 2:
+			return ", ".join(self.trains[train]["blocks"])
 
 	def Update(self, train, loco, block):
+		print("update train list")
 		if block is None:
 			return
 
@@ -21,6 +41,9 @@ class TrainList:
 
 			for tr in dellist:
 				del(self.trains[tr])
+				self.order.remove(tr)
+			self.SetItemCount(len(self.order))
+			self.RefreshItems(0, len(self.order))
 		else:
 			if train in self.trains:
 				if block not in self.trains[train]["blocks"]:
@@ -29,6 +52,12 @@ class TrainList:
 					self.trains[train]["loco"] = loco
 			else:
 				self.trains[train] = {"blocks": [block], "loco": loco}
+				self.order.append(train)
+				self.SetItemCount(len(self.order))
+				
+			tx = self.order.index(train)
+			print("refresh train tx %s" % tx)
+			self.RefreshItem(tx)
 
 	def FindTrainInBlock(self, block):
 		for tr, trinfo in self.trains.items():
@@ -53,12 +82,15 @@ class TrainList:
 						self.trains[nname]["blocks"].append(b)
 			else:
 				self.trains[nname] = self.trains[oname]
+				self.order.append(nname)
 
 			del(self.trains[oname])
+			self.order.remove(oname)
 
 		if nloco is not None:
 			self.trains[nname]["loco"] = nloco
 
+		self.RefreshItems(0, len(self.order))
 		return True
 
 	def GetSetTrainCmds(self, train=None):

@@ -59,7 +59,12 @@ class Krulish(District):
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("N20.srel").GetStatus())	# Stop relays
 		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("N11.srel").GetStatus())	# Stop relays
 
-		logging.debug("Krulish: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
+		inb = [0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
+		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
+		logging.debug("Krulish: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 1)
 
     # SendPacket(KRULISH, &KrulishAborts, &KIn[0], &KOld[0], &KOut[0], 3, true);
     #     KRText = "Krulish\t" + OutText;

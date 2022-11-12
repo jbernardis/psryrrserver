@@ -96,7 +96,12 @@ class Latham(District):
 		outb[4] = setBit(outb[4], 1, self.rr.GetOutput("L21.srel").GetStatus())
 		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("P50.srel").GetStatus())
 
-		logging.debug("Latham:Latham: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
+		inb = [0, 0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4])
+		logging.debug("Latham:Latham: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 2)
 
 		# inb, inbc = self.rrbus.sendRecv(LATHAM, outb, 5, swap=True)
 		# if inb is None:
@@ -204,7 +209,12 @@ class Latham(District):
 		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("S21.srel").GetStatus())	# Krulish West stopping relays
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("N25.srel").GetStatus())	
 
-		logging.debug("Latham:Carlton: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
+		inb = [0, 0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4])
+		logging.debug("Latham:Carlton: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 1, 2)
 
 		# inb, inbc = self.rrbus.sendRecv(CARLTON, outb, 5, swap=True)
 		# if inb is None:

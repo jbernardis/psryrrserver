@@ -178,7 +178,7 @@ class Nassau(District):
 
 		v = self.rr.GetInput("R10").GetValue() + self.rr.GetInput("R10.W").GetValue() 
 		outb[3] = setBit(outb[3], 0, 1 if v != 0 else 0 )  				# Rocky Hill approach indicator
-#		outb[3] = setBit(outb[3], 1, self.rr.GetInput("B20").GetValue())  bank #	Bank approach indicator
+		outb[3] = setBit(outb[3], 1, self.rr.GetInput("B20").GetValue()) #	Bank approach indicator
 # 	NWOut[3].bit.b2 = !NFltL12.R;		//Fleet indicator
 # 	NWOut[3].bit.b3 = NFltL12.R;
 		sigL = self.DetermineSignalLever(["N14LA", "N14LB", "N14LC"], ["N14R"])

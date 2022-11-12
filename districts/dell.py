@@ -129,7 +129,12 @@ class Dell(District):
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H23.srel").GetStatus())
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("D11.srel").GetStatus())
 
-		logging.debug("Dell:Dell:: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
+		inb = [0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		logging.debug("Dell:Dell:: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 2)
 
 		# inb, inbc = self.rrbus.sendRecv(DELL, outb, 4, swap=True)
 		# if inb is None:
@@ -201,7 +206,12 @@ class Dell(District):
 		outb[2] = setBit(outb[2], 4, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 5, 1 if asp in [4, 5, 6, 7] else 0)
 
-		logging.debug("Dell:Foss: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
+		inb = [0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
+		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
+		logging.debug("Dell:Foss: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 1, 2)
 
 		# inb, inbc = self.rrbus.sendRecv(FOSS, outb, 3, swap=True)
 		# if inb is None:

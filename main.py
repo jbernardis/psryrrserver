@@ -2,7 +2,7 @@ import wx
 import wx.lib.newevent
 
 import logging
-logging.basicConfig(filename='pydispatch.log', format='%(asctime)s %(message)s', level=logging.INFO)
+logging.basicConfig(filename='pydispatch.log', filemode='w', format='%(asctime)s %(message)s', level=logging.INFO)
 import json
 import socket
 
@@ -14,10 +14,13 @@ from sktserver import SktServer
 
 from clientlist import ClientList
 from trainlist import TrainList
+from iodisplay import IODisplay
 
 (HTTPMessageEvent, EVT_HTTPMESSAGE) = wx.lib.newevent.NewEvent()  
 (RailroadEvent, EVT_RAILROAD) = wx.lib.newevent.NewEvent()  
 (SocketEvent, EVT_SOCKET) = wx.lib.newevent.NewEvent()  
+(IOClearEvent, EVT_CLEARIO) = wx.lib.newevent.NewEvent()  
+(IOTextEvent, EVT_TEXTIO) = wx.lib.newevent.NewEvent()  
 
 class MainFrame(wx.Frame):
 	def __init__(self):
@@ -37,6 +40,42 @@ class MainFrame(wx.Frame):
 		logging.info("Creating railroad object")
 		self.rr = Railroad(self, self.rrEventReceipt, self.settings) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
 
+		self.clientList = ClientList(self)
+		self.trainList = TrainList(self)
+		self.ioDisplay = IODisplay(self)
+
+		vsz = wx.BoxSizer(wx.VERTICAL)
+		hsz = wx.BoxSizer(wx.HORIZONTAL)
+
+		hsz.AddSpacer(20)
+		hsz.Add(self.rr)
+		hsz.AddSpacer(10)
+		vsz2 = wx.BoxSizer(wx.VERTICAL)
+		vsz2.Add(self.clientList)
+		vsz2.AddSpacer(10)
+		vsz2.Add(self.trainList)
+		hsz.Add(vsz2)
+		hsz.AddSpacer(20)
+
+		vsz.AddSpacer(20)
+		vsz.Add(hsz)
+		vsz.AddSpacer(20)
+		hsz2 = wx.BoxSizer(wx.HORIZONTAL)
+		hsz2.AddSpacer(20)
+		hsz2.Add(self.ioDisplay)
+		hsz2.AddSpacer(20)
+		vsz.Add(hsz2)
+		vsz.AddSpacer(20)
+
+		self.SetSizer(vsz)
+		self.Layout()
+		self.Fit()
+		
+		wx.CallAfter(self.Initialize)
+
+	def Initialize(self):
+		self.rr.Initialize()
+
 		logging.info("Opening a railroad monitoring thread on device %s" % self.settings.tty)
 		self.rrMonitor = RailroadMonitor(self.settings.tty, self.rr, self.settings)
 		if not self.rrMonitor.initialized:
@@ -48,30 +87,26 @@ class MainFrame(wx.Frame):
 		self.Bind(EVT_HTTPMESSAGE, self.onHTTPMessageEvent)
 		self.Bind(EVT_RAILROAD, self.onRailroadEvent)
 		self.Bind(EVT_SOCKET, self.onSocketEvent)
+		self.Bind(EVT_CLEARIO, self.onClearIOEvent)
+		self.Bind(EVT_TEXTIO, self.onTextIOEvent)
 
 		logging.info("Starting Socket server at address: %s:%d" % (self.ip, self.settings.socketport))
 		self.socketServer = SktServer(self.ip, self.settings.socketport, self.socketEventReceipt)
 		self.socketServer.start()
 
-		self.clientList = ClientList(self)
-		self.trainList = TrainList(self)
+	def ClearIO(self):
+		evt = IOClearEvent()
+		wx.QueueEvent(self, evt)
 
-		vsz = wx.BoxSizer(wx.VERTICAL)
-		hsz = wx.BoxSizer(wx.HORIZONTAL)
+	def onClearIOEvent(self, evt):
+		self.ioDisplay.ClearIO()
 
-		hsz.AddSpacer(20)
-		hsz.Add(self.rr)
-		hsz.AddSpacer(10)
-		hsz.Add(self.clientList)
-		hsz.AddSpacer(20)
+	def ShowText(self, otext, itext, line, lines):
+		evt = IOTextEvent(otext=otext, itext=itext, line=line, lines=lines)
+		wx.QueueEvent(self, evt)
 
-		vsz.AddSpacer(20)
-		vsz.Add(hsz)
-		vsz.AddSpacer(20)
-
-		self.SetSizer(vsz)
-		self.Layout()
-		self.Fit()
+	def onTextIOEvent(self, evt):
+		self.ioDisplay.ShowText(evt.otext, evt.itext, evt.line, evt.lines)
 
 	def socketEventReceipt(self, cmd):
 		evt = SocketEvent(data=cmd)
