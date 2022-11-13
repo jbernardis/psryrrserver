@@ -5,4 +5,4 @@ class Settings:
 		self.serverport = 9000
 		self.socketport = 9001
 		self.tty = "COM4"
-		self.busInterval = 1
+		self.busInterval = 0.4

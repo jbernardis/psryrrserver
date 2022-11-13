@@ -81,6 +81,12 @@ class Bank(District):
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("CBBank").GetValue())  #Circuit breaker
 		outb[3] = setBit(outb[3], 5, 1 if asp24l != 0 else 0)  #Signal 24L indicator
 
+		inb = [0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		logging.debug("Bank: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 1)
 	# SendPacket(BANK, &BankAborts, &BKIn[0], &BKOld[0], &BKOut[0], 4, true);
 	# BKText = "Bank\t" + OutText;
 

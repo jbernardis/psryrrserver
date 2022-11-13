@@ -293,6 +293,22 @@ class MainFrame(wx.Frame):
 				return
 			self.refreshClient(addr, skt)
 
+		elif verb == "placetrain":
+			try:
+				blknm = evt.data["block"][0]
+			except:
+				print("block missing")
+				return
+			self.rr.PlaceTrain(blknm)
+
+		elif verb == "removetrain":
+			try:
+				blknm = evt.data["block"][0]
+			except:
+				print("block missing")
+				return
+			self.rr.RemoveTrain(blknm)
+
 		elif verb == "quit":
 			logging.info("HTTP 'quit' command received - terminating")
 			self.Shutdown()

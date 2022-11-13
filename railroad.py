@@ -15,6 +15,7 @@ class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
 		wx.Notebook.__init__(self, frame, wx.ID_ANY, style=wx.BK_DEFAULT)
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.pageChanged)
+		#self.SetBackgroundColour(wx.Colour(128, 128, 128))
 		self.frame = frame
 		self.cbEvent = cbEvent
 		self.settings = settings
@@ -41,6 +42,9 @@ class Railroad(wx.Notebook):
 			self.AddPage(p, dname)
 			self.districts[dname] = p
 
+		self.SetPageText(0, "* " + self.districtList[0][0] + " *")
+
+
 	def Initialize(self):
 		for dname, dobj in self.districts.items():
 			dobj.SendIO(False)
@@ -50,10 +54,12 @@ class Railroad(wx.Notebook):
 	def pageChanged(self, evt):
 		opx = evt.GetOldSelection()
 		if opx != wx.NOT_FOUND:
+			self.SetPageText(opx, self.districtList[opx][0])
 			odistrict = self.districts[self.districtList[opx][0]]
 			odistrict.SendIO(False)
 		px = evt.GetSelection()
 		if px != wx.NOT_FOUND:
+			self.SetPageText(px, "* " + self.districtList[px][0] + " *")
 			district = self.districts[self.districtList[px][0]]
 			district.SendIO(True)
 
@@ -105,6 +111,22 @@ class Railroad(wx.Notebook):
 			m = op.GetEventMessage()
 			if m is not None:
 				yield m
+
+	def PlaceTrain(self, blknm):
+		if blknm not in self.inputs:
+			logging.warning("No input defined for block %s" % blknm)
+			return
+		ip, district, itype = self.inputs[blknm]
+		district.PlaceTrain(blknm)
+
+	def RemoveTrain(self, blknm):
+		print("rr remove train")
+		if blknm not in self.inputs:
+			logging.warning("No input defined for block %s" % blknm)
+			print("block %s not found" % blknm)
+			return
+		ip, district, itype = self.inputs[blknm]
+		district.RemoveTrain(blknm)
 
 	def SetAspect(self, signame, aspect):
 		if signame not in self.outputs:

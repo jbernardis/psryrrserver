@@ -75,7 +75,7 @@ class Bus:
 		return inbuf, nbytes
 
 class RailroadMonitor(threading.Thread):
-	def __init__(self, ttyDevice, rr, settings, pollInterval=1): #0.25):
+	def __init__(self, ttyDevice, rr, settings):
 		threading.Thread.__init__(self)
 		self.simulation = settings.simulation
 		self.initialized = False
@@ -86,7 +86,7 @@ class RailroadMonitor(threading.Thread):
 			if not self.rrbus.initialized:
 				return
 
-		self.pollInterval = pollInterval * 1000000000 # convert s to ns
+		self.pollInterval = settings.busInterval * 1000000000 # convert s to ns
 		self.isRunning = False
 		self.initialized = True
 

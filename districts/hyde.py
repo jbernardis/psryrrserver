@@ -133,8 +133,6 @@ class Hyde(District):
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  #Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 
-		logging.debug("HydeIO: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4]))
-
 		# inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=True)
 		# if inb is None:
 		# 		print("No data received from Hyde")
@@ -142,7 +140,13 @@ class Hyde(District):
 
 		# 	print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
 
-		inb = []
+		inb = [0, 0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4])
+		logging.debug("BHyde: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 1)
+
 		inbc = 0
 		if inbc == 5:
 			self.rr.GetInput("H12W").SetValue(getBit(inb[0], 0))   #Routes

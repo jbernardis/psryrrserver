@@ -230,15 +230,20 @@ class Nassau(District):
 		asp = self.rr.GetOutput("N24RD").GetAspect()   
 		outb[7] = setBit(outb[7], 5, 1 if asp != 0 else 0)
 
-		logging.debug("Nassau:NassauW: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:00b}  {5:00b}  {6:00b}  {7:00b}".format(
-						outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7]))
-
 		# inb, inbc = self.rrbus.sendRecv(NASSAUW, outb, 4, swap=True)
 		# if inb is None:
 		# 		print("No data received from NASSAU:NASSAUW")
 		# 	return
 
 		# 	print("NASSAU_NASSAUE: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
+		inb = [0, 0, 0, 0, 0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(
+					outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(
+					inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6], inb[7])
+		logging.debug("Nassau:West: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 0, 3)
 
 
 		inb = []
@@ -421,7 +426,12 @@ class Nassau(District):
 		outb[3] = setBit(outb[3], 6, 1 if sigL == "N" else 0)
 		outb[3] = setBit(outb[3], 7, 1 if sigL == "R" else 0)
 
-		logging.debug("Nassau:NassauE: Output bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3]))
+		inb = [0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		logging.debug("Nassau:East: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 1, 3)
 
 # 	SendPacket(NASSAUE, &NassauEAborts, &NEIn[0], &NEOld[0], &NEOut[0], 4, true);
 # 		NEText = "NassauE\t" + OutText;
@@ -499,7 +509,7 @@ class Nassau(District):
 		outb[1] = setBit(outb[1], 3, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnW11").GetOutPulse()
 		outb[1] = setBit(outb[1], 4, 1 if op != 0 else 0)
-		op = self.rr.GetOutput("NNXBtnN32E").GetOutPulse()  # Nassau East
+		op = self.rr.GetOutput("NNXBtnN32E").GetOutPulse()
 		outb[1] = setBit(outb[1], 5, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN31E").GetOutPulse()
 		outb[1] = setBit(outb[1], 6, 1 if op != 0 else 0)
@@ -523,6 +533,10 @@ class Nassau(District):
 
 
 		logging.debug("Nassau:NX: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
+		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
+		logging.debug("Nassau:NX: Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, "", 2, 3)
 
 
 # // 	NXOut[2].bit.b7 =

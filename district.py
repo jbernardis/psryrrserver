@@ -116,6 +116,32 @@ class District(wx.Panel):
 		else:
 			logging.warning("No handling of input type %s(%s)" % (District.typeLabels[itype], itype))
 
+	def PlaceTrain(self, blknm):
+		try:
+			ix, ip, itype = self.inputMap[blknm]
+		except:
+			print("blknm not found in inputs")
+			return
+		if itype != District.block:
+			print("not a block")
+			return
+
+		self.ilist.SetItem(ix, 1, "1")
+		ip.SetValue(1)
+
+	def RemoveTrain(self, blknm):
+		try:
+			ix, ip, itype = self.inputMap[blknm]
+		except:
+			print("blknm not found in inputs")
+			return
+		if itype != District.block:
+			print("not a block")
+			return
+
+		self.ilist.SetItem(ix, 1, "0")
+		ip.SetValue(0)
+
 	def AddOutputs(self, olist, oclass, otype, ix=0):
 		for oname in olist:
 			oc = oclass(oname, self)
