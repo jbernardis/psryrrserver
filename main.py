@@ -2,7 +2,7 @@ import wx
 import wx.lib.newevent
 
 import logging
-logging.basicConfig(filename='pydispatch.log', filemode='w', format='%(asctime)s %(message)s', level=logging.INFO)
+logging.basicConfig(filename='rrserver.log', filemode='w', format='%(asctime)s %(message)s', level=logging.INFO)
 import json
 import socket
 
@@ -192,6 +192,15 @@ class MainFrame(wx.Frame):
 					trn = ntrn
 				if nloco:
 					loco = nloco
+			elif trn:
+				# this is a known train - see if we have an existing train (known or unknown)
+				# in the block, and just replace it
+				etrn, eloco = self.trainList.FindTrainInBlock(block)
+				if etrn:
+					if self.trainList.RenameTrain(etrn, trn, eloco, loco):
+						for cmd in self.trainList.GetSetTrainCmds(trn):
+							self.socketServer.sendToAll(cmd)
+					return
 
 			resp = {"settrain": [{"name": trn, "loco": loco, "block": block}]}
 			self.socketServer.sendToAll(resp)
@@ -247,16 +256,33 @@ class MainFrame(wx.Frame):
 				self.rr.GetInput(swname).SetState(status)
 
 		elif verb == "nxbutton":
-			bentry = evt.data["entry"][0]
-			bexit = evt.data["exit"][0]
-			self.rr.SetOutPulseNXB(bentry)
-			self.rr.SetOutPulseNXB(bexit)
+			try:
+				bentry = evt.data["entry"][0]
+			except:
+				bentry = None
+			try:
+				bexit = evt.data["exit"][0]
+			except:
+				bexit = None
+			try:
+				button = evt.data["button"][0]
+			except:
+				button = None
+
+			if bentry and bexit:
+				self.rr.SetOutPulseNXB(bentry)
+				self.rr.SetOutPulseNXB(bexit)
+			else:
+				self.rr.SetOutPulseNXB(button)
 
 			# nxbuttons are not normally echoed back to listeners.  Instead,
 			# the turnout information that the railroad reponds with is sent
 			# back to listeners to convey this information
 			if self.settings.echoTurnout and self.settings.simulation:
-				self.rr.EvaluateNXButtons(bentry, bexit)
+				if bentry and bexit:
+					self.rr.EvaluateNXButtons(bentry, bexit)
+				else:
+					self.rr.EvaluateNXButton(button)
 
 		elif verb == "turnoutlock":
 			swname = evt.data["name"][0]
@@ -292,6 +318,29 @@ class MainFrame(wx.Frame):
 				logging.info("session %s not found" % sid)
 				return
 			self.refreshClient(addr, skt)
+
+		elif verb == "setroute":
+			blknm = evt.data["block"][0]
+			try:
+				route = evt.data["route"][0]
+			except:
+				route = None
+
+			if route is None:
+				ends = None
+			else:
+				try:
+					ends = evt.data["ends"][0:2]
+				except:
+					ends = None
+
+			self.rr.SetOSRoute(blknm, route, ends)
+			resp = {"setroute": [{ "block": blknm, "route": route}]}
+			if ends is not None:
+				resp["setroute"][0]["ends"] = ends
+
+			self.socketServer.sendToAll(resp)
+
 
 		elif verb == "placetrain":
 			try:

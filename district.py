@@ -163,6 +163,8 @@ class District(wx.Panel):
 			self.ilist.InsertItem(ix, iname)
 			if itype == District.turnout:
 				self.ilist.SetItem(ix, 1, "N")
+			elif itype == District.block:
+				self.ilist.SetItem(ix, 1, "0,E")
 			else:
 				self.ilist.SetItem(ix, 1, "0")
 			self.ilist.SetItem(ix, 2, District.typeLabels[itype])

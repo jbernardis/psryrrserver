@@ -10,6 +10,7 @@ from districts.krulish import Krulish
 from districts.nassau import Nassau
 from districts.bank import Bank
 from districts.cliveden import Cliveden
+from districts.cliff import Cliff
 
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
@@ -29,13 +30,14 @@ class Railroad(wx.Notebook):
 			[ "Nassau", Nassau ],
 			[ "Bank", Bank ],
 			[ "Cliveden", Cliveden ],
+			[ "Cliff", Cliff ],
 			[ "Hyde", Hyde ],
 		]
 
 		self.districts = {}
 		self.outputs = {}
 		self.inputs = {}
-		
+		self.osRoutes = {}
 		for dname, dclass in self.districtList:
 			logging.debug("Creating district %s" % dname)
 			p = dclass(self, dname, self.settings)
@@ -111,6 +113,19 @@ class Railroad(wx.Notebook):
 			m = op.GetEventMessage()
 			if m is not None:
 				yield m
+
+		print("get current values - about to send routes")
+		for osblk, rtinfo in self.osRoutes.items():
+			rt = rtinfo[0]
+			ends = rtinfo[1]
+			print("block: %s %s" % (osblk, rt))
+			m = {"setroute": [{ "block": osblk, "route": str(rt)}]}
+			if ends is not None:
+				m["setroute"][0]["ends"] = ends
+			yield m
+
+	def SetOSRoute(self, blknm, rtname, ends):
+		self.osRoutes[blknm] = [rtname, ends]
 
 	def PlaceTrain(self, blknm):
 		if blknm not in self.inputs:
@@ -211,6 +226,13 @@ class Railroad(wx.Notebook):
 			return
 		district = self.outputs[bEntry][1]
 		district.EvaluateNXButtons(bEntry, bExit)
+
+	def EvaluateNXButton(self, btn):
+		if btn not in self.outputs:
+			logging.warning("No output defined for %s" % btn)
+			return
+		district = self.outputs[btn][1]
+		district.EvaluateNXButton(btn)
 
 	def allIO(self):
 		for d in self.districts.values():

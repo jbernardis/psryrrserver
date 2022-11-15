@@ -12,6 +12,7 @@ class Bank(District):
 						"C22R", "C22L",
 						"C24R", "C24L" ]
 		toNames = [ "CSw17", "CSw23" ]
+		hsNames = [ "CSw19", "CSw21a", "CSw21b" ]
 		handswitchNames = [ "CSw19.hand", "CSw21a.hand", "CSw21b.hand" ]
 		relayNames = [ "B20.srel", "B11.srel", "B21.srel" ]
 		indNames = [ "CBBank" ]
@@ -32,7 +33,7 @@ class Bank(District):
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
-		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def OutIn(self):

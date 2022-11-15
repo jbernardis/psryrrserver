@@ -16,6 +16,7 @@ class Latham(District):
 						"L18R", "L18L",
 						"S21E", "N20W", "S11E", "N10W" ]
 		toNames = [ "LSw1", "LSw3", "LSw5", "LSw7", "LSw9", "LSw15", "LSw17" ]
+		hsNames = [ "LSw11", "LSw13" ]
 		handswitchNames = [ "LSw11.hand", "LSw13.hand" ]
 		relayNames = [ "L11.srel", "L20.srel", "L21.srel", "P21.srel", "P50.srel", "L31.srel", "D10.srel", "S21.srel", "N25.srel" ]
 
@@ -35,7 +36,7 @@ class Latham(District):
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
-		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 		self.rr.GetOutput("S21E").SetAspect(1)

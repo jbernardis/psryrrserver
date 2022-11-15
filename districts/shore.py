@@ -18,6 +18,7 @@ class Shore(District):
 						"S18LA", "S18LB", "S18R",
 						"S20L", "S20R" ]
 		toNames = [ "SSw3", "SSw5", "SSw7", "SSw9", "SSw11", "SSw13", "SSw15", "SSw17", "SSw19" ]
+		hsNames = [ "SSw1", "CSw15" ]
 		handswitchNames = [ "SSw1.hand", "CSw15.hand" ]
 		relayNames = [ "S20.srel", "S11.srel", "H30.srel", "H10.srel", "F10.srel", "F11.srel", "H20.srel", "P42.srel", "H11.srel" ]
 
@@ -41,7 +42,7 @@ class Shore(District):
 		ix = self.AddSubBlocks("H10", ["H10A", "H10B"], ix)
 		ix = self.AddInputs(["F10", "F10.E", "SOSHF", "F11.W", "F11", "H20", "H20.E", "P42.W", "P42", "P42.E", "SOSHJW", "SOSHJM", "SOSHJE", "H11", "H11.W"], BlockInput, District.block, ix)
 
-		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
 
 	def OutIn(self):
 		S10B = self.rr.GetInput("S10B").GetValue() != 0

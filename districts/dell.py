@@ -19,6 +19,7 @@ class Dell(District):
 						"RXO", "R10W"
 						]
 		toNames = [ "DSw1", "DSw3", "DSw5", "DSw7", "DSw11" ]
+		hsNames = [ "DSw9" ]
 		handswitchNames = [ "DSw9.hand" ]
 		relayNames = [ "H23.srel", "D11.srel", "D20.srel", "D21.srel", "S10.srel", "R10.srel" ]
 
@@ -42,7 +43,7 @@ class Dell(District):
 		#ix = self.AddSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)
 		ix = self.AddInputs(["R11", "R12"], BlockInput, District.block, ix)
 
-		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
 
 	def OutIn(self):
 		# determine the state of the crossing gate at laporte

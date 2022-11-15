@@ -92,7 +92,7 @@ class BlockInput(Input):
 		self.SetValue(nv)
 
 	def GetEventMessage(self):
-		return {"block": [{ "name": self.name, "state": self.value}]}
+		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W"}]}
 
 class SubBlockInput(Input):
 	def __init__(self, name, district):

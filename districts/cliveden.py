@@ -13,6 +13,7 @@ class Cliveden(District):
 						"C10R", "C10L" ]
 		toNames = [ "CSw9", "CSw13" ]
 		handswitchNames = [ "CSw15.hand", "CSw11.hand" ]
+		hsNames = [ "CSw15", "CSw11" ]
 		relayNames = [ "C13.srel", "C23.srel", "C12.srel" ]
 		#indNames = [ "CBBank" ]
 
@@ -32,7 +33,7 @@ class Cliveden(District):
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
-		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def OutIn(self):
