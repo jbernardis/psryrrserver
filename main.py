@@ -2,7 +2,6 @@ import wx
 import wx.lib.newevent
 
 import logging
-logging.basicConfig(filename='rrserver.log', filemode='w', format='%(asctime)s %(message)s', level=logging.INFO)
 import json
 import socket
 
@@ -15,6 +14,8 @@ from sktserver import SktServer
 from clientlist import ClientList
 from trainlist import TrainList
 from iodisplay import IODisplay
+
+logging.basicConfig(filename='rrserver.log', filemode='w', format='%(asctime)s %(message)s', level=logging.INFO)
 
 (HTTPMessageEvent, EVT_HTTPMESSAGE) = wx.lib.newevent.NewEvent()  
 (RailroadEvent, EVT_RAILROAD) = wx.lib.newevent.NewEvent()  
