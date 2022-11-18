@@ -4,6 +4,7 @@ from district import District, LATHAM
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
+
 class Bank(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
@@ -65,7 +66,7 @@ class Bank(District):
 
 		outb[2] = setBit(outb[2], 0, 1 if asp in [4, 5, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 1, self.rr.GetInput("B10").GetValue())  #block indicators
-		#outb[2] = setBit(outb[2], 2, self.rr.GetInput("C13").GetValue()) 
+		outb[2] = setBit(outb[2], 2, self.rr.GetInput("C13").GetValue())
 		csw21 = self.rr.GetOutput("CSw21a.hand").GetStatus() + self.rr.GetOutput("CSw21b.hand").GetStatus()
 		outb[2] = setBit(outb[2], 3, 0 if csw21 != 0 else 1) # hand switch unlocks
 		outb[2] = setBit(outb[2], 4, 0 if self.rr.GetOutput("CSw19.hand").GetStatus() != 0 else 1) 
@@ -96,22 +97,22 @@ class Bank(District):
 		if inbc == 4:
 			pass
 
-			ip = self.rr.GetInput("CSw23")    # Switch positions
-			nb = getBit(inb[0], 0)
+			nb = getBit(inb[0], 0)  # Switch Positions
 			rb = getBit(inb[0], 1)
-			ip = self.rr.GetInput("CSw21a") 
+			self.rr.GetInput("CSw23").SetState(nb, rb)
 			nb = getBit(inb[0], 2)
 			rb = getBit(inb[0], 3)
-			ip = self.rr.GetInput("CSw21b") 
+			self.rr.GetInput("CSw21a").SetState(nb, rb)
 			nb = getBit(inb[0], 4)
 			rb = getBit(inb[0], 5)
-			ip = self.rr.GetInput("CSw19") 
+			self.rr.GetInput("CSw21b").SetState(nb, rb)
 			nb = getBit(inb[0], 6)
 			rb = getBit(inb[0], 7)
+			self.rr.GetInput("CSw19").SetState(nb, rb)
 
-			ip = self.rr.GetInput("CSw17") 
 			nb = getBit(inb[1], 0)
 			rb = getBit(inb[1], 1)
+			self.rr.GetInput("CSw17").SetState(nb, rb)
 			ip = self.rr.GetInput("B20")    # block detection
 			ip.SetValue(getBit(inb[1], 2))
 			ip = self.rr.GetInput("B20.E") 

@@ -329,16 +329,23 @@ class MainFrame(wx.Frame):
 
 			if route is None:
 				ends = None
+				signals = None
 			else:
 				try:
 					ends = evt.data["ends"][0:2]
 				except:
 					ends = None
+				try:
+					signals = evt.data["signals"][0:2]
+				except:
+					signals = None
 
-			self.rr.SetOSRoute(blknm, route, ends)
+			self.rr.SetOSRoute(blknm, route, ends, signals)
 			resp = {"setroute": [{ "block": blknm, "route": route}]}
 			if ends is not None:
 				resp["setroute"][0]["ends"] = ends
+			if signals is not None:
+				resp["setroute"][0]["signals"] = signals
 
 			self.socketServer.sendToAll(resp)
 

@@ -73,7 +73,6 @@ class Hyde(District):
 		for t in toNames:
 			self.rr.AddInput(TurnoutInput(t, self), self, District.turnout)
 
-
 	def OutIn(self):
 		outb = [0 for i in range(5)]
 		op = self.rr.GetOutput("HSw1").GetOutPulse()
@@ -127,10 +126,10 @@ class Hyde(District):
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H21.srel").GetStatus())	      # Stop relays
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("H13.srel").GetStatus())
 
-		outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBHydeJct").GetValue())    #Circuit breakers
+		outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBHydeJct").GetValue())    # Circuit breakers
 		outb[4] = setBit(outb[4], 1, self.rr.GetInput("CBHydeWest").GetValue()) 
 		outb[4] = setBit(outb[4], 2, self.rr.GetInput("CBHydeEast").GetValue()) 
-		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  #Power Control
+		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  # Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 
 		# inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=True)

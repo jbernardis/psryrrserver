@@ -12,11 +12,11 @@ from districts.bank import Bank
 from districts.cliveden import Cliveden
 from districts.cliff import Cliff
 
+
 class Railroad(wx.Notebook):
 	def __init__(self, frame, cbEvent, settings):
 		wx.Notebook.__init__(self, frame, wx.ID_ANY, style=wx.BK_DEFAULT)
 		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.pageChanged)
-		#self.SetBackgroundColour(wx.Colour(128, 128, 128))
 		self.frame = frame
 		self.cbEvent = cbEvent
 		self.settings = settings
@@ -46,10 +46,10 @@ class Railroad(wx.Notebook):
 
 		self.SetPageText(0, "* " + self.districtList[0][0] + " *")
 
-
 	def Initialize(self):
 		for dname, dobj in self.districts.items():
 			dobj.SendIO(False)
+			dobj.DetermineSignalLevers()
 
 		self.districts["Yard"].SendIO(True)
 
@@ -124,8 +124,8 @@ class Railroad(wx.Notebook):
 				m["setroute"][0]["ends"] = ends
 			yield m
 
-	def SetOSRoute(self, blknm, rtname, ends):
-		self.osRoutes[blknm] = [rtname, ends]
+	def SetOSRoute(self, blknm, rtname, ends, signals):
+		self.osRoutes[blknm] = [rtname, ends, signals]
 
 	def PlaceTrain(self, blknm):
 		if blknm not in self.inputs:
@@ -144,11 +144,14 @@ class Railroad(wx.Notebook):
 		district.RemoveTrain(blknm)
 
 	def SetAspect(self, signame, aspect):
+		print("set aspect for signal %s" % signame)
 		if signame not in self.outputs:
+			print("not in outputs")
 			logging.warning("No output defined for signal %s" % signame)
 			return
 		op, district, otype = self.outputs[signame]
 		op.SetAspect(aspect)
+		district.DetermineSignalLevers()
 		district.UpdateSignal(signame)
 
 	def SetBlockDirection(self, block, direction):

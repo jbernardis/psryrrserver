@@ -4,6 +4,7 @@ from district import District, LATHAM
 from rrobjects import SignalOutput, TurnoutOutput, NXButtonOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
+
 class Nassau(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
@@ -132,6 +133,15 @@ class Nassau(District):
 		for toName, status in tolist:
 			self.rr.GetInput(toName).SetState(status)
 
+	def DetermineSignalLevers(self):
+		self.sigLever["N14"] = self.DetermineSignalLever(["N14LA", "N14LB", "N14LC"], ["N14R"])
+		self.sigLever["N16"] = self.DetermineSignalLever(["N16L"], ["N16R"])
+		self.sigLever["N18"] = self.DetermineSignalLever(["N18LA", "N18LB"], ["N18R"])
+		self.sigLever["N20"] = self.DetermineSignalLever(["N20L"], ["N20R"])
+		self.sigLever["N24"] = self.DetermineSignalLever(["N24L"], ["N24RA", "N24RB", "N24RC", "N24RD"])
+		self.sigLever["N26"] = self.DetermineSignalLever(["N26L"], ["N26RA", "N26RB", "N26RC"])
+		self.sigLever["N28"] = self.DetermineSignalLever(["N28L"], ["N28R"])
+
 	def OutIn(self):
 		#Nassau West
 		outb = [0 for i in range(8)]
@@ -174,27 +184,27 @@ class Nassau(District):
 		outb[2] = setBit(outb[2], 4, 1 if asp in [1, 3, 5, 7] else 0) 
 		outb[2] = setBit(outb[2], 5, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 6, 1 if asp in [4, 5, 6, 7] else 0)
-		outb[2] = setBit(outb[2], 6, self.rr.GetInput("S11").GetValue())  #	Shore approach indicator
+		outb[2] = setBit(outb[2], 6, self.rr.GetInput("S11").GetValue())  # Shore approach indicator
 
 		v = self.rr.GetInput("R10").GetValue() + self.rr.GetInput("R10.W").GetValue() 
 		outb[3] = setBit(outb[3], 0, 1 if v != 0 else 0 )  				# Rocky Hill approach indicator
-		outb[3] = setBit(outb[3], 1, self.rr.GetInput("B20").GetValue()) #	Bank approach indicator
+		outb[3] = setBit(outb[3], 1, self.rr.GetInput("B20").GetValue())  # Bank approach indicator
 # 	NWOut[3].bit.b2 = !NFltL12.R;		//Fleet indicator
 # 	NWOut[3].bit.b3 = NFltL12.R;
-		sigL = self.DetermineSignalLever(["N14LA", "N14LB", "N14LC"], ["N14R"])
+		sigL = self.sigLever["N14"]
 		outb[3] = setBit(outb[3], 4, 1 if sigL == "L" else 0)       # Signal Indicators
 		outb[3] = setBit(outb[3], 5, 1 if sigL == "N" else 0)
 		outb[3] = setBit(outb[3], 6, 1 if sigL == "R" else 0)
-		sigL = self.DetermineSignalLever(["N16L"], ["N16R"])
+		sigL = self.sigLever["N16"]
 		outb[3] = setBit(outb[3], 7, 1 if sigL == "L" else 0) 
 
 		outb[4] = setBit(outb[4], 0, 1 if sigL == "N" else 0)
 		outb[4] = setBit(outb[4], 1, 1 if sigL == "R" else 0)
-		sigL = self.DetermineSignalLever(["N18LA", "N18LB"], ["N18R"])
-		outb[4] = setBit(outb[4], 2, 1 if sigL == "L" else 0) 
+		sigL = self.sigLever["N18"]
+		outb[4] = setBit(outb[4], 2, 1 if sigL == "L" else 0)
 		outb[4] = setBit(outb[4], 3, 1 if sigL == "N" else 0)
 		outb[4] = setBit(outb[4], 4, 1 if sigL == "R" else 0)
-		sigL = self.DetermineSignalLever(["N20L"], ["N20R"])
+		sigL = self.sigLever["N20"]
 		outb[4] = setBit(outb[4], 5, 1 if sigL == "L" else 0) 
 		outb[4] = setBit(outb[4], 6, 1 if sigL == "N" else 0)
 		outb[4] = setBit(outb[4], 7, 1 if sigL == "R" else 0)
@@ -344,7 +354,7 @@ class Nassau(District):
 			self.rr.GetInput("CBFoss").SetValue(getBit(inb[6], 7))
 
 			self.rr.GetInput("CBDell").SetValue(getBit(inb[7], 0))
-			NSw60A = getBit(inb[7], 1) # Switches in coach yard
+			NSw60A = getBit(inb[7], 1)  # Switches in coach yard
 			NSw60B = getBit(inb[7], 2)
 			NSw60C = getBit(inb[7], 3)
 			NSw60D = getBit(inb[7], 4)
@@ -412,16 +422,16 @@ class Nassau(District):
 #     NEOut[2].bit.b4 = NESL2;
 #    	NEOut[2].bit.b5 = NESL3;
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("B10.srel").GetStatus())	# Stop relay
-		sigL = self.DetermineSignalLever(["N24L"], ["N24RA", "N24RB", "N24RC", "N24RD"])
+		sigL = self.sigLever["N24"]
 		outb[2] = setBit(outb[2], 7, 1 if sigL == "L" else 0)       # Signal Indicators
 
 		outb[3] = setBit(outb[3], 0, 1 if sigL == "N" else 0)
 		outb[3] = setBit(outb[3], 1, 1 if sigL == "R" else 0)
-		sigL = self.DetermineSignalLever(["N26L"], ["N26RA", "N26RB", "N26RC"])
+		sigL = self.sigLever["N26"]
 		outb[3] = setBit(outb[3], 2, 1 if sigL == "L" else 0)  
 		outb[3] = setBit(outb[3], 3, 1 if sigL == "N" else 0)
 		outb[3] = setBit(outb[3], 4, 1 if sigL == "R" else 0)
-		sigL = self.DetermineSignalLever(["N28L"], ["N28R"])
+		sigL = self.sigLever["N28"]
 		outb[3] = setBit(outb[3], 5, 1 if sigL == "L" else 0)  
 		outb[3] = setBit(outb[3], 6, 1 if sigL == "N" else 0)
 		outb[3] = setBit(outb[3], 7, 1 if sigL == "R" else 0)
@@ -498,7 +508,6 @@ class Nassau(District):
 		op = self.rr.GetOutput("NNXBtnN12W").GetOutPulse()
 		outb[0] = setBit(outb[0], 7, 1 if op != 0 else 0)
 
-
 		op = self.rr.GetOutput("NNXBtnN22W").GetOutPulse()
 		outb[1] = setBit(outb[1], 0, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnN41W").GetOutPulse()
@@ -530,7 +539,6 @@ class Nassau(District):
 		outb[2] = setBit(outb[2], 5, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("NNXBtnB20").GetOutPulse()
 		outb[2] = setBit(outb[2], 6, 1 if op != 0 else 0)
-
 
 		logging.debug("Nassau:NX: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
 		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])

@@ -48,6 +48,7 @@ class District(wx.Panel):
 		self.settings = settings
 		self.outputMap = {}
 		self.inputMap = {}
+		self.sigLever = {}
 		self.sendIO = False
 
 		self.olist = wx.ListCtrl(self, wx.ID_ANY, pos=(0, 0), size=(260, 300), style=wx.LC_REPORT)
@@ -57,7 +58,7 @@ class District(wx.Panel):
 		self.olist.SetColumnWidth(1, 50)
 		self.olist.InsertColumn(2, "Type", wx.LIST_FORMAT_CENTER)
 		self.olist.SetColumnWidth(2, 90)
- 
+
 		self.ilist = wx.ListCtrl(self, wx.ID_ANY, pos=(330, 0), size=(260, 300), style=wx.LC_REPORT)
 		self.ilist.InsertColumn(0, "Input")
 		self.ilist.SetColumnWidth(0, 100)
@@ -269,10 +270,13 @@ class District(wx.Panel):
 		
 		aspect = oc.GetAspect()
 		self.olist.SetItem(ix, 1, "%d" % aspect)
-		
+
+	def DetermineSignalLevers(self):
+		pass
 
 	def DetermineSignalLever(self, lsigs, rsigs):
 		lval = 0
+		print("Dsl for %s" % lsigs[0])
 		for sig in lsigs:
 			try:
 				oc = self.outputMap[sig][1]
@@ -293,15 +297,19 @@ class District(wx.Panel):
 				rval += oc.GetAspect()
 
 		if rval == 0 and lval == 0:
+			print("return N")
 			return 'N'
 
 		if rval == 0:
+			print("return L")
 			return "L"
 
 		if lval == 0:
+			print("return R")
 			return 'R'
 
 		# both non-zero - shouldn't happen, bue set to N
+		print("return N catchall")
 		return 'N'
 
 	def UpdateIndicator(self, indname):

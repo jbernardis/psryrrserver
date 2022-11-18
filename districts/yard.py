@@ -10,17 +10,17 @@ class Yard(District):
 
 		#OUTPUTS
 		sigNames = [
-				"Y2L", "Y2R", 
-				"Y4L", "Y4RA", "Y4RB",
-                "Y8LA", "Y8LB", "Y8LC", "Y8R",
-                "Y10L", "Y10R",
-                "Y22L", "Y22R",
-                "Y24LA", "Y24LB", 
-                "Y26LA", "Y26LB", "Y26LC", "Y26R",
-                "Y34L", "Y34RA", "Y34RB" ]
+				"Y2R", "Y2L",
+				"Y4R", "Y4LA", "Y4LB",
+				"Y8RA", "Y8RB", "Y8RC", "Y8L",
+				"Y10R", "Y10L",
+				"Y22R", "Y22L",
+				"Y24RA", "Y24RB",
+				"Y26RA", "Y26RB", "Y26RC", "Y26L",
+				"Y34R", "Y34LA", "Y34LB" ]
 		toNames = [ "YSw1", "YSw3",
-                    "YSw7", "YSw9", "YSw11",
-                    "YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"]
+				"YSw7", "YSw9", "YSw11",
+				"YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"]
 		relayNames = [ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ]
 		indNames = [ "Y20H", "Y20D" ]
 
@@ -62,6 +62,16 @@ class Yard(District):
 		hiddenToNames = sorted([ "YSw113", "YSw115", "YSw116", "YSw131", "YSw132", "YSw134" ])
 		for t in hiddenToNames:
 			self.rr.AddInput(TurnoutInput(t, self), self, District.turnout)
+
+	def DetermineSignalLevers(self):
+		self.sigLever["Y2"] = self.DetermineSignalLever(["Y2L"], ["Y2R"])
+		self.sigLever["Y4"] = self.DetermineSignalLever(["Y4L"], ["Y4RA", "Y4RB"])
+		self.sigLever["Y8"] = self.DetermineSignalLever(["Y8LA", "Y8LB", "Y8LC"], ["Y8R"])
+		self.sigLever["Y10"] = self.DetermineSignalLever(["Y10L"], ["Y10R"])
+		self.sigLever["Y22"] = self.DetermineSignalLever(["Y22L"], ["Y22R"])
+		self.sigLever["Y24"] = self.DetermineSignalLever(["Y24LA", "Y24LB"], [])
+		self.sigLever["Y26"] = self.DetermineSignalLever(["Y26LA", "Y26LB", "Y26LC"], ["Y26R"])
+		self.sigLever["Y34"] = self.DetermineSignalLever(["Y34L"], ["Y34RA", "Y34RB"])
 
 	def OutIn(self):
 		#Cornell Jct
@@ -285,36 +295,36 @@ class Yard(District):
 
 		# Yard-----------------------------------------------------------------------
 		outb = [0 for i in range(6)]
-		sigL2 = self.DetermineSignalLever(["Y2L"], ["Y2R"])
+		sigL2 = self.sigLever["Y2"]
 		outb[0] = setBit(outb[0], 0, 1 if sigL2 == "L" else 0)       # Signal Indicators
 		outb[0] = setBit(outb[0], 1, 1 if sigL2 == "N" else 0)
 		outb[0] = setBit(outb[0], 2, 1 if sigL2 == "R" else 0)
-		sigL4 = self.DetermineSignalLever(["Y4L"], ["Y4RA", "Y4RB"])
+		sigL4 = self.sigLever["Y4"]
 		outb[0] = setBit(outb[0], 3, 1 if sigL4 == "L" else 0)    
 		outb[0] = setBit(outb[0], 4, 1 if sigL4 == "N" else 0)
 		outb[0] = setBit(outb[0], 5, 1 if sigL4 == "R" else 0)
-		sigL8 = self.DetermineSignalLever(["Y8LA", "Y8LB", "Y8LC"], ["Y8R"])
+		sigL8 = self.sigLever["Y8"]
 		outb[0] = setBit(outb[0], 6, 1 if sigL8 == "L" else 0) 
 		outb[0] = setBit(outb[0], 7, 1 if sigL8 == "N" else 0)
 
 		outb[1] = setBit(outb[1], 0, 1 if sigL8 == "R" else 0)
-		sigL10 = self.DetermineSignalLever(["Y10L"], ["Y10R"])
+		sigL10 = self.sigLever["Y10"]
 		outb[1] = setBit(outb[1], 1, 1 if sigL10 == "L" else 0)    
 		outb[1] = setBit(outb[1], 2, 1 if sigL10 == "N" else 0)
 		outb[1] = setBit(outb[1], 3, 1 if sigL10 == "R" else 0)
-		sigL22 = self.DetermineSignalLever(["Y22L"], ["Y22R"])
+		sigL22 = self.sigLever["Y22"]
 		outb[1] = setBit(outb[1], 4, 1 if sigL22 == "L" else 0)    
 		outb[1] = setBit(outb[1], 5, 1 if sigL22 == "N" else 0)
 		outb[1] = setBit(outb[1], 6, 1 if sigL22 == "R" else 0)
-		sigL24 = self.DetermineSignalLever(["Y24LA", "Y24LB"], []) 
+		sigL24 = self.sigLever["Y24"]
 		outb[1] = setBit(outb[1], 7, 1 if sigL24 == "L" else 0)    
 
 		outb[2] = setBit(outb[2], 0, 1 if sigL24 == "N" else 0)
-		sigL26 = self.DetermineSignalLever(["Y26LA", "Y26LB", "Y26LC"], ["Y26R"])
+		sigL26 = self.sigLever["Y26"]
 		outb[2] = setBit(outb[2], 1, 1 if sigL26== "L" else 0)    
 		outb[2] = setBit(outb[2], 2, 1 if sigL26 == "N" else 0)
 		outb[2] = setBit(outb[2], 3, 1 if sigL26 == "R" else 0)
-		sigL34 = self.DetermineSignalLever(["Y34L"], ["Y34RA", "Y34RB"])
+		sigL34 = self.sigLever["Y34"]
 		outb[2] = setBit(outb[2], 4, 1 if sigL34== "L" else 0)    
 		outb[2] = setBit(outb[2], 5, 1 if sigL34 == "N" else 0)
 		outb[2] = setBit(outb[2], 6, 1 if sigL34 == "R" else 0)

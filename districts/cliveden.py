@@ -15,14 +15,14 @@ class Cliveden(District):
 		handswitchNames = [ "CSw15.hand", "CSw11.hand" ]
 		hsNames = [ "CSw15", "CSw11" ]
 		relayNames = [ "C13.srel", "C23.srel", "C12.srel" ]
-		#indNames = [ "CBBank" ]
+		# indNames = [ "CBBank" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
 		ix = self.AddOutputs(toNames, TurnoutOutput, District.turnout, ix)
 		ix = self.AddOutputs(handswitchNames, HandSwitchOutput, District.handswitch, ix)
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
-		#ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
+		# ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
 
 		for n in toNames:
 			self.SetTurnoutPulseLen(n, 2)
@@ -113,7 +113,7 @@ class Cliveden(District):
 			self.rr.GetInput("COSCLEW").SetValue(getBit(inb[2], 0)) 
 			self.rr.GetInput("COSCLEE").SetValue(getBit(inb[2], 1))
 			self.rr.GetInput("C22").SetValue(getBit(inb[2], 2))
-			self.rr.GetInput("CBGreenMtnStn").SetValue(getBit(inb[2], 4)) # Breakers
+			self.rr.GetInput("CBGreenMtnStn").SetValue(getBit(inb[2], 4))  # Breakers
 			self.rr.GetInput("CBSheffieldA").SetValue(getBit(inb[2], 5))
 			self.rr.GetInput("CBGreenMtnYd").SetValue(getBit(inb[2], 6))
 			self.rr.GetInput("CBHydeJct").SetValue(getBit(inb[2], 7))

@@ -22,6 +22,7 @@ class Input:
 	def GetEventMessage(self):
 		return None
 
+
 class BreakerInput(Input):
 	def __init__(self, name, district):
 		Input.__init__(self, name, district)
@@ -35,6 +36,7 @@ class BreakerInput(Input):
 
 	def GetEventMessage(self):
 		return {"breaker": [{ "name": self.name, "value": self.value}]}
+
 
 class RouteInput(Input):
 	def __init__(self, name, district):
@@ -51,6 +53,7 @@ class RouteInput(Input):
 		# Route inputs are communicated indirectly by sending the values for the underlying turnouts
 		# this is done by the MapRouteToTurnouts method above
 		return None
+
 
 class BlockInput(Input):
 	def __init__(self, name, district):
@@ -94,6 +97,7 @@ class BlockInput(Input):
 	def GetEventMessage(self):
 		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W"}]}
 
+
 class SubBlockInput(Input):
 	def __init__(self, name, district):
 		Input.__init__(self, name, district)
@@ -126,6 +130,7 @@ class SubBlockInput(Input):
 	def GetEventMessage(self):
 		return None
 
+
 class TurnoutInput(Input):
 	def __init__(self, name, district):
 		Input.__init__(self, name, district)
@@ -154,6 +159,7 @@ class TurnoutInput(Input):
 	def GetEventMessage(self):
 		return {"turnout": [{ "name": self.name, "state": self.state}]}
 
+
 class Output:
 	def __init__(self, name, district):
 		self.name = name
@@ -168,6 +174,7 @@ class Output:
 
 	def GetEventMessage(self):
 		pass
+
 
 class IndicatorOutput(Output):
 	def __init__(self, name, district):
@@ -187,6 +194,7 @@ class IndicatorOutput(Output):
 	def GetStatus(self):
 		return self.status
 
+
 class HandSwitchOutput(IndicatorOutput):
 	def __init__(self, name, district):
 		IndicatorOutput.__init__(self, name, district)
@@ -201,6 +209,7 @@ class RelayOutput(IndicatorOutput):
 
 	def GetEventMessage(self):
 		return {"relay": [{ "name": self.name, "state": self.status}]}
+
 
 class SignalOutput(Output):
 	def __init__(self, name, district):
@@ -228,6 +237,7 @@ class SignalOutput(Output):
 	def GetEventMessage(self):
 		return {"signal": [{ "name": self.name, "aspect": self.aspect}]}
 
+
 class PulsedOutput(Output):
 	def __init__(self, name, district, pulseLen=1):
 		Output.__init__(self, name, district)
@@ -235,6 +245,7 @@ class PulsedOutput(Output):
 
 	def SetPulseLen(self, pulseLen):
 		self.pulseLen = pulseLen
+
 
 class TurnoutOutput(PulsedOutput):
 	def __init__(self, name, district, pulseLen=1):
@@ -292,6 +303,7 @@ class TurnoutOutput(PulsedOutput):
 			self.rr.RailroadEvent({"refreshoutput": [self.name]})
 
 		return rv
+
 
 class NXButtonOutput(PulsedOutput):
 	def __init__(self, name, district, pulseLen=1):
