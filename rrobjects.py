@@ -3,6 +3,7 @@ class Input:
 		self.name = name
 		self.district = district
 		self.value = 0
+		self.rr = None
 
 	def SetRailRoad(self, rr):
 		self.rr = rr
@@ -51,7 +52,7 @@ class RouteInput(Input):
 
 	def GetEventMessage(self):
 		# Route inputs are communicated indirectly by sending the values for the underlying turnouts
-		# this is done by the MapRouteToTurnouts method above
+		# this is done by the MapRouteToTurnouts method in district called above
 		return None
 
 
@@ -160,11 +161,52 @@ class TurnoutInput(Input):
 		return {"turnout": [{ "name": self.name, "state": self.state}]}
 
 
+class SignalLeverInput (Input):
+	def __init__(self, name, district):
+		Input.__init__(self, name, district)
+		self.state = "N"
+
+	def SetState(self, state):
+		if state == self.state:
+			return
+
+		self.state = state
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent(self.GetEventMessage())
+
+	def GetState(self):
+		return self.state
+
+	def GetEventMessage(self):
+		return {"siglever": [{ "name": self.name, "state": self.state}]}
+
+
+class FleetLeverInput (Input):
+	def __init__(self, name, district):
+		Input.__init__(self, name, district)
+		self.state = 0
+
+	def SetState(self, state):
+		if state == self.state:
+			return
+
+		self.state = state
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent(self.GetEventMessage())
+
+	def GetState(self):
+		return self.state
+
+	def GetEventMessage(self):
+		return {"control": [{ "name": self.name, "value": self.state}]}
+
+
 class Output:
 	def __init__(self, name, district):
 		self.name = name
 		self.district = district
 		self.value = 0
+		self.rr = None
 
 	def SetRailRoad(self, rr):
 		self.rr = rr

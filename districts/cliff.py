@@ -1,8 +1,10 @@
 import logging
 
-from district import District
-from rrobjects import SignalOutput, NXButtonOutput, HandSwitchOutput, BlockInput, TurnoutInput, RouteInput
+from district import District, leverState
+from rrobjects import SignalOutput, NXButtonOutput, HandSwitchOutput, BlockInput, TurnoutInput, RouteInput, \
+	FleetLeverInput, SignalLeverInput
 from bus import setBit, getBit
+
 
 class Cliff(District):
 	def __init__(self, parent, name, settings):
@@ -66,6 +68,8 @@ class Cliff(District):
 			"CC44E", "CC43E", "CC42E", "CC41E", "CC40E", "CC21E", "CC50E", "CC51E", "CC52E", "CC53E", "CC54E",
 			"CC44W", "CC43W", "CC42W", "CC41W", "CC40W", "CC21W", "CC50W", "CC51W", "CC52W", "CC53W", "CC54W",
 		]
+		signalLeverNames = [ "C2.lvr", "C4.lvr", "C6.lvr", "C8.lvr"]
+		fleetlLeverNames = [ "cliff.fleet" ]
 
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
 		ix = self.AddOutputs(nxButtons, NXButtonOutput, District.nxbutton, ix)
@@ -82,6 +86,8 @@ class Cliff(District):
 		ix = self.AddInputs(nxButtons, RouteInput, District.route, ix)
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(signalLeverNames, SignalLeverInput, District.slever, ix)
+		ix = self.AddInputs(fleetlLeverNames, FleetLeverInput, District.flever, ix)
 
 	def EvaluateNXButton(self, btn):
 		if btn not in self.routeMap:
@@ -106,6 +112,8 @@ class Cliff(District):
 		self.sigLever["C24"] = self.DetermineSignalLever(["C24L"], ["C24R"])
 
 	def OutIn(self):
+		optControl = self.rr.GetControlOption("cliff")  # 0 => Cliff, 1 => Dispatcher bank/cliveden, 2 => Dispatcher All
+		optFleet = self.rr.GetControlOption("cliff.fleet")  # 0 => no fleeting, 1 => fleeting
 		# Green Mountain
 		outb = [0 for i in range(3)]
 		asp = self.rr.GetOutput("C2RB").GetAspect()
@@ -148,7 +156,7 @@ class Cliff(District):
 		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
 		logging.debug("Cliff:GM: Output bytes: %s" % otext)
 		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 4)
+			self.rr.ShowText(otext, itext, 0, 3)
 
 		inb = []
 		inbc = 0
@@ -206,8 +214,8 @@ class Cliff(District):
 		outb[2] = setBit(outb[2], 2, 1 if sigl == "L" else 0)
 		outb[2] = setBit(outb[2], 3, 1 if sigl == "N" else 0)
 		outb[2] = setBit(outb[2], 4, 1 if sigl == "R" else 0)
-# 	CFOut[2].bit.b5 = !CFltL16.R;	//Fleet indicator
-# 	CFOut[2].bit.b6 = CFltL16.R;
+		outb[2] = setBit(outb[2], 5, optFleet)                    # fleet indicator
+		outb[2] = setBit(outb[2], 6, 1-optFleet)
 		sigl = self.sigLever["C18"]
 		outb[2] = setBit(outb[2], 7, 1 if sigl == "L" else 0)
 
@@ -241,112 +249,110 @@ class Cliff(District):
 		outb[5] = setBit(outb[5], 0, 0 if locked else 1)
 		outb[5] = setBit(outb[5], 1, 1 if locked else 0)
 		outb[5] = setBit(outb[5], 2, self.rr.GetInput("B10").GetValue())    # block indicators
-		# outb[5] = setBit(outb[5], 3, self.rr.GetInput("CBGreenMountain").GetValue())    #Circuit breakers
-		# outb[5] = setBit(outb[5], 4, self.rr.GetInput("CBSheffield").GetValue())
-		# outb[5] = setBit(outb[5], 5, self.rr.GetInput("CBClivedon").GetValue())
-		# outb[5] = setBit(outb[5], 6, self.rr.GetInput("CBReverser").GetValue())
-		# outb[5] = setBit(outb[5], 6, self.rr.GetInput("CBBank").GetValue())
-#
-# 	CFOut[6].bit.b0 = CSw31.L;		//Switch locks
-# 	CFOut[6].bit.b1 = CSw41.L;
-# 	CFOut[6].bit.b2 = CSw43.L;
-# 	CFOut[6].bit.b3 = CSw61.L;
-# 	CFOut[6].bit.b4 = CSw9.L;
-# 	CFOut[6].bit.b5 = CSw13.L;
-# 	CFOut[6].bit.b6 = CSw17.L;
-# 	CFOut[6].bit.b7 = CSw23.L;
-#
+		CBGM = self.rr.GetInput("CBGreenMtnStn").GetValue() + self.rr.GetInput("CBGreenMtnYd").GetValue()  # Circuit Breakers
+		outb[5] = setBit(outb[5], 3, 1 if CBGM != 0 else 0)
+		CBSheffield = self.rr.GetInput("CBSheffieldA").GetValue() + self.rr.GetInput("CBSheffieldB").GetValue()  # Circuit Breakers
+		outb[5] = setBit(outb[5], 4, 1 if CBSheffield != 0 else 0)
+		outb[5] = setBit(outb[5], 5, self.rr.GetInput("CBCliveden").GetValue())
+		outb[5] = setBit(outb[5], 6, self.rr.GetInput("CBReverserC22C23").GetValue())
+		outb[5] = setBit(outb[5], 6, self.rr.GetInput("CBBank").GetValue())
+
+		outb[6] = setBit(outb[6], 0, 1 if self.rr.GetSwitchLock("CSw31") else 0)
+		outb[6] = setBit(outb[6], 1, 1 if self.rr.GetSwitchLock("CSw41") else 0)
+		outb[6] = setBit(outb[6], 2, 1 if self.rr.GetSwitchLock("CSw43") else 0)
+		outb[6] = setBit(outb[6], 3, 1 if self.rr.GetSwitchLock("CSw61") else 0)
+		outb[6] = setBit(outb[6], 4, 1 if self.rr.GetSwitchLock("CSw9") else 0)
+		outb[6] = setBit(outb[6], 5, 1 if self.rr.GetSwitchLock("CSw13") else 0)
+		outb[6] = setBit(outb[6], 6, 1 if self.rr.GetSwitchLock("CSw17") else 0)
+		outb[6] = setBit(outb[6], 7, 1 if self.rr.GetSwitchLock("CSw23") else 0)
+
 		outb[7] - setBit(outb[7], 0, 1 if self.rr.GetInput("CSw21a").GetValue() == "R" else 0)  # remote hand switch indications
-		outb[7] - setBit(outb[7], 1, 1 if self.rr.GetInput("CSw21b").GetValue() == "R" else 0)  # remote hand switch indications
-		outb[7] - setBit(outb[7], 2, 1 if self.rr.GetInput("CSw19").GetValue() == "R" else 0)  # remote hand switch indications
-		outb[7] - setBit(outb[7], 3, 1 if self.rr.GetInput("CSw15").GetValue() == "R" else 0)  # remote hand switch indications
-		outb[7] - setBit(outb[7], 4, 1 if self.rr.GetInput("CSw11").GetValue() == "R" else 0)  # remote hand switch indications
+		outb[7] - setBit(outb[7], 1, 1 if self.rr.GetInput("CSw21b").GetValue() == "R" else 0)
+		outb[7] - setBit(outb[7], 2, 1 if self.rr.GetInput("CSw19").GetValue() == "R" else 0)
+		outb[7] - setBit(outb[7], 3, 1 if self.rr.GetInput("CSw15").GetValue() == "R" else 0)
+		outb[7] - setBit(outb[7], 4, 1 if self.rr.GetInput("CSw11").GetValue() == "R" else 0)
 
 		inb = [0, 0, 0, 0, 0, 0, 0, 0]
 		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7])
 		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6], inb[7])
 		logging.debug("Cliff: Output bytes: %s" % otext)
 		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 4)
+			self.rr.ShowText(otext, itext, 1, 3)
 
 		inb = []
 		inbc = 0
-		if inbc == 3:
-			pass
-# 		C21W = CFIn[0].bit.b0;    //Routes
-# 		C40W = CFIn[0].bit.b1;
-# 		C44W = CFIn[0].bit.b2;
-# 		C43W = CFIn[0].bit.b3;
-# 		C42W = CFIn[0].bit.b4;
-# 		C41W = CFIn[0].bit.b5;
-# 		C41E = CFIn[0].bit.b6;
-# 		C42E = CFIn[0].bit.b7;
-#
-			# "CC44E", "CC43E", "CC42E", "CC41E", "CC40E", "CC21E", "CC50E", "CC51E", "CC52E", "CC53E", "CC54E",
-			# "CC44W", "CC43W", "CC42W", "CC41W", "CC40W", "CC21W", "CC50W", "CC51W", "CC52W", "CC53W", "CC54W",
-## 		C21E = CFIn[1].bit.b0;
-# 		C40E = CFIn[1].bit.b1;
-# 		C44E = CFIn[1].bit.b2;
-# 		C43E = CFIn[1].bit.b3;
-# 		COS3 = CFIn[1].bit.b4;   COSSHE     //Detection
-# 		C21.M = CFIn[1].bit.b5;
-# 		C40.M = CFIn[1].bit.b6;
-# 		C41.M = CFIn[1].bit.b7;
-#
-# 		C42.M = CFIn[2].bit.b0;
-# 		C43.M = CFIn[2].bit.b1;
-# 		C44.M = CFIn[2].bit.b2;
-# 		COS4 = CFIn[2].bit.b3;  #COSSHW
-#
-# 		if(!RBDispatcherAll->Checked)
-# 		{
-# 			CSigL2.L = CFIn[2].bit.b4;			//Signal levers
-# 			CSigL2.Callon = CFIn[2].bit.b5;
-# 			CSigL2.R = CFIn[2].bit.b6;
-# 			CSigL4.L = CFIn[2].bit.b7;
-#
-# 			CSigL4.Callon = CFIn[3].bit.b0;
-# 			CSigL4.R = CFIn[3].bit.b1;
-# 			CSigL6.L = CFIn[3].bit.b2;
-# 			CSigL6.Callon = CFIn[3].bit.b3;
-# 			CSigL6.R = CFIn[3].bit.b4;
-# 			CSigL8.L = CFIn[3].bit.b5;
-# 			CSigL8.Callon = CFIn[3].bit.b6;
-# 			CSigL8.R = CFIn[3].bit.b7;
-# 		}
-#
-# 		if(RBCliff->Checked)
-#         {
-#
-# 			CSigL10.L = CFIn[4].bit.b0;
-# 			CSigL10.Callon = CFIn[4].bit.b1;
-# 			CSigL10.R = CFIn[4].bit.b2;
-# 			CSigL12.L = CFIn[4].bit.b3;
-# 			CSigL12.Callon = CFIn[4].bit.b4;
-# 			CSigL12.R = CFIn[4].bit.b5;
-# 			CSigL14.L = CFIn[4].bit.b6;
-# 			CSigL14.Callon = CFIn[4].bit.b7;
-#
-# 			CSigL14.R = CFIn[5].bit.b0;
-# 			CFltL16.R = CFIn[5].bit.b1;				//Fleet
-# 			CSigL18.L = CFIn[5].bit.b2;
-# 			CSigL18.Callon = CFIn[5].bit.b3;
-# 			CSigL18.R = CFIn[5].bit.b4;
-# 			CSigL22.L = CFIn[5].bit.b5;
-# 			CSigL22.Callon = CFIn[5].bit.b6;
-# 			CSigL22.R = CFIn[5].bit.b7;
-#
-# 			CSigL24.L = CFIn[6].bit.b0;
-# 			CSigL24.Callon = CFIn[6].bit.b1;
-# 			CSigL24.R = CFIn[6].bit.b2;
-# 		}
-#
+		if inbc == 7:
+			self.rr.GetInput("CC21W").SetValue(getBit(inb[0], 0))  # Routes
+			self.rr.GetInput("CC40W").SetValue(getBit(inb[0], 1))
+			self.rr.GetInput("CC44W").SetValue(getBit(inb[0], 2))
+			self.rr.GetInput("CC43W").SetValue(getBit(inb[0], 3))
+			self.rr.GetInput("CC42W").SetValue(getBit(inb[0], 4))
+			self.rr.GetInput("CC41W").SetValue(getBit(inb[0], 5))
+			self.rr.GetInput("CC41E").SetValue(getBit(inb[0], 6))
+			self.rr.GetInput("CC42E").SetValue(getBit(inb[0], 7))
+
+			self.rr.GetInput("CC21E").SetValue(getBit(inb[1], 0))
+			self.rr.GetInput("CC40E").SetValue(getBit(inb[1], 1))
+			self.rr.GetInput("CC44E").SetValue(getBit(inb[1], 2))
+			self.rr.GetInput("CC43E").SetValue(getBit(inb[1], 3))
+			self.rr.GetInput("COSSHE").SetValue(getBit(inb[1], 4))  # Detection (COS3)
+			self.rr.GetInput("C21").SetValue(getBit(inb[1], 5))
+			self.rr.GetInput("C41").SetValue(getBit(inb[1], 6))
+			self.rr.GetInput("C41").SetValue(getBit(inb[1], 7))
+
+			self.rr.GetInput("C42").SetValue(getBit(inb[2], 0))
+			self.rr.GetInput("C43").SetValue(getBit(inb[2], 1))
+			self.rr.GetInput("C44").SetValue(getBit(inb[2], 2))
+			self.rr.GetInput("COSSHW").SetValue(getBit(inb[2], 3))  # COS4
+			if optControl != 2:  # NOT Dispatcher: ALL
+				lvrL = getBit(inb[2], 4)       # signal levers
+				lvrCallOn = getBit(inb[2], 5)
+				lvrR = getBit(inb[2], 6)
+				self.rr.GetInput("C2.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[2], 7)
+
+				lvrCallOn = getBit(inb[3], 0)
+				lvrR = getBit(inb[3], 1)
+				self.rr.GetInput("C4.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[3], 2)
+				lvrCallOn = getBit(inb[3], 3)
+				lvrR = getBit(inb[3], 4)
+				self.rr.GetInput("C6.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[3], 5)
+				lvrCallOn = getBit(inb[3], 6)
+				lvrR = getBit(inb[3], 7)
+				self.rr.GetInput("C8.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+
+			if optControl == 0:  # Cliff local control
+				lvrL = getBit(inb[4], 0)
+				lvrCallOn = getBit(inb[4], 1)
+				lvrR = getBit(inb[4], 2)
+				self.rr.GetInput("C10.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[4], 3)
+				lvrCallOn = getBit(inb[4], 4)
+				lvrR = getBit(inb[4], 5)
+				self.rr.GetInput("C12.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[4], 6)
+				lvrCallOn = getBit(inb[4], 7)
+
+				lvrR = getBit(inb[5], 0)
+				self.rr.GetInput("C14.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				fleet = getBit(inb[5], 1)
+				self.rr.GetInput("cliff.fleet").SetState(fleet)  # fleet
+				lvrL = getBit(inb[5], 2)
+				lvrCallOn = getBit(inb[5], 3)
+				lvrR = getBit(inb[5], 4)
+				self.rr.GetInput("C18.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[5], 5)
+				lvrCallOn = getBit(inb[5], 6)
+				lvrR = getBit(inb[5], 7)
+				self.rr.GetInput("C22.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+
+				lvrL = getBit(inb[6], 0)
+				lvrCallOn = getBit(inb[6], 1)
+				lvrR = getBit(inb[6], 2)
+				self.rr.GetInput("C24.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
 # 		CRelease = CFIn[6].bit.b3;
-#
-# 		CSigL2.N = !CSigL2.L && !CSigL2.R;
-# 		CSigL4.N = !CSigL4.L && !CSigL4.R;
-# 		CSigL6.N = !CSigL6.L && !CSigL6.R;
-# 		CSigL8.N = !CSigL8.L && !CSigL8.R;
 #
 # 		if(RBCliff->Checked)
 # 		{
@@ -355,76 +361,97 @@ class Cliff(District):
 # 			CSw15.UnlockReq = CFIn[6].bit.b6;
 # 			CSw19.UnlockReq = CFIn[6].bit.b7;
 # 			CSw21.UnlockReq = CFIn[7].bit.b0;
-#
-# 			CSw3.N = !CSw3.R;
-# 			CSw11.N = !CSw11.R;
-# 			CSw15.N = !CSw15.R;
-# 			CSw19.N = !CSw19.R;
-# 			CSw21.N = !CSw21.R;
-# 		}
-# 	}
-#
-# //Sheffield
-#
-# 	SHOut[0].bit.b0 = SBC54E;  //Switch outputs Sheffield
-# 	SHOut[0].bit.b1 = SBC53E;
-# 	SHOut[0].bit.b2 = SBC52E;
-# 	SHOut[0].bit.b3 = SBC51E;
-# 	SHOut[0].bit.b4 = SBC50E;
-# 	SHOut[0].bit.b5 = SBC21E;
-# 	SHOut[0].bit.b6 = SBC40E;
-# 	SHOut[0].bit.b7 = SBC41E;
-#
-# 	SHOut[1].bit.b0 = SBC42E;
-# 	SHOut[1].bit.b1 = SBC43E;
-# 	SHOut[1].bit.b2 = SBC44E;
-# 	SHOut[1].bit.b3 = SBC54W;
-# 	SHOut[1].bit.b4 = SBC53W;
-# 	SHOut[1].bit.b5 = SBC52W;
-# 	SHOut[1].bit.b6 = SBC51W;
-# 	SHOut[1].bit.b7 = SBC50W;
-#
-# 	SHOut[2].bit.b0 = SBC21W;
-# 	SHOut[2].bit.b1 = SBC40W;
-# 	SHOut[2].bit.b2 = SBC41W;
-# 	SHOut[2].bit.b3 = SBC42W;
-# 	SHOut[2].bit.b4 = SBC43W;
-# 	SHOut[2].bit.b5 = SBC44W;
-# 	SHOut[2].bit.b6 = SBC30E;  //Switch outputs Green Mtn.
-# 	SHOut[2].bit.b7 = SBC10E;
-#
-# 	SHOut[3].bit.b0 = SBG10E;
-# 	SHOut[3].bit.b1 = SBG12E;
-# 	SHOut[3].bit.b2 = SBC30W;
-# 	SHOut[3].bit.b3 = SBC31W;
-# 	SHOut[3].bit.b4 = SBC10W;
-# 	SHOut[3].bit.b5 = SBG21W;
-# 	SHOut[3].bit.b6 = 0;
-# 	SHOut[3].bit.b7 = 0;
-#
-# 	SendPacket(SHEFFIELD, &SHAborts, &SHIn[0], &SHOld[0], &SHOut[0], 4, true);
-# 			SFText = "Sheffield " + OutText;
-#
-# 	if(Match)
-# 	{
-# 		C50W = SHIn[0].bit.b0;   //Routes
-# 		C51W = SHIn[0].bit.b1;
-# 		C52W = SHIn[0].bit.b2;
-# 		C53W = SHIn[0].bit.b3;
-# 		C54W = SHIn[0].bit.b4;
-# 		C50E = SHIn[0].bit.b5;
-# 		C51E = SHIn[0].bit.b6;
-# 		C52E = SHIn[0].bit.b7;
 
-			# "CC44E", "CC43E", "CC42E", "CC41E", "CC40E", "CC21E", "CC50E", "CC51E", "CC52E", "CC53E", "CC54E",
-			# "CC44W", "CC43W", "CC42W", "CC41W", "CC40W", "CC21W", "CC50W", "CC51W", "CC52W", "CC53W", "CC54W",
-#
-# 		C53E = SHIn[1].bit.b0;
-# 		C54E = SHIn[1].bit.b1;
-# 		C50.M = SHIn[1].bit.b2;        //Detection
-# 		C51.M = SHIn[1].bit.b3;
-# 		C52.M = SHIn[1].bit.b4;
-# 		C53.M = SHIn[1].bit.b5;
-# 		C54.M = SHIn[1].bit.b6;
-# 	}
-# }
+		# Sheffield
+		outb = [0 for i in range(4)]
+		op = self.rr.GetOutput("CC54E").GetOutPulse()  # Switch button outputs - Sheffield
+		outb[0] = setBit(outb[0], 0, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC53E").GetOutPulse()
+		outb[0] = setBit(outb[0], 1, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC52E").GetOutPulse()
+		outb[0] = setBit(outb[0], 2, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC51E").GetOutPulse()
+		outb[0] = setBit(outb[0], 3, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC50E").GetOutPulse()
+		outb[0] = setBit(outb[0], 4, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC21E").GetOutPulse()
+		outb[0] = setBit(outb[0], 5, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC40E").GetOutPulse()
+		outb[0] = setBit(outb[0], 6, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC41E").GetOutPulse()
+		outb[0] = setBit(outb[0], 7, 1 if op != 0 else 0)
+
+		op = self.rr.GetOutput("CC42E").GetOutPulse()
+		outb[1] = setBit(outb[1], 0, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC43E").GetOutPulse()
+		outb[1] = setBit(outb[1], 1, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC44E").GetOutPulse()
+		outb[1] = setBit(outb[1], 2, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC54W").GetOutPulse()
+		outb[1] = setBit(outb[1], 3, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC53W").GetOutPulse()
+		outb[1] = setBit(outb[1], 4, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC52W").GetOutPulse()
+		outb[1] = setBit(outb[1], 5, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC51W").GetOutPulse()
+		outb[1] = setBit(outb[1], 6, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC50W").GetOutPulse()
+		outb[1] = setBit(outb[1], 7, 1 if op != 0 else 0)
+
+		op = self.rr.GetOutput("CC21W").GetOutPulse()
+		outb[2] = setBit(outb[2], 0, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC40W").GetOutPulse()
+		outb[2] = setBit(outb[2], 1, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC41W").GetOutPulse()
+		outb[2] = setBit(outb[2], 2, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC42W").GetOutPulse()
+		outb[2] = setBit(outb[2], 3, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC43W").GetOutPulse()
+		outb[2] = setBit(outb[2], 4, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC44W").GetOutPulse()
+		outb[2] = setBit(outb[2], 5, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC30E").GetOutPulse()  # Switch buttons - green mountain
+		outb[2] = setBit(outb[2], 6, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC10E").GetOutPulse()
+		outb[2] = setBit(outb[2], 7, 1 if op != 0 else 0)
+
+		op = self.rr.GetOutput("CG10E").GetOutPulse()
+		outb[3] = setBit(outb[3], 0, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CG12E").GetOutPulse()
+		outb[3] = setBit(outb[3], 1, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC30W").GetOutPulse()
+		outb[3] = setBit(outb[3], 2, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC31W").GetOutPulse()
+		outb[3] = setBit(outb[3], 3, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CC10W").GetOutPulse()
+		outb[3] = setBit(outb[3], 4, 1 if op != 0 else 0)
+		op = self.rr.GetOutput("CG21W").GetOutPulse()
+		outb[3] = setBit(outb[3], 5, 1 if op != 0 else 0)
+
+		inb = [0, 0, 0, 0]
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
+		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		logging.debug("Cliff:Switches Output bytes: %s" % otext)
+		if self.sendIO:
+			self.rr.ShowText(otext, itext, 2, 3)
+
+		inb = []
+		inbc = 0
+		if inbc == 4:
+			self.rr.GetInput("CC50W").SetValue(getBit(inb[0], 0))  # Routes
+			self.rr.GetInput("CC51W").SetValue(getBit(inb[0], 1))
+			self.rr.GetInput("CC52W").SetValue(getBit(inb[0], 2))
+			self.rr.GetInput("CC53W").SetValue(getBit(inb[0], 3))
+			self.rr.GetInput("CC54W").SetValue(getBit(inb[0], 4))
+			self.rr.GetInput("CC50E").SetValue(getBit(inb[0], 5))
+			self.rr.GetInput("CC51E").SetValue(getBit(inb[0], 6))
+			self.rr.GetInput("CC52E").SetValue(getBit(inb[0], 7))
+
+			self.rr.GetInput("CC53E").SetValue(getBit(inb[1], 0))
+			self.rr.GetInput("CC54E").SetValue(getBit(inb[1], 1))
+			self.rr.GetInput("C50").SetValue(getBit(inb[1], 2))
+			self.rr.GetInput("C51").SetValue(getBit(inb[1], 3))
+			self.rr.GetInput("C52").SetValue(getBit(inb[1], 4))
+			self.rr.GetInput("C53").SetValue(getBit(inb[1], 5))
+			self.rr.GetInput("C54").SetValue(getBit(inb[1], 6))
+

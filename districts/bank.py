@@ -1,7 +1,8 @@
 import logging
 
 from district import District, LATHAM
-from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
+from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, \
+	SignalLeverInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
 
@@ -17,6 +18,7 @@ class Bank(District):
 		handswitchNames = [ "CSw19.hand", "CSw21a.hand", "CSw21b.hand" ]
 		relayNames = [ "B20.srel", "B11.srel", "B21.srel" ]
 		indNames = [ "CBBank" ]
+		signalLeverNames = [ "C18.lvr", "C22.lvr", "C24.lvr" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
@@ -35,6 +37,7 @@ class Bank(District):
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(signalLeverNames, SignalLeverInput, District.slever, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def OutIn(self):

@@ -34,10 +34,24 @@ class Railroad(wx.Notebook):
 			[ "Hyde", Hyde ],
 		]
 
+		self.controlOptions = {
+			"nassau": 0,
+			"cliff": 0,
+			"yard": 0,
+			"signal4": 0,
+			"cliff.fleet": 0,
+			"hyde.fleet": 0,
+			"port.fleet": 0,
+			"yard.fleet": 0,
+		}
+
 		self.districts = {}
 		self.outputs = {}
 		self.inputs = {}
 		self.osRoutes = {}
+		self.switchLock = {}
+		self.fleetedSignals = {}
+
 		for dname, dclass in self.districtList:
 			logging.debug("Creating district %s" % dname)
 			p = dclass(self, dname, self.settings)
@@ -114,7 +128,6 @@ class Railroad(wx.Notebook):
 			if m is not None:
 				yield m
 
-		print("get current values - about to send routes")
 		for osblk, rtinfo in self.osRoutes.items():
 			rt = rtinfo[0]
 			ends = rtinfo[1]
@@ -123,6 +136,24 @@ class Railroad(wx.Notebook):
 			if ends is not None:
 				m["setroute"][0]["ends"] = ends
 			yield m
+
+		for signm, flag in self.fleetedSignals.items():
+			m = {"fleet": [{ "name": signm, "value": flag}]}
+			yield m
+
+		for name, value in self.controlOptions.items():
+			m = {"control": [{ "name": name, "value": value}]}
+			yield m
+
+	def SetControlOption(self, name, value):
+		print("setting control option %s to %s" % (name, str(value)))
+		self.controlOptions[name] = value
+
+	def GetControlOption(self, name):
+		try:
+			return self.controlOptions[name]
+		except:
+			return None
 
 	def SetOSRoute(self, blknm, rtname, ends, signals):
 		self.osRoutes[blknm] = [rtname, ends, signals]
@@ -153,6 +184,10 @@ class Railroad(wx.Notebook):
 		op.SetAspect(aspect)
 		district.DetermineSignalLevers()
 		district.UpdateSignal(signame)
+
+	def SetSignalFleet(self, signame, flag):
+		print("set signal fleet: %s %d" % (signame, flag))
+		self.fleetedSignals[signame] = flag
 
 	def SetBlockDirection(self, block, direction):
 		if block not in self.inputs:
@@ -186,12 +221,19 @@ class Railroad(wx.Notebook):
 		district.UpdateHandSwitch(hsname)
 
 	def SetSwitchLock(self, toname, state):
+		self.switchLock[toname] = state
 		if toname not in self.outputs:
 			logging.warning("no output defined for turnout %s" % toname)
 			return
 		op, district, otype = self.outputs[toname]
 		op.SetLock(state)
 		district.RefreshOutput(toname)
+
+	def GetSwitchLock(self, toname):
+		if toname in self.switchLock:
+			return self.switchLock[toname]
+		else:
+			return False
 
 	def SetOutPulseTo(self, oname, state):
 		if oname not in self.outputs:

@@ -2,7 +2,8 @@ import wx
 import logging
 
 from district import District, HYDE
-from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput, TurnoutInput
+from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput, \
+	FleetLeverInput, TurnoutInput
 from bus import setBit, getBit
 
 class Hyde(District):
@@ -64,10 +65,12 @@ class Hyde(District):
 				"H31", "H33", "H34", "H12", "H22", "H43", "H42", "H41", "H40",
 				"HOSEW", "HOSEE",
 				"H13.W", "H13" ]
+		fleetlLeverNames = [ "hyde.fleet" ]
 
 		ix = 0
 		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
+		ix = self.AddInputs(fleetlLeverNames, FleetLeverInput, District.flever, ix)
 
 		# add "proxy" inputs for the turnouts.  These will not be addressed directly, but through the  route table
 		for t in toNames:

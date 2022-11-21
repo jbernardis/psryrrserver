@@ -1,8 +1,9 @@
 import logging
 
 from district import District, LATHAM
-from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
+from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, SignalLeverInput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
+
 
 class Cliveden(District):
 	def __init__(self, parent, name, settings):
@@ -30,10 +31,12 @@ class Cliveden(District):
 		brkrNames = sorted(["CBGreenMtnStn", "CBSheffieldA", "CBGreenMtnYd", "CBHydeJct",
 					"CBHydeWest", "CBHydeEast", "CBSouthportJct", "CBCarlton", "CBSheffieldB" ])
 		blockNames = [ "C13.W", "C13", "C13.E", "COSCLW", "C23.W", "C23", "C12.W", "C12", "COSCLEW", "COSCLEE", "C22", "C11" ]
+		leverNames = [ "C10.lvr", "C12.lvr", "C14.lvr" ]
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(leverNames, SignalLeverInput, District.slever, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def OutIn(self):

@@ -29,6 +29,16 @@ SHEFFIELD = 0x95;
 
 from rrobjects import BlockInput, SubBlockInput
 
+def leverState(lvrL, lvrCallOn, lvrR):
+	if lvrL == 1 and lvrR == 0:
+		return "L"
+
+	if lvrR == 1 and lvrL == 0:
+		return "R"
+
+	return "N"
+
+
 class District(wx.Panel):
 	signal = 0
 	turnout = 1
@@ -39,7 +49,9 @@ class District(wx.Panel):
 	block = 6
 	breaker = 7
 	nxbutton = 8
-	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker", "NX Button" ]
+	slever = 9
+	flever = 10
+	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker", "NX Button", "Signal Lever", "fleet lever" ]
 
 	def __init__(self, parent, name, settings):
 		wx.Panel.__init__(self, parent, wx.ID_ANY)
@@ -48,7 +60,7 @@ class District(wx.Panel):
 		self.settings = settings
 		self.outputMap = {}
 		self.inputMap = {}
-		self.sigLever = {}
+		self.sigLever = {}  # outbound representation of signal levers
 		self.sendIO = False
 
 		self.olist = wx.ListCtrl(self, wx.ID_ANY, pos=(0, 0), size=(260, 300), style=wx.LC_REPORT)
@@ -90,6 +102,12 @@ class District(wx.Panel):
 		elif itype == District.block:
 			cval = int(self.ilist.GetItemText(index, 1).split(",")[0])
 			nval = 1 - cval
+		elif itype == District.slever:
+			cval = self.ilist.GetItemText(index, 1)
+			if cval == 'N':
+				nval = 'L'
+			else:
+				nval = 'N'
 		else:
 			cval = int(self.ilist.GetItemText(index, 1))
 			nval = 1 - cval
@@ -108,7 +126,7 @@ class District(wx.Panel):
 		elif itype == District.block:
 			ip.SetValue(nval)
 
-		elif itype == District.turnout:
+		elif itype in [District.turnout, District.slever, District.flever]:
 			ip.SetState(nval)
 
 		elif itype == District.breaker:
@@ -163,6 +181,8 @@ class District(wx.Panel):
 			self.rr.AddInput(ic, self, itype)
 			self.ilist.InsertItem(ix, iname)
 			if itype == District.turnout:
+				self.ilist.SetItem(ix, 1, "N")
+			elif itype == District.slever:
 				self.ilist.SetItem(ix, 1, "N")
 			elif itype == District.block:
 				self.ilist.SetItem(ix, 1, "0,E")
@@ -276,7 +296,6 @@ class District(wx.Panel):
 
 	def DetermineSignalLever(self, lsigs, rsigs):
 		lval = 0
-		print("Dsl for %s" % lsigs[0])
 		for sig in lsigs:
 			try:
 				oc = self.outputMap[sig][1]
@@ -297,19 +316,15 @@ class District(wx.Panel):
 				rval += oc.GetAspect()
 
 		if rval == 0 and lval == 0:
-			print("return N")
 			return 'N'
 
 		if rval == 0:
-			print("return L")
 			return "L"
 
 		if lval == 0:
-			print("return R")
 			return 'R'
 
 		# both non-zero - shouldn't happen, bue set to N
-		print("return N catchall")
 		return 'N'
 
 	def UpdateIndicator(self, indname):

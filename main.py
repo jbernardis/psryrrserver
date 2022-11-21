@@ -174,6 +174,15 @@ class MainFrame(wx.Frame):
 			self.socketServer.sendToAll(resp)
 			self.rr.SetAspect(signame, aspect)
 
+		elif verb == "fleet":
+			signame = evt.data["name"][0]
+			value = int(evt.data["value"][0])
+			self.rr.SetSignalFleet(signame, value)
+			resp = {"fleet": [{"name": signame, "value": value}]}
+			# fleeting changes are always echoed back to all listeners
+			# TODO: need to record this somewhere for outpuing bits
+			self.socketServer.sendToAll(resp)
+
 		elif verb == "settrain":
 			try:
 				trn = evt.data["name"][0]
@@ -349,7 +358,6 @@ class MainFrame(wx.Frame):
 
 			self.socketServer.sendToAll(resp)
 
-
 		elif verb == "placetrain":
 			try:
 				blknm = evt.data["block"][0]
@@ -365,6 +373,12 @@ class MainFrame(wx.Frame):
 				print("block missing")
 				return
 			self.rr.RemoveTrain(blknm)
+
+		elif verb == "control":
+			name = evt.data["name"][0]
+			value = int(evt.data["value"][0])
+
+			self.rr.SetControlOption(name, value)
 
 		elif verb == "quit":
 			logging.info("HTTP 'quit' command received - terminating")
