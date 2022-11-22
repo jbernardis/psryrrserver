@@ -112,7 +112,8 @@ class Nassau(District):
 
 		brkrNames = [ "CBKrulish", "CBKrulishYd", "CBNassauW", "CBNassauE", "CBSptJct", "CBWilson", "CBThomas", "CBFoss", "CBDell" ]
 		blockNames = [ "N21.W", "N21", "N21.E", "NWOSTY", "NWOSCY", "NWOSW", "NWOSE",
-						"B10.W", "B10", "N31", "N32", "N12", "N22", "N41", "N42",
+						"N31", "N32", "N12", "N22", "N41", "N42",
+						"NEOSW", "NEOSE", "NEOSRH", "B10.W", "B10",
 						"N60", "T12", "W10", "W11", "W20", "R10.W" ]
 
 		ix = 0
