@@ -35,14 +35,6 @@ class Railroad(wx.Notebook):
 		]
 
 		self.controlOptions = {
-			"nassau": 0,
-			"cliff": 0,
-			"yard": 0,
-			"signal4": 0,
-			"cliff.fleet": 0,
-			"hyde.fleet": 0,
-			"port.fleet": 0,
-			"yard.fleet": 0,
 		}
 
 		self.districts = {}
@@ -51,6 +43,7 @@ class Railroad(wx.Notebook):
 		self.osRoutes = {}
 		self.switchLock = {}
 		self.fleetedSignals = {}
+		self.districtLock = {"NWSL": [0, 0, 0, 0], "NESL": [0, 0, 0]}
 
 		for dname, dclass in self.districtList:
 			logging.debug("Creating district %s" % dname)
@@ -146,14 +139,13 @@ class Railroad(wx.Notebook):
 			yield m
 
 	def SetControlOption(self, name, value):
-		print("setting control option %s to %s" % (name, str(value)))
 		self.controlOptions[name] = value
 
 	def GetControlOption(self, name):
 		try:
 			return self.controlOptions[name]
 		except:
-			return None
+			return 0
 
 	def SetOSRoute(self, blknm, rtname, ends, signals):
 		self.osRoutes[blknm] = [rtname, ends, signals]
@@ -234,6 +226,16 @@ class Railroad(wx.Notebook):
 			return self.switchLock[toname]
 		else:
 			return False
+
+	def SetDistrictLock(self, name, value):
+		print("setting district lock %s to (%s)" % (name, str(value)))
+		self.districtLock[name] = value
+
+	def GetDistrictLock(self, name):
+		if name in self.districtLock:
+			return self.districtLock[name]
+
+		return None
 
 	def SetOutPulseTo(self, oname, state):
 		if oname not in self.outputs:

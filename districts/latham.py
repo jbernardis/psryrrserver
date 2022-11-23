@@ -4,6 +4,7 @@ from district import District, LATHAM
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
+
 class Latham(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)

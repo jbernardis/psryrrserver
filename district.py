@@ -51,7 +51,10 @@ class District(wx.Panel):
 	nxbutton = 8
 	slever = 9
 	flever = 10
-	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker", "NX Button", "Signal Lever", "fleet lever" ]
+	hslever = 11
+	toggle = 12
+	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker",
+				   "NX Button", "Signal Lever", "Fleet Lever", "HS Lever", "Toggle" ]
 
 	def __init__(self, parent, name, settings):
 		wx.Panel.__init__(self, parent, wx.ID_ANY)
@@ -126,7 +129,7 @@ class District(wx.Panel):
 		elif itype == District.block:
 			ip.SetValue(nval)
 
-		elif itype in [District.turnout, District.slever, District.flever]:
+		elif itype in [District.turnout, District.slever, District.flever, District.hslever, District.toggle]:
 			ip.SetState(nval)
 
 		elif itype == District.breaker:

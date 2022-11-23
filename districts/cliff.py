@@ -2,7 +2,7 @@ import logging
 
 from district import District, leverState
 from rrobjects import SignalOutput, NXButtonOutput, HandSwitchOutput, BlockInput, TurnoutInput, RouteInput, \
-	FleetLeverInput, SignalLeverInput
+	FleetLeverInput, SignalLeverInput, HandswitchLeverInput, ToggleInput
 from bus import setBit, getBit
 
 
@@ -70,6 +70,8 @@ class Cliff(District):
 		]
 		signalLeverNames = [ "C2.lvr", "C4.lvr", "C6.lvr", "C8.lvr"]
 		fleetlLeverNames = [ "cliff.fleet" ]
+		hsLeverNames = [ "CSw3.lvr", "CSw11.lvr", "CSw15.lvr", "CSw19.lvr", "CSw21.lvr", "CSw21a.lvr", "CSw21b.lvr"]
+		toggleNames = [ "crelease" ]
 
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
 		ix = self.AddOutputs(nxButtons, NXButtonOutput, District.nxbutton, ix)
@@ -88,6 +90,8 @@ class Cliff(District):
 		ix = self.AddInputs(toNames+hsNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(signalLeverNames, SignalLeverInput, District.slever, ix)
 		ix = self.AddInputs(fleetlLeverNames, FleetLeverInput, District.flever, ix)
+		ix = self.AddInputs(hsLeverNames, HandswitchLeverInput, District.hslever, ix)
+		ix = self.AddInputs(toggleNames, ToggleInput, District.toggle, ix)
 
 	def EvaluateNXButton(self, btn):
 		if btn not in self.routeMap:
@@ -113,7 +117,9 @@ class Cliff(District):
 
 	def OutIn(self):
 		optControl = self.rr.GetControlOption("cliff")  # 0 => Cliff, 1 => Dispatcher bank/cliveden, 2 => Dispatcher All
-		optFleet = self.rr.GetControlOption("cliff.fleet")  # 0 => no fleeting, 1 => fleeting
+		optBank = self.rr.GetControlOption("bank.fleet")  # 0 => no fleeting, 1 => fleeting
+		optCliveden = self.rr.GetControlOption("bank.fleet")  # 0 => no fleeting, 1 => fleeting
+		optFleet = optBank or optCliveden
 		# Green Mountain
 		outb = [0 for i in range(3)]
 		asp = self.rr.GetOutput("C2RB").GetAspect()
@@ -352,15 +358,16 @@ class Cliff(District):
 				lvrCallOn = getBit(inb[6], 1)
 				lvrR = getBit(inb[6], 2)
 				self.rr.GetInput("C24.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
-# 		CRelease = CFIn[6].bit.b3;
-#
-# 		if(RBCliff->Checked)
-# 		{
-# 			CSw3.UnlockReq = CFIn[6].bit.b4;
-# 			CSw11.UnlockReq = CFIn[6].bit.b5;
-# 			CSw15.UnlockReq = CFIn[6].bit.b6;
-# 			CSw19.UnlockReq = CFIn[6].bit.b7;
-# 			CSw21.UnlockReq = CFIn[7].bit.b0;
+				release = getBit(inb[6], 3)
+				self.rr.GetInput("crelease").SetState(release)  # C Release switch
+				self.rr.GetInput("CSw3.lvr").SetState(getBit(inb[6], 4))  # handswitch unlocking
+				self.rr.GetInput("CSw11.lvr").SetState(getBit(inb[6], 5))
+				self.rr.GetInput("CSw15.lvr").SetState(getBit(inb[6], 6))
+				self.rr.GetInput("CSw19.lvr").SetState(getBit(inb[6], 7))
+
+				st = getBit(inb[6], 7)
+				self.rr.GetInput("CSw21a.lvr").SetState(st)
+				self.rr.GetInput("CSw21b.lvr").SetState(st)
 
 		# Sheffield
 		outb = [0 for i in range(4)]
@@ -449,7 +456,7 @@ class Cliff(District):
 
 			self.rr.GetInput("CC53E").SetValue(getBit(inb[1], 0))
 			self.rr.GetInput("CC54E").SetValue(getBit(inb[1], 1))
-			self.rr.GetInput("C50").SetValue(getBit(inb[1], 2))
+			self.rr.GetInput("C50").SetValue(getBit(inb[1], 2))  # Detection
 			self.rr.GetInput("C51").SetValue(getBit(inb[1], 3))
 			self.rr.GetInput("C52").SetValue(getBit(inb[1], 4))
 			self.rr.GetInput("C53").SetValue(getBit(inb[1], 5))

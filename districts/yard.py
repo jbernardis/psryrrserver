@@ -1,15 +1,15 @@
 import logging
 
-from district import District, CORNELL, EASTJCT, KALE, YARD, YARDSW
+from district import District, leverState, CORNELL, EASTJCT, KALE, YARD, YARDSW
 from rrobjects import TurnoutInput, BlockInput, RouteInput, SignalOutput, TurnoutOutput, RelayOutput, \
-	FleetLeverInput, IndicatorOutput
+	FleetLeverInput, IndicatorOutput, SignalLeverInput, ToggleInput
 from bus import setBit, getBit
+
 
 class Yard(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
 
-		#OUTPUTS
 		sigNames = [
 				"Y2R", "Y2L",
 				"Y4R", "Y4LA", "Y4LB",
@@ -54,12 +54,17 @@ class Yard(District):
 				"Y84E": [ ["YSw131", "N"], ["YSw132","N"], ["YSw134", "R"] ],
 		}
 		fleetlLeverNames = [ "yard.fleet" ]
+		signalLeverNames = [ "Y2.lvr", "Y4.lvr", "Y8.lvr", "Y10.lvr",
+							"Y22.lvr", "Y24.lvr", "Y26.lvr", "Y34.lvr"]
+		toggleNames = ["yrelease", "wos2norm"]
 
 		ix = 0
 		ix = self.AddInputs(routeNames, RouteInput, District.route, ix)
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
+		ix = self.AddInputs(signalLeverNames, SignalLeverInput, District.slever, ix)
 		ix = self.AddInputs(fleetlLeverNames, FleetLeverInput, District.flever, ix)
+		ix = self.AddInputs(toggleNames, ToggleInput, District.toggle, ix)
 
 		# add "proxy" inputs for the waterman turnouts.  These will not be addressed directly, but through the  route table
 		hiddenToNames = sorted([ "YSw113", "YSw115", "YSw116", "YSw131", "YSw132", "YSw134" ])
@@ -386,39 +391,45 @@ class Yard(District):
 			rb = getBit(inb[0], 1)
 			ip.SetState(nb, rb)
 
-# 		if(RBYard->Checked)
-# 		{
-# 			YSigL2.R = YDIn[0].bit.b2;      //Signals
-# 			YSigL2.Callon = YDIn[0].bit.b3;
-# 			YSigL2.L = YDIn[0].bit.b4;
-# 			YSigL4.R = YDIn[0].bit.b5;
-# 			YSigL4.Callon = YDIn[0].bit.b6;
-# 			YSigL4.L = YDIn[0].bit.b7;
+			if optControl == 0:  # Control by yard
+				lvrR = getBit(inb[0], 2)       # signal levers
+				lvrCallOn = getBit(inb[0], 3)
+				lvrL = getBit(inb[0], 4)
+				self.rr.GetInput("L2.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrR = getBit(inb[0], 5)
+				lvrCallOn = getBit(inb[0], 6)
+				lvrL = getBit(inb[0], 7)
+				self.rr.GetInput("L4.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
 
-# 			YSigL8.R = YDIn[1].bit.b0;
-# 			YSigL8.Callon = YDIn[1].bit.b1;
-# 			YSigL8.L = YDIn[1].bit.b2;
-# 			YSigL10.R = YDIn[1].bit.b3;
-# 			YSigL10.Callon = YDIn[1].bit.b4;
-# 			YSigL10.L = YDIn[1].bit.b5;
-# 			YSigL22.R = YDIn[1].bit.b6;
-# 			YSigL22.Callon = YDIn[1].bit.b7;
+				lvrR = getBit(inb[1], 0)
+				lvrCallOn = getBit(inb[1], 1)
+				lvrL = getBit(inb[1], 2)
+				self.rr.GetInput("L8.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrR = getBit(inb[1], 3)
+				lvrCallOn = getBit(inb[1], 4)
+				lvrL = getBit(inb[1], 5)
+				self.rr.GetInput("L10.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrR = getBit(inb[1], 6)
+				lvrCallOn = getBit(inb[1], 7)
 
-# 			YSigL22.L = YDIn[2].bit.b0;
-# 			YSigL24.Callon = YDIn[2].bit.b1;
-# 			YSigL24.L = YDIn[2].bit.b2;
-# 			YSigL26.R = YDIn[2].bit.b3;
-# 			YSigL26.Callon = YDIn[2].bit.b4;
-# 			YSigL26.L = YDIn[2].bit.b5;
-# 			YSigL34.R = YDIn[2].bit.b6;
-# 			YSigL34.Callon = YDIn[2].bit.b7;
+				lvrL = getBit(inb[2], 0)
+				self.rr.GetInput("L22.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrCallOn = getBit(inb[2], 1)
+				lvrL = getBit(inb[2], 2)
+				self.rr.GetInput("L24.lvr").SetState(leverState(lvrL, lvrCallOn, 0))
+				lvrR = getBit(inb[2], 3)
+				lvrCallOn = getBit(inb[2], 4)
+				lvrL = getBit(inb[2], 5)
+				self.rr.GetInput("L26.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrR = getBit(inb[2], 6)
+				lvrCallOn = getBit(inb[2], 7)
 
-# 			YSigL34.L = YDIn[3].bit.b0;
-# 		}
+				lvrL = getBit(inb[3], 0)
+				self.rr.GetInput("L34.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				self.rr.GetInput("yrelease").SetState(getBit(inb[3], 1))  # Y Release switch
+				self.rr.GetInput("wos1norm").SetState(getBit(inb[3], 2))  # WOS1 Norm
 
-# 		YRelease = YDIn[3].bit.b1;
-# 		WOS1Norm = YDIn[3].bit.b2;      //switches normal for WOS1 into Y70
-			self.rr.GetInput("Y81W").SetValue(getBit(inb[3], 3)) 
+			self.rr.GetInput("Y81W").SetValue(getBit(inb[3], 3))
 			self.rr.GetInput("Y82W").SetValue(getBit(inb[3], 4)) 
 			self.rr.GetInput("Y83W").SetValue(getBit(inb[3], 5)) 
 			self.rr.GetInput("Y84W").SetValue(getBit(inb[3], 6)) 

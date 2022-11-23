@@ -1,7 +1,8 @@
 import logging
 
-from district import District, LATHAM
-from rrobjects import SignalOutput, TurnoutOutput, NXButtonOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
+from district import District, leverState,  LATHAM
+from rrobjects import SignalOutput, TurnoutOutput, NXButtonOutput, RelayOutput, BreakerInput, BlockInput, \
+	TurnoutInput, SignalLeverInput, ToggleInput
 from bus import setBit, getBit
 
 
@@ -115,12 +116,17 @@ class Nassau(District):
 						"N31", "N32", "N12", "N22", "N41", "N42",
 						"NEOSW", "NEOSE", "NEOSRH", "B10.W", "B10",
 						"N60", "T12", "W10", "W11", "W20", "R10.W" ]
+		signalLeverNames = [ "N14.lvr", "N16.lvr", "N18.lvr", "N20.lvr", "N24.lvr", "N26.lvr", "N28.lvr" ]
+		toggleNames = [ "nrelease" ]
+
 
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)
 		ix = self.AddInputs(toONames+toNames, TurnoutInput, District.turnout, ix)
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
+		ix = self.AddInputs(signalLeverNames, SignalLeverInput, District.slever, ix)
+		ix = self.AddInputs(toggleNames, ToggleInput, District.toggle, ix)
 
 	def EvaluateNXButtons(self, bEntry, bExit):
 		if bEntry not in self.NXMap:
@@ -144,7 +150,12 @@ class Nassau(District):
 		self.sigLever["N28"] = self.DetermineSignalLever(["N28L"], ["N28R"])
 
 	def OutIn(self):
-		#Nassau West
+		optControl = self.rr.GetControlOption("nassau")  # 0 => Nassau, 1 => Dispatcher Main, 2 => Dispatcher All
+		optFleet = self.rr.GetControlOption("nassau.fleet")  # 0 => no fleeting, 1 => fleeting
+
+		NESL = self.rr.GetDistrictLock("NESL")
+		NWSL = self.rr.GetDistrictLock("NWSL")
+		# Nassau West
 		outb = [0 for i in range(8)]
 
 		asp = self.rr.GetOutput("N14LC").GetAspect()     # signals
@@ -190,8 +201,8 @@ class Nassau(District):
 		v = self.rr.GetInput("R10").GetValue() + self.rr.GetInput("R10.W").GetValue() 
 		outb[3] = setBit(outb[3], 0, 1 if v != 0 else 0 )  				# Rocky Hill approach indicator
 		outb[3] = setBit(outb[3], 1, self.rr.GetInput("B20").GetValue())  # Bank approach indicator
-# 	NWOut[3].bit.b2 = !NFltL12.R;		//Fleet indicator
-# 	NWOut[3].bit.b3 = NFltL12.R;
+		outb[3] = setBit(outb[3], 2, optFleet)                    # fleet indicator
+		outb[3] = setBit(outb[3], 3, 1-optFleet)
 		sigL = self.sigLever["N14"]
 		outb[3] = setBit(outb[3], 4, 1 if sigL == "L" else 0)       # Signal Indicators
 		outb[3] = setBit(outb[3], 5, 1 if sigL == "N" else 0)
@@ -228,12 +239,12 @@ class Nassau(District):
 		outb[6] = setBit(outb[6], 2, self.rr.GetInput("CBNassauE").GetValue())  
 		outb[6] = setBit(outb[6], 3, self.rr.GetInput("CBSptJct").GetValue())  
 		outb[6] = setBit(outb[6], 4, self.rr.GetInput("CBWilson").GetValue())   
-		outb[6] = setBit(outb[6], 5, self.rr.GetInput("CBThomas").GetValue())   
-# 	NWOut[6].bit.b6 = NWSL1;			//Switch locks
-# 	NWOut[6].bit.b7 = NWSL2;
+		outb[6] = setBit(outb[6], 5, self.rr.GetInput("CBThomas").GetValue())
+		outb[6] = setBit(outb[6], 6, NWSL[0])  # switch locks west
+		outb[6] = setBit(outb[6], 7, NWSL[1])
 
-#     NWOut[7].bit.b0 = NWSL3;
-# 	NWOut[7].bit.b1 = NWSL4;
+		outb[7] = setBit(outb[7], 0, NWSL[2])
+		outb[7] = setBit(outb[7], 1, NWSL[3])
 		outb[7] = setBit(outb[7], 2, self.rr.GetOutput("N21.srel").GetStatus())	      # Stop relays
 																					# Bit 3 used for signal N14R above
 		asp = self.rr.GetOutput("N14LD").GetAspect()    							# dwarf signals for W20
@@ -315,36 +326,44 @@ class Nassau(District):
 			ip.SetValue(getBit(inb[3], 0)) 
 			ip = self.rr.GetInput("N12") 
 			ip.SetValue(getBit(inb[3], 1)) 
-# 		NRelease 		= NWIn[3].bit.b2; 	//Switch release
-# 		if(RBNassau->Checked)
-# 		{
-# 			NFltL12.R 		= NWIn[3].bit.b3;	//Fleet lever
-# 			NSigL14.R		= NWIn[3].bit.b4;	//Signal levers
-# 			NSigL14.Callon	= NWIn[3].bit.b5;
-# 			NSigL14.L		= NWIn[3].bit.b6;
-# 			NSigL16.R 		= NWIn[3].bit.b7;
-# 			NSigL16.Callon	= NWIn[4].bit.b0;
-# 			NSigL16.L		= NWIn[4].bit.b1;
-# 			NSigL18.R		= NWIn[4].bit.b2;
-# 			NSigL18.Callon	= NWIn[4].bit.b3;
-# 			NSigL18.L		= NWIn[4].bit.b4;
-# 			NSigL24.R		= NWIn[5].bit.b0;
-# 			NSigL24.Callon	= NWIn[5].bit.b1;
-# 			NSigL24.L	 	= NWIn[5].bit.b2;
-# 			NSigL26.R 		= NWIn[5].bit.b3;
-# 			NSigL26.Callon 	= NWIn[5].bit.b4;
-# 			NSigL26.L 		= NWIn[5].bit.b5;
-# 		}
 
-# 		if(!RBNDispatcherAll->Checked)
-# 		{
-# 			NSigL20.R		= NWIn[4].bit.b5;
-# 			NSigL20.Callon	= NWIn[4].bit.b6;
-# 			NSigL20.L		= NWIn[4].bit.b7;
-# 			NSigL28.R	 	= NWIn[5].bit.b6;
-# 			NSigL28.Callon	= NWIn[5].bit.b7;
-# 			NSigL28.L   	= NWIn[6].bit.b0;
-# 		}
+			if optControl == 0:  # Nassau local control
+				release = getBit(inb[3], 2)
+				self.rr.GetInput("nrelease").SetState(release)  # C Release switch
+				fleet = getBit(inb[3], 3)
+				self.rr.GetInput("nassau.fleet").SetState(fleet)  # fleet
+				lvrL = getBit(inb[3], 4)  # signal levers
+				lvrCallOn = getBit(inb[3], 5)
+				lvrR = getBit(inb[3], 6)
+				self.rr.GetInput("N14.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[3], 7)
+
+				lvrCallOn = getBit(inb[4], 0)
+				lvrR = getBit(inb[4], 1)
+				self.rr.GetInput("N16.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[4], 2)
+				lvrCallOn = getBit(inb[4], 3)
+				lvrR = getBit(inb[4], 4)
+				self.rr.GetInput("N18.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+
+				lvrL = getBit(inb[5], 0)
+				lvrCallOn = getBit(inb[5], 1)
+				lvrR = getBit(inb[5], 2)
+				self.rr.GetInput("N24.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[5], 3)
+				lvrCallOn = getBit(inb[5], 4)
+				lvrR = getBit(inb[5], 5)
+				self.rr.GetInput("N26.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+
+			if optControl != 2:  # NOT dispatcher ALL
+				lvrL = getBit(inb[4], 5)
+				lvrCallOn = getBit(inb[4], 6)
+				lvrR = getBit(inb[4], 7)
+				self.rr.GetInput("N20.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
+				lvrL = getBit(inb[5], 6)
+				lvrCallOn = getBit(inb[5], 7)
+				lvrR = getBit(inb[6], 0)
+				self.rr.GetInput("N28.lvr").SetState(leverState(lvrL, lvrCallOn, lvrR))
 
 			self.rr.GetInput("CBKrulishYd").SetValue(getBit(inb[6], 1)) # Breakers
 			self.rr.GetInput("CBThomas").SetValue(getBit(inb[6], 2))
@@ -419,9 +438,9 @@ class Nassau(District):
 		asp = self.rr.GetOutput("N28L").GetAspect()       
 		outb[2] = setBit(outb[2], 1, 1 if asp in [1, 3] else 0)
 		outb[2] = setBit(outb[2], 2, 1 if asp in [2, 3] else 0)
-#    	NEOut[2].bit.b3 = NESL1;                //Switch locks
-#     NEOut[2].bit.b4 = NESL2;
-#    	NEOut[2].bit.b5 = NESL3;
+		outb[2] = setBit(outb[2], 3, NESL[0])  # switch locks east
+		outb[2] = setBit(outb[2], 4, NESL[1])
+		outb[2] = setBit(outb[2], 5, NESL[2])
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("B10.srel").GetStatus())	# Stop relay
 		sigL = self.sigLever["N24"]
 		outb[2] = setBit(outb[2], 7, 1 if sigL == "L" else 0)       # Signal Indicators
@@ -547,8 +566,6 @@ class Nassau(District):
 		if self.sendIO:
 			self.rr.ShowText(otext, "", 2, 3)
 
-
-# // 	NXOut[2].bit.b7 =
 
 # 	SendPacket(NASSAUNX, &NassauNXAborts, &NXIn[0], &NXOld[0], &NXOut[0], 3, true);
 # 		NXText = "NassauNX" + OutText;

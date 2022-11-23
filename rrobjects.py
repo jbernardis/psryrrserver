@@ -201,6 +201,48 @@ class FleetLeverInput (Input):
 		return {"control": [{ "name": self.name, "value": self.state}]}
 
 
+class ToggleInput (Input):
+	def __init__(self, name, district):
+		Input.__init__(self, name, district)
+		self.state = 0
+
+	def SetState(self, state):
+		if state == self.state:
+			return
+
+		self.state = state
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent(self.GetEventMessage())
+
+	def GetState(self):
+		return self.state
+
+	def GetEventMessage(self):
+		return {"control": [{ "name": self.name, "value": self.state}]}
+
+
+class HandswitchLeverInput (Input):
+	def __init__(self, name, district):
+		Input.__init__(self, name, district)
+		self.state = 0
+
+	def SetState(self, state):
+		print("HS set state")
+		if state == self.state:
+			return
+
+		self.state = state
+		#self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent(self.GetEventMessage())
+
+	def GetState(self):
+		return self.state
+
+	def GetEventMessage(self):
+		hsname = self.name.split(".")[0] + ".hand"
+		return {"handswitch": [{ "name": hsname, "state": self.state}]}
+
+
 class Output:
 	def __init__(self, name, district):
 		self.name = name

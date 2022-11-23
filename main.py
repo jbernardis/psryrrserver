@@ -380,6 +380,13 @@ class MainFrame(wx.Frame):
 
 			self.rr.SetControlOption(name, value)
 
+		elif verb == "districtlock":
+			name = evt.data["name"][0]
+			value = evt.data["value"]
+			print("raw value: %s" % str(value))
+
+			self.rr.SetDistrictLock(name, [int(v) for v in value])
+
 		elif verb == "quit":
 			logging.info("HTTP 'quit' command received - terminating")
 			self.Shutdown()

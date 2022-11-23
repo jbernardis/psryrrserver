@@ -66,8 +66,8 @@ class Krulish(District):
 		if self.sendIO:
 			self.rr.ShowText(otext, itext, 0, 1)
 
-    # SendPacket(KRULISH, &KrulishAborts, &KIn[0], &KOld[0], &KOut[0], 3, true);
-    #     KRText = "Krulish\t" + OutText;
+	# SendPacket(KRULISH, &KrulishAborts, &KIn[0], &KOld[0], &KOut[0], 3, true);
+	#     KRText = "Krulish\t" + OutText;
 
 		inb = []
 		inbc = 0
@@ -84,7 +84,7 @@ class Krulish(District):
 			nb = getBit(inb[0], 6)
 			rb = getBit(inb[0], 7)
 			self.rr.GetInput("KSw7").SetState(nb, rb)
-    
+
 			self.rr.GetInput("N10.W").SetValue(getBit(inb[1], 2))  # Detection
 			self.rr.GetInput("N10").SetValue(getBit(inb[1], 3))
 			self.rr.GetInput("N10.E").SetValue(getBit(inb[1], 4)) 
