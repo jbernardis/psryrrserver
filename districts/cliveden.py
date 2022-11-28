@@ -9,7 +9,7 @@ class Cliveden(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
 
-		sigNames =  [ "C14R", "C14LA", "C14LB",
+		sigNames = [ "C14R", "C14LA", "C14LB",
 						"C12R", "C12L",
 						"C10R", "C10L" ]
 		toNames = [ "CSw9", "CSw13" ]

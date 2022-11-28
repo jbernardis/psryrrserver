@@ -105,9 +105,23 @@ class Railroad(wx.Notebook):
 			logging.warning("No output found for name \"%s\"" % oname)
 			return None
 
+	def GetOutputInfo(self, oname):
+		try:
+			return self.outputs[oname]
+		except KeyError:
+			logging.warning("No output found for name \"%s\"" % oname)
+			return None
+
 	def GetInput(self, iname):
 		try:
 			return self.inputs[iname][0]
+		except KeyError:
+			logging.warning("No input found for name \"%s\"" % iname)
+			return None
+
+	def GetInputInfo(self, iname):
+		try:
+			return self.inputs[iname]
 		except KeyError:
 			logging.warning("No input found for name \"%s\"" % iname)
 			return None

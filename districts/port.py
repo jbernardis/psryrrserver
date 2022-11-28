@@ -13,7 +13,7 @@ class Port(District):
 		toNames = [ "PBSw11", "PBSw13" ]
 		hsNames = [ "PBSw5", "PBSw15a", "PBSw15b" ]
 		handswitchNames = [ "PBSw5.hand", "PBSw15a.hand", "PBSw15b.hand" ]
-		relayNames = [ "L11.srel", "L20.srel", "L21.srel", "P21.srel", "P50.srel", "L31.srel", "D10.srel", "S21.srel", "N25.srel" ]
+		relayNames = [ "P31.srel", "P41.srel", "L32.srel", "P42.srel" ]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)

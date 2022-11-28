@@ -301,21 +301,13 @@ class District(wx.Panel):
 	def DetermineSignalLever(self, lsigs, rsigs):
 		lval = 0
 		for sig in lsigs:
-			try:
-				oc = self.outputMap[sig][1]
-			except KeyError:
-				logging.warning("Output for signal %s not found" % sig)
-				oc = None
+			oc = self.rr.GetOutput(sig)
 			if oc:
 				lval += oc.GetAspect()
 
 		rval = 0
 		for sig in rsigs:
-			try:
-				oc = self.outputMap[sig][1]
-			except KeyError:
-				logging.warning("Output for signal %s not found" % sig)
-				oc = None
+			oc = self.rr.GetOutput(sig)
 			if oc:
 				rval += oc.GetAspect()
 
