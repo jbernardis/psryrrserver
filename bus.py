@@ -4,8 +4,10 @@ import time
 
 MAXTRIES = 3
 
+
 def swapbyte(b):
 	return int("0b"+"{0:08b}".format(b)[::-1], 2)
+
 
 def setBit(obyte, obit, val):
 	if val != 0:
@@ -13,12 +15,14 @@ def setBit(obyte, obit, val):
 	else:
 		return obyte
 
+
 def getBit(ibyte, ibit):
 	if ibit < 0 or ibit > 7:
-		#bit out of range
+		# bit index is out of range
 		return 0
 	mask = 1 << ibit
-	return 1 if ibyte&mask != 0 else 0
+	return 1 if ibyte & mask != 0 else 0
+
 
 class Bus:
 	def __init__(self, tty):
@@ -69,10 +73,11 @@ class Bus:
 				inbuf.append(b)
 				
 		if len(inbuf) != nbytes:
-			#print("incomplete read.  Expecting %d characters, got %d" % (nbytes, len(inbuf)))
+			# print("incomplete read.  Expecting %d characters, got %d" % (nbytes, len(inbuf)))
 			return None, 0
 
 		return inbuf, nbytes
+
 
 class RailroadMonitor(threading.Thread):
 	def __init__(self, ttyDevice, rr, settings):
@@ -82,11 +87,11 @@ class RailroadMonitor(threading.Thread):
 		self.tty = ttyDevice
 		self.rr = rr
 		if not self.simulation:
-			self.rrbus = Bus(self.tty, settings)
+			self.rrbus = Bus(self.tty)
 			if not self.rrbus.initialized:
 				return
 
-		self.pollInterval = settings.busInterval * 1000000000 # convert s to ns
+		self.pollInterval = settings.busInterval * 1000000000  # convert s to ns
 		self.isRunning = False
 		self.initialized = True
 

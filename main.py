@@ -23,9 +23,13 @@ logging.basicConfig(filename='rrserver.log', filemode='w', format='%(asctime)s %
 (IOClearEvent, EVT_CLEARIO) = wx.lib.newevent.NewEvent()  
 (IOTextEvent, EVT_TEXTIO) = wx.lib.newevent.NewEvent()  
 
+
 class MainFrame(wx.Frame):
 	def __init__(self):
 		wx.Frame.__init__(self, None, size=(900, 800), style=wx.DEFAULT_FRAME_STYLE)
+		self.socketServer = None
+		self.dispServer = None
+		self.rrMonitor = None
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		logging.info("pydispatch starting")
 
@@ -39,8 +43,7 @@ class MainFrame(wx.Frame):
 				(self.ip, self.settings.serverport, self.settings.socketport))
 
 		logging.info("Creating railroad object")
-		self.rr = Railroad(self, self.rrEventReceipt, self.settings) #, self.rrbus, self.rrEventReceipt, self.settings.busInterval)
-
+		self.rr = Railroad(self, self.rrEventReceipt, self.settings)
 		self.clientList = ClientList(self)
 		self.trainList = TrainList(self)
 		self.ioDisplay = IODisplay(self)
@@ -99,7 +102,7 @@ class MainFrame(wx.Frame):
 		evt = IOClearEvent()
 		wx.QueueEvent(self, evt)
 
-	def onClearIOEvent(self, evt):
+	def onClearIOEvent(self, _):
 		self.ioDisplay.ClearIO()
 
 	def ShowText(self, otext, itext, line, lines):
@@ -119,7 +122,7 @@ class MainFrame(wx.Frame):
 				addr = parms["addr"]
 				skt = parms["socket"]
 				sid = parms["SID"]
-				logging.info("New Client connecting from address: %s:%d" % (addr))
+				logging.info("New Client connecting from address: %s" % addr)
 				self.socketServer.sendToOne(skt, addr, {"sessionID": sid})
 				self.clients[addr] = [skt, sid]
 				self.refreshClient(addr, skt)
@@ -127,7 +130,7 @@ class MainFrame(wx.Frame):
 
 			elif cmd == "delclient":
 				addr = parms["addr"]
-				logging.info("Disconnecting Client from address: %s:%d" % (addr))
+				logging.info("Disconnecting Client from address: %s" % addr)
 				try:
 					del self.clients[addr]
 				except KeyError:
@@ -186,11 +189,11 @@ class MainFrame(wx.Frame):
 		elif verb == "settrain":
 			try:
 				trn = evt.data["name"][0]
-			except:
+			except (IndexError, KeyError):
 				trn = None
 			try:
 				loco = evt.data["loco"][0]
-			except:
+			except (IndexError, KeyError):
 				loco = None
 			block = evt.data["block"][0]
 			# train information is always echoed back to all listeners
@@ -220,19 +223,19 @@ class MainFrame(wx.Frame):
 		elif verb == "renametrain":
 			try:
 				oname = evt.data["oldname"][0]
-			except:
+			except (IndexError, KeyError):
 				oname = None
 			try:
 				oloco = evt.data["oldloco"][0]
-			except:
+			except (IndexError, KeyError):
 				oloco = None
 			try:
 				nname = evt.data["newname"][0]
-			except:
+			except (IndexError, KeyError):
 				nname = None
 			try:
 				nloco = evt.data["newloco"][0]
-			except:
+			except (IndexError, KeyError):
 				nloco = None
 
 			if self.trainList.RenameTrain(oname, nname, oloco, nloco):
@@ -268,15 +271,15 @@ class MainFrame(wx.Frame):
 		elif verb == "nxbutton":
 			try:
 				bentry = evt.data["entry"][0]
-			except:
+			except (IndexError, KeyError):
 				bentry = None
 			try:
 				bexit = evt.data["exit"][0]
-			except:
+			except (IndexError, KeyError):
 				bexit = None
 			try:
 				button = evt.data["button"][0]
-			except:
+			except (IndexError, KeyError):
 				button = None
 
 			if bentry and bexit:
@@ -333,7 +336,7 @@ class MainFrame(wx.Frame):
 			blknm = evt.data["block"][0]
 			try:
 				route = evt.data["route"][0]
-			except:
+			except (IndexError, KeyError):
 				route = None
 
 			if route is None:
@@ -342,11 +345,11 @@ class MainFrame(wx.Frame):
 			else:
 				try:
 					ends = evt.data["ends"][0:2]
-				except:
+				except (IndexError, KeyError):
 					ends = None
 				try:
 					signals = evt.data["signals"][0:2]
-				except:
+				except (IndexError, KeyError):
 					signals = None
 
 			self.rr.SetOSRoute(blknm, route, ends, signals)
@@ -361,7 +364,7 @@ class MainFrame(wx.Frame):
 		elif verb == "placetrain":
 			try:
 				blknm = evt.data["block"][0]
-			except:
+			except (IndexError, KeyError):
 				print("block missing")
 				return
 			self.rr.PlaceTrain(blknm)
@@ -369,7 +372,7 @@ class MainFrame(wx.Frame):
 		elif verb == "removetrain":
 			try:
 				blknm = evt.data["block"][0]
-			except:
+			except (IndexError, KeyError):
 				print("block missing")
 				return
 			self.rr.RemoveTrain(blknm)
@@ -402,24 +405,26 @@ class MainFrame(wx.Frame):
 		self.dispServer.close()
 
 		logging.info("closing bus to railroad...")
-		try:
-			self.rrMonitor.kill()
-		except:
-			pass
-		try:
-			self.rrbus.close()
-		except:
-			pass
+		self.rrMonitor.kill()
+		# try:
+		# 	self.rrMonitor.kill()
+		# except:
+		# 	pass
 
 		logging.info("exiting...")
 		self.Destroy()
 
+
 class App(wx.App):
+	def __init__(self, redirect=False, filename=None, useBestVisual=False, clearSigInt=True):
+		super().__init__(redirect, filename, useBestVisual, clearSigInt)
+		self.frame = None
+
 	def OnInit(self):
 		self.frame = MainFrame()
 		self.frame.Show()
 		return True
 
+
 app = App(False)
 app.MainLoop()
-

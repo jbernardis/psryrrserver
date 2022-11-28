@@ -1,35 +1,35 @@
 import wx
 import logging
-
-# district node addresses
-YARD      = 0x11;
-KALE      = 0x12;
-EASTJCT   = 0x13;
-CORNELL   = 0x14;
-YARDSW    = 0x15;
-PARSONS   = 0x21;
-PORTA     = 0x22;
-PORTB     = 0x23;
-LATHAM    = 0x31;
-CARLTON   = 0x32;
-DELL      = 0x41;
-FOSS      = 0x42;
-HYDEJCT   = 0x51;
-HYDE      = 0x52;
-SHORE     = 0x61;
-KRULISH   = 0x71;
-NASSAUW   = 0x72;
-NASSAUE   = 0x73;
-NASSAUNX  = 0x74;
-BANK      = 0x81;
-CLIVEDEN  = 0x91;
-GREENMTN  = 0x92;
-CLIFF     = 0x93;
-SHEFFIELD = 0x95;
-
 from rrobjects import BlockInput, SubBlockInput
 
-def leverState(lvrL, lvrCallOn, lvrR):
+# district node addresses
+YARD      = 0x11
+KALE      = 0x12
+EASTJCT   = 0x13
+CORNELL   = 0x14
+YARDSW    = 0x15
+PARSONS   = 0x21
+PORTA     = 0x22
+PORTB     = 0x23
+LATHAM    = 0x31
+CARLTON   = 0x32
+DELL      = 0x41
+FOSS      = 0x42
+HYDEJCT   = 0x51
+HYDE      = 0x52
+SHORE     = 0x61
+KRULISH   = 0x71
+NASSAUW   = 0x72
+NASSAUE   = 0x73
+NASSAUNX  = 0x74
+BANK      = 0x81
+CLIVEDEN  = 0x91
+GREENMTN  = 0x92
+CLIFF     = 0x93
+SHEFFIELD = 0x95
+
+
+def leverState(lvrL, _, lvrR):  # parameter 2 is callon lever - not yet used
 	if lvrL == 1 and lvrR == 0:
 		return "L"
 
@@ -54,10 +54,11 @@ class District(wx.Panel):
 	hslever = 11
 	toggle = 12
 	typeLabels = [ "Signal", "Turnout", "Indicator", "Stop Relay", "Handswitch", "Route", "Block", "Breaker",
-				   "NX Button", "Signal Lever", "Fleet Lever", "HS Lever", "Toggle" ]
+					"NX Button", "Signal Lever", "Fleet Lever", "HS Lever", "Toggle" ]
 
 	def __init__(self, parent, name, settings):
 		wx.Panel.__init__(self, parent, wx.ID_ANY)
+		self.routeMap = {}
 		self.name = name
 		self.rr = parent
 		self.settings = settings
@@ -141,7 +142,7 @@ class District(wx.Panel):
 	def PlaceTrain(self, blknm):
 		try:
 			ix, ip, itype = self.inputMap[blknm]
-		except:
+		except IndexError:
 			print("blknm not found in inputs")
 			return
 		if itype != District.block:
@@ -154,7 +155,7 @@ class District(wx.Panel):
 	def RemoveTrain(self, blknm):
 		try:
 			ix, ip, itype = self.inputMap[blknm]
-		except:
+		except IndexError:
 			print("blknm not found in inputs")
 			return
 		if itype != District.block:

@@ -11,6 +11,7 @@ from districts.nassau import Nassau
 from districts.bank import Bank
 from districts.cliveden import Cliveden
 from districts.cliff import Cliff
+from districts.port import Port
 
 
 class Railroad(wx.Notebook):
@@ -31,6 +32,7 @@ class Railroad(wx.Notebook):
 			[ "Bank", Bank ],
 			[ "Cliveden", Cliveden ],
 			[ "Cliff", Cliff ],
+			[ "Port", Port ],
 			[ "Hyde", Hyde ],
 		]
 
