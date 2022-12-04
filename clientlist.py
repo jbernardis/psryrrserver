@@ -30,5 +30,5 @@ class ClientList(wx.ListCtrl):
 		except ValueError:
 			return
 
-		self.DeleteItem(index)
+		# self.DeleteItem(index)
 		del(self.clientList[index])

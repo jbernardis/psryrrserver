@@ -122,7 +122,7 @@ class MainFrame(wx.Frame):
 				addr = parms["addr"]
 				skt = parms["socket"]
 				sid = parms["SID"]
-				logging.info("New Client connecting from address: %s" % addr)
+				logging.info("New Client connecting from address: %s:%s" % (addr[0], addr[1]))
 				self.socketServer.sendToOne(skt, addr, {"sessionID": sid})
 				self.clients[addr] = [skt, sid]
 				self.refreshClient(addr, skt)
@@ -130,7 +130,7 @@ class MainFrame(wx.Frame):
 
 			elif cmd == "delclient":
 				addr = parms["addr"]
-				logging.info("Disconnecting Client from address: %s" % addr)
+				logging.info("Disconnecting Client from address: %s:%s" % (addr[0], addr[1]))
 				try:
 					del self.clients[addr]
 				except KeyError:
