@@ -56,6 +56,26 @@ class Railroad(wx.Notebook):
 		self.SetPageText(0, "* " + self.districtList[0][0] + " *")
 
 	def Initialize(self):
+		# TODO:  put all of these in an ini file
+		self.SetControlOption("nassau", 2)
+		self.SetControlOption("cliff", 2)
+		self.SetControlOption("yard", 0)
+		self.SetControlOption("signal4", 0)
+		self.SetControlOption("bank.fleet", 0)
+		self.SetControlOption("carlton.fleet", 0)
+		self.SetControlOption("cliff.fleet", 0)
+		self.SetControlOption("cliveden.fleet", 0)
+		self.SetControlOption("foss.fleet", 0)
+		self.SetControlOption("hyde.fleet", 0)
+		self.SetControlOption("hydejct.fleet", 0)
+		self.SetControlOption("krulish.fleet", 0)
+		self.SetControlOption("latham.fleet", 0)
+		self.SetControlOption("nassau.fleet", 0)
+		self.SetControlOption("port.fleet", 0)
+		self.SetControlOption("shore.fleet", 0)
+		self.SetControlOption("valleyjct.fleet", 0)
+		self.SetControlOption("yard.fleet", 0)
+
 		for dname, dobj in self.districts.items():
 			dobj.SendIO(False)
 			dobj.DetermineSignalLevers()
@@ -89,14 +109,14 @@ class Railroad(wx.Notebook):
 
 		self.outputs[oname] = [output, district, otype]
 
-	def AddInput(self, input, district, itype):
-		input.SetRailRoad(self)
-		iname = input.GetName()
+	def AddInput(self, iput, district, itype):
+		iput.SetRailRoad(self)
+		iname = iput.GetName()
 		if iname in self.inputs:
 			logging.warning("Input (%s) duplicate definitionb" % iname)
 			return
 
-		self.inputs[iname] = [input, district, itype]
+		self.inputs[iname] = [iput, district, itype]
 
 	def GetOutput(self, oname):
 		try:
@@ -127,12 +147,12 @@ class Railroad(wx.Notebook):
 			return None
 
 	def GetCurrentValues(self):
-		for ip,district,itype in self.inputs.values():
+		for ip, district, itype in self.inputs.values():
 			m = ip.GetEventMessage()
 			if m is not None:
 				yield m
 
-		for op,district,itype in self.outputs.values():
+		for op, district, itype in self.outputs.values():
 			m = op.GetEventMessage()
 			if m is not None:
 				yield m
@@ -140,7 +160,6 @@ class Railroad(wx.Notebook):
 		for osblk, rtinfo in self.osRoutes.items():
 			rt = rtinfo[0]
 			ends = rtinfo[1]
-			print("block: %s %s" % (osblk, rt))
 			m = {"setroute": [{ "block": osblk, "route": str(rt)}]}
 			if ends is not None:
 				m["setroute"][0]["ends"] = ends
@@ -160,7 +179,7 @@ class Railroad(wx.Notebook):
 	def GetControlOption(self, name):
 		try:
 			return self.controlOptions[name]
-		except:
+		except IndexError:
 			return 0
 
 	def SetOSRoute(self, blknm, rtname, ends, signals):
@@ -174,18 +193,14 @@ class Railroad(wx.Notebook):
 		district.PlaceTrain(blknm)
 
 	def RemoveTrain(self, blknm):
-		print("rr remove train")
 		if blknm not in self.inputs:
 			logging.warning("No input defined for block %s" % blknm)
-			print("block %s not found" % blknm)
 			return
 		ip, district, itype = self.inputs[blknm]
 		district.RemoveTrain(blknm)
 
 	def SetAspect(self, signame, aspect):
-		print("set aspect for signal %s" % signame)
 		if signame not in self.outputs:
-			print("not in outputs")
 			logging.warning("No output defined for signal %s" % signame)
 			return
 		op, district, otype = self.outputs[signame]
@@ -194,7 +209,6 @@ class Railroad(wx.Notebook):
 		district.UpdateSignal(signame)
 
 	def SetSignalFleet(self, signame, flag):
-		print("set signal fleet: %s %d" % (signame, flag))
 		self.fleetedSignals[signame] = flag
 
 	def SetBlockDirection(self, block, direction):
@@ -204,12 +218,19 @@ class Railroad(wx.Notebook):
 		ip, district, itype = self.inputs[block]
 		ip.SetDirection(direction)
 
+	def SetBlockClear(self, block, clear):
+		if block not in self.inputs:
+			logging.warning("No input defined for block %s" % block)
+			return
+		ip, district, itype = self.inputs[block]
+		ip.SetClear(clear)
+
 	def SetIndicator(self, indname, state):
 		if indname not in self.outputs:
 			logging.warning("no output defined for indicator %s" % indname)
 			return
 		op, district, otype = self.outputs[indname]
-		op.SetStatus(state!=0)
+		op.SetStatus(state != 0)
 		district.UpdateIndicator(indname)
 
 	def SetRelay(self, relayname, state):
@@ -217,7 +238,7 @@ class Railroad(wx.Notebook):
 			logging.warning("no output defined for relay %s" % relayname)
 			return
 		op, district, otype = self.outputs[relayname]
-		op.SetStatus(state!=0)
+		op.SetStatus(state != 0)
 		district.UpdateRelay(relayname)
 
 	def SetHandSwitch(self, hsname, state):
@@ -225,7 +246,7 @@ class Railroad(wx.Notebook):
 			logging.warning("no output defined for handswitch %s" % hsname)
 			return
 		op, district, otype = self.outputs[hsname]
-		op.SetStatus(state!=0)
+		op.SetStatus(state != 0)
 		district.UpdateHandSwitch(hsname)
 
 	def SetSwitchLock(self, toname, state):
@@ -244,7 +265,6 @@ class Railroad(wx.Notebook):
 			return False
 
 	def SetDistrictLock(self, name, value):
-		print("setting district lock %s to (%s)" % (name, str(value)))
 		self.districtLock[name] = value
 
 	def GetDistrictLock(self, name):

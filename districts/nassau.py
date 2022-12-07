@@ -119,7 +119,6 @@ class Nassau(District):
 		signalLeverNames = [ "N14.lvr", "N16.lvr", "N18.lvr", "N20.lvr", "N24.lvr", "N26.lvr", "N28.lvr" ]
 		toggleNames = [ "nrelease" ]
 
-
 		ix = 0
 		ix = self.AddInputs(blockNames, BlockInput, District.block, ix)
 		ix = self.AddSubBlocks("R10", ["R10A", "R10B", "R10C"], ix)

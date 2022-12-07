@@ -1,15 +1,16 @@
 import wx
 
+
 class IODisplay(wx.ListCtrl):
 	def __init__(self, parent):
-		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(900, 240), style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_VIRTUAL)
+		wx.ListCtrl.__init__(self, parent, wx.ID_ANY, size=(940, 240), style=wx.LC_REPORT | wx.LC_NO_HEADER | wx.LC_VIRTUAL)
 		f = wx.Font(12, wx.FONTFAMILY_TELETYPE, wx.NORMAL, wx.FONTWEIGHT_BOLD, faceName="Monospace")
 		self.SetFont(f)
 		self.parent = parent
 		self.olines = []
 		self.ilines = []
 		self.InsertColumn(0, "")
-		self.SetColumnWidth(0, 900)
+		self.SetColumnWidth(0, 940)
 		self.SetItemCount(0)
 		self.attrO = wx.ItemAttr()
 		self.attrO.SetBackgroundColour("white")

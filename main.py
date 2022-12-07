@@ -247,6 +247,11 @@ class MainFrame(wx.Frame):
 			direction = evt.data["dir"][0]
 			self.rr.SetBlockDirection(block, direction)
 
+		elif verb == "blockclear":
+			block = evt.data["block"][0]
+			clear = evt.data["clear"][0]
+			self.rr.SetBlockClear(block, clear == "1")
+
 		elif verb == "handswitch":
 			hsname = evt.data["name"][0]
 			stat = int(evt.data["status"][0])
@@ -365,7 +370,6 @@ class MainFrame(wx.Frame):
 			try:
 				blknm = evt.data["block"][0]
 			except (IndexError, KeyError):
-				print("block missing")
 				return
 			self.rr.PlaceTrain(blknm)
 
@@ -373,7 +377,6 @@ class MainFrame(wx.Frame):
 			try:
 				blknm = evt.data["block"][0]
 			except (IndexError, KeyError):
-				print("block missing")
 				return
 			self.rr.RemoveTrain(blknm)
 
@@ -386,7 +389,6 @@ class MainFrame(wx.Frame):
 		elif verb == "districtlock":
 			name = evt.data["name"][0]
 			value = evt.data["value"]
-			print("raw value: %s" % str(value))
 
 			self.rr.SetDistrictLock(name, [int(v) for v in value])
 

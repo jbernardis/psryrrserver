@@ -2,6 +2,63 @@ import wx
 import logging
 from rrobjects import BlockInput, SubBlockInput
 
+
+class RadioDlg (wx.Dialog):
+	def __init__(self, parent, title, choices, value):
+		wx.Dialog.__init__(self, parent, wx.ID_ANY, title)
+		self.Bind(wx.EVT_CLOSE, self.onCancel)
+
+		vsz = wx.BoxSizer(wx.VERTICAL)
+		vsz.AddSpacer(20)
+
+		self.choices = [x for x in choices]
+		self.rb = wx.RadioBox(self, wx.ID_ANY, "", wx.DefaultPosition, wx.DefaultSize,
+					self.choices, 1, wx.RA_SPECIFY_COLS)
+		try:
+			ix = self.choices.index(value)
+		except ValueError:
+			ix = None
+
+		if ix is not None:
+			self.rb.SetSelection(ix)
+
+		vsz.Add(self.rb, 0, wx.ALIGN_CENTER_HORIZONTAL, 1)
+		vsz.AddSpacer(20)
+
+		bsz = wx.BoxSizer(wx.HORIZONTAL)
+
+		self.bOK = wx.Button(self, wx.ID_ANY, "OK")
+		self.bCancel = wx.Button(self, wx.ID_ANY, "Cancel")
+
+		bsz.Add(self.bOK)
+		bsz.AddSpacer(10)
+		bsz.Add(self.bCancel)
+
+		self.Bind(wx.EVT_BUTTON, self.onOK, self.bOK)
+		self.Bind(wx.EVT_BUTTON, self.onCancel, self.bCancel)
+
+		vsz.Add(bsz, 0, wx.ALIGN_CENTER)
+
+		vsz.AddSpacer(20)
+
+		hsz = wx.BoxSizer(wx.HORIZONTAL)
+		hsz.AddSpacer(10)
+		hsz.Add(vsz)
+		hsz.AddSpacer(10)
+
+		self.SetSizer(hsz)
+		self.Layout()
+		self.Fit()
+
+	def onCancel(self, _):
+		self.EndModal(wx.ID_CANCEL)
+
+	def onOK(self, _):
+		self.EndModal(wx.ID_OK)
+
+	def GetResults(self):
+		return self.choices[self.rb.GetSelection()]
+
 # district node addresses
 YARD      = 0x11
 KALE      = 0x12
@@ -108,10 +165,13 @@ class District(wx.Panel):
 			nval = 1 - cval
 		elif itype == District.slever:
 			cval = self.ilist.GetItemText(index, 1)
-			if cval == 'N':
-				nval = 'L'
-			else:
-				nval = 'N'
+			dlg = RadioDlg(self, "Signal Lever Position", ["L", "N", "R"], cval)
+			rc = dlg.ShowModal()
+			if rc == wx.ID_OK:
+				nval = dlg.GetResults()
+			dlg.Destroy()
+			if rc != wx.ID_OK:
+				return
 		else:
 			cval = int(self.ilist.GetItemText(index, 1))
 			nval = 1 - cval
@@ -143,10 +203,8 @@ class District(wx.Panel):
 		try:
 			ix, ip, itype = self.inputMap[blknm]
 		except IndexError:
-			print("blknm not found in inputs")
 			return
 		if itype != District.block:
-			print("not a block")
 			return
 
 		self.ilist.SetItem(ix, 1, "1")
@@ -156,10 +214,8 @@ class District(wx.Panel):
 		try:
 			ix, ip, itype = self.inputMap[blknm]
 		except IndexError:
-			print("blknm not found in inputs")
 			return
 		if itype != District.block:
-			print("not a block")
 			return
 
 		self.ilist.SetItem(ix, 1, "0")
@@ -189,7 +245,7 @@ class District(wx.Panel):
 			elif itype == District.slever:
 				self.ilist.SetItem(ix, 1, "N")
 			elif itype == District.block:
-				self.ilist.SetItem(ix, 1, "0,E")
+				self.ilist.SetItem(ix, 1, "0,N,E")
 			else:
 				self.ilist.SetItem(ix, 1, "0")
 			self.ilist.SetItem(ix, 2, District.typeLabels[itype])
@@ -223,8 +279,9 @@ class District(wx.Panel):
 
 		if itype == District.block:
 			east = ic.GetEast()
+			clear = ic.GetClear()
 			val = ic.GetValue()
-			self.ilist.SetItem(ix, 1, "%d,%s" % (val, "E" if east else "W"))
+			self.ilist.SetItem(ix, 1, "%d,%s,%s" % (val, "C" if clear else "N", "E" if east else "W"))
 		else:
 			logging.warning("Refresh input: no handling of type %s" % itype)
 

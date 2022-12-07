@@ -4,6 +4,7 @@ from district import District, SHORE
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
+
 class Shore(District):
 	def __init__(self, parent, name, settings):
 		District.__init__(self, parent, name, settings)
@@ -117,7 +118,7 @@ class Shore(District):
 		outb[3] = setBit(outb[3], 2, self.rr.GetInput("S10").GetValue())  #block occupancy indicators
 		outb[3] = setBit(outb[3], 3, self.rr.GetInput("H20").GetValue())
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("S21").GetValue())
-		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("P32").GetValue())  port
+		outb[3] = setBit(outb[3], 5, self.rr.GetInput("P32").GetValue())
 		outb[3] = setBit(outb[3], 6, self.rr.GetInput("CBShore").GetValue())
 		outb[3] = setBit(outb[3], 7, self.rr.GetInput("CBHarpersFerry").GetValue())
 
@@ -253,7 +254,7 @@ class Shore(District):
 		outb[2] = setBit(outb[2], 3, 1 if op > 0 else 0)
 		outb[2] = setBit(outb[2], 4, 1 if op < 0 else 0)
 		outb[2] = setBit(outb[2], 5, self.rr.GetOutput("H20.srel").GetStatus())	# Stop relays
-		# outb[2] = setBit(outb[2], 6, self.rr.GetOutput("P42.srel").GetStatus())	port
+		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("P42.srel").GetStatus())
 		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("H11.srel").GetStatus())	
 
 		inb = [0, 0, 0]

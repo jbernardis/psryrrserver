@@ -100,7 +100,6 @@ class Cliff(District):
 		tolist = self.routeMap[btn]
 
 		for toName, status in tolist:
-			print("%s: %s" % (toName, status))
 			self.rr.GetInput(toName).SetState(status)
 
 	def DetermineSignalLevers(self):

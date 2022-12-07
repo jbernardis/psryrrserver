@@ -354,7 +354,7 @@ class Yard(District):
 
 		outb[4] = setBit(outb[4], 0, self.rr.GetInput("CBWaterman").GetValue())
 		outb[4] = setBit(outb[4], 1, self.rr.GetInput("L20").GetValue())  # adjacent block indicators
-		# outb[4] = setBit(outb[4], 2, self.rr.GetInput("P50").GetValue())  port
+		outb[4] = setBit(outb[4], 2, self.rr.GetInput("P50").GetValue())
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("YSw1").GetLock())  # Switch Locks
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("YSw3").GetLock())  
 		outb[4] = setBit(outb[4], 5, self.rr.GetOutput("YSw7").GetLock()) 

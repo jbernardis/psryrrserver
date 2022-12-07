@@ -26,7 +26,6 @@ class TrainList(wx.ListCtrl):
 			return ", ".join(self.trains[train]["blocks"])
 
 	def Update(self, train, loco, block):
-		print("update train list")
 		if block is None:
 			return
 
@@ -56,7 +55,6 @@ class TrainList(wx.ListCtrl):
 				self.SetItemCount(len(self.order))
 				
 			tx = self.order.index(train)
-			print("refresh train tx %s" % tx)
 			self.RefreshItem(tx)
 
 	def FindTrainInBlock(self, block):
@@ -94,10 +92,8 @@ class TrainList(wx.ListCtrl):
 		return True
 
 	def GetSetTrainCmds(self, train=None):
-		print("GetSetTrainCmds %d items" % len(self.trains))
 		for tr, trinfo in self.trains.items():
 			if train is None or train == tr:
-				print("sending train %s" % tr)
 				loco = trinfo["loco"]
 				blocks = trinfo["blocks"]
 				clist = []

@@ -90,7 +90,7 @@ class Latham(District):
 		outb[3] = setBit(outb[3], 2, 1 if asp in [4, 5, 6, 7] else 0)
 		outb[3] = setBit(outb[3], 3, self.rr.GetInput("L10").GetValue())  #block indicators
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("L31").GetValue()) 
-		# outb[3] = setBit(outb[3], 5, self.rr.GetInput("P11").GetValue().GetStatus())   port
+		outb[3] = setBit(outb[3], 5, self.rr.GetInput("P11").GetValue())
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("L20.srel").GetStatus())	# Stop relays
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("P21.srel").GetStatus())
 

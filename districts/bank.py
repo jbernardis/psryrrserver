@@ -98,8 +98,6 @@ class Bank(District):
 		inb = []
 		inbc = 0
 		if inbc == 4:
-			pass
-
 			nb = getBit(inb[0], 0)  # Switch Positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("CSw23").SetState(nb, rb)

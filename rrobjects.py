@@ -61,6 +61,7 @@ class BlockInput(Input):
 		Input.__init__(self, name, district)
 		self.subBlocks = []
 		self.east = True
+		self.clear = False
 
 	def SetValue(self, nv):
 		if nv == self.value:
@@ -77,11 +78,22 @@ class BlockInput(Input):
 			for sb in self.subBlocks:
 				sb.SetDirection(direction)
 
+	def SetClear(self, clear):
+		if len(self.subBlocks) == 0:
+			self.clear = clear
+			self.rr.RailroadEvent({"refreshinput": [self.name]})
+		else:
+			for sb in self.subBlocks:
+				sb.SetClear(clear)
+
 	def GetValue(self):
 		return self.value
 
 	def GetEast(self):
 		return self.east
+
+	def GetClear(self):
+		return self.clear
 
 	def AddSubBlock(self, sub):
 		self.subBlocks.append(sub)
@@ -96,7 +108,7 @@ class BlockInput(Input):
 		self.SetValue(nv)
 
 	def GetEventMessage(self):
-		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W"}]}
+		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W", "clear": 1 if self.clear else 0}]}
 
 
 class SubBlockInput(Input):
@@ -104,6 +116,7 @@ class SubBlockInput(Input):
 		Input.__init__(self, name, district)
 		self.parent = None
 		self.east = True
+		self.clear = False
 	
 	def SetParent(self, parent):
 		self.parent = parent
@@ -118,6 +131,14 @@ class SubBlockInput(Input):
 			self.parent.EvaluateSubBlocks()
 		self.rr.RailroadEvent({"refreshinput": [self.name]})
 
+	def SetClear(self, nv):
+		if nv == self.clear:
+			return
+		self.clear = nv
+		if self.parent:
+			self.parent.EvaluateSubBlocks()
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+
 	def SetDirection(self, direction):
 		self.east = direction == "E"
 		self.rr.RailroadEvent({"refreshinput": [self.name]})
@@ -125,9 +146,12 @@ class SubBlockInput(Input):
 	def GetValue(self):
 		return self.value
 
+	def GetClear(self):
+		return self.clear
+
 	def GetEast(self):
 		return self.east
-	
+
 	def GetEventMessage(self):
 		return None
 
@@ -227,12 +251,11 @@ class HandswitchLeverInput (Input):
 		self.state = 0
 
 	def SetState(self, state):
-		print("HS set state")
 		if state == self.state:
 			return
 
 		self.state = state
-		#self.rr.RailroadEvent({"refreshinput": [self.name]})
+		# self.rr.RailroadEvent({"refreshinput": [self.name]})
 		self.rr.RailroadEvent(self.GetEventMessage())
 
 	def GetState(self):
