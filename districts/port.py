@@ -66,7 +66,7 @@ class Port(District):
 		# Port A
 		#
 		# Southport
-		outb = [0 for i in range(9)]
+		outb = [0 for _ in range(9)]
 		asp = self.rr.GetOutput("PA12R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3] else 0)  # signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3] else 0)
@@ -104,8 +104,10 @@ class Port(District):
 		outb[2] = setBit(outb[2], 3, 1 if asp != 0 else 0)
 		asp = self.rr.GetOutput("PA6LC").GetAspect()
 		outb[2] = setBit(outb[2], 4, 1 if asp != 0 else 0)
-#     PAOut[2].bit.b5 = P10.ClrW;				//Semaphore signal
-#     PAOut[2].bit.b6 = P10.RstrW;
+		inp = self.rr.GetInput("P10")
+		clr10w = inp.GetClear() and not inp.GetEast()
+		outb[5] = setBit(outb[2], 5, 1 if clr10w else 0)  # semaphore signal
+		outb[5] = setBit(outb[2], 6, 1 if clr10w else 0)  # should be using RstrW
 		st = self.rr.GetInput("PA4.lvr")   # Signal indicators
 		outb[2] = setBit(outb[2], 7, 1 if st == "L" else 0)
 
@@ -149,7 +151,7 @@ class Port(District):
 		inp = self.rr.GetInput("P21")
 		clr21e = inp.GetClear() and inp.GetEast()
 		outb[6] = setBit(outb[6], 0, 1 if clr21e else 0)
-		outb[6] = setBit(outb[6], 1, self.rr.GetInput("CBParsonsJct").GetValue())  #Circuit breakers
+		outb[6] = setBit(outb[6], 1, self.rr.GetInput("CBParsonsJct").GetValue())  # Circuit breakers
 		outb[6] = setBit(outb[6], 2, self.rr.GetInput("CBSouthport").GetValue())
 		outb[6] = setBit(outb[6], 3, self.rr.GetInput("CBLavinYard").GetValue())
 		outb[6] = setBit(outb[6], 4, 1 if self.rr.GetSwitchLock("PASw1") else 0)  # Switch Locks
@@ -171,8 +173,10 @@ class Port(District):
 		outb[8] = setBit(outb[8], 2, self.rr.GetOutput("P10.srel").GetStatus())	      # Stop relays
 		outb[8] = setBit(outb[8], 2, self.rr.GetOutput("P40.srel").GetStatus())
 		outb[8] = setBit(outb[8], 2, self.rr.GetOutput("P31.srel").GetStatus())
-#     PAOut[8].bit.b5 = P40.ClrW;       		//Semaphore signal
-#     PAOut[8].bit.b6 = P40.RstrW;
+		inp = self.rr.GetInput("P40")
+		clr40w = inp.GetClear() and not inp.GetEast()
+		outb[8] = setBit(outb[2], 5, 1 if clr40w else 0)  # semaphore signal
+		outb[8] = setBit(outb[2], 6, 1 if clr40w else 0)  # should be using RstrW
 #
 # 	SendPacket(PORTA, &PortAAborts, &PAIn[0], &PAOld[0], &PAOut[0], 9, true);
 #    		PAText = "PortA\t" + OutText;
@@ -304,7 +308,7 @@ class Port(District):
 			self.rr.GetInput("parelease").SetState(release)  # Port A Release switch
 
 		# Parsons Junction
-		outb = [0 for i in range(3)]
+		outb = [0 for _ in range(3)]
 		asp = self.rr.GetOutput("PA34LB").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # westward signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -410,7 +414,7 @@ class Port(District):
 			ip.SetValue(getBit(inb[3], 0))
 
 		#  Port B
-		outb = [0 for i in range(7)]
+		outb = [0 for _ in range(7)]
 		asp = self.rr.GetOutput("PB2R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # South Jct Eastward signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -585,4 +589,3 @@ class Port(District):
 			self.rr.GetInput("PBSw15b.lvr").SetState(st)
 			release = getBit(inb[5], 3)
 			self.rr.GetInput("pbrelease").SetState(release)  # Port B Release switch
-

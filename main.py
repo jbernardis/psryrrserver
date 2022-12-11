@@ -177,6 +177,15 @@ class MainFrame(wx.Frame):
 			self.socketServer.sendToAll(resp)
 			self.rr.SetAspect(signame, aspect)
 
+		elif verb == "signallock":
+			signame = evt.data["name"][0]
+			status = int(evt.data["status"][0])
+
+			self.rr.SetSignalLock(signame, status)
+			# signallock information is always echoed to all listeners
+			resp = {"signallock": [{ "name": signame, "state": status}]}
+			self.socketServer.sendToAll(resp)
+
 		elif verb == "fleet":
 			signame = evt.data["name"][0]
 			value = int(evt.data["value"][0])

@@ -228,6 +228,8 @@ class District(wx.Panel):
 			self.olist.InsertItem(ix, oname)
 			if otype == District.turnout:
 				self.olist.SetItem(ix, 1, "0,U")
+			elif otype == District.signal:
+				self.olist.SetItem(ix, 1, "0,U")
 			else:
 				self.olist.SetItem(ix, 1, "0")
 			self.olist.SetItem(ix, 2, District.typeLabels[otype])
@@ -304,7 +306,8 @@ class District(wx.Panel):
 			self.olist.SetItem(ix, 1, "%d,%s" % (pulseval, "L" if state != 0 else "U"))
 		elif otype == District.signal:
 			aspect = oc.GetAspect()
-			self.olist.SetItem(ix, 1, "%d" % aspect)
+			lock = oc.IsLocked() == 1
+			self.olist.SetItem(ix, 1, "%d,%s" % (aspect, "L" if lock else "U"))
 		elif otype == District.nxbutton:
 			pulseval = oc.GetOutPulseValue()
 			self.olist.SetItem(ix, 1, "%d" % pulseval)

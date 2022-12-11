@@ -206,7 +206,15 @@ class Railroad(wx.Notebook):
 		op, district, otype = self.outputs[signame]
 		op.SetAspect(aspect)
 		district.DetermineSignalLevers()
-		district.UpdateSignal(signame)
+		district.RefreshOutput(signame)
+
+	def SetSignalLock(self, signame, lock):
+		if signame not in self.outputs:
+			logging.warning("No output defined for signal %s" % signame)
+			return
+		op, district, otype = self.outputs[signame]
+		op.SetLock(lock)
+		district.RefreshOutput(signame)
 
 	def SetSignalFleet(self, signame, flag):
 		self.fleetedSignals[signame] = flag

@@ -322,6 +322,7 @@ class SignalOutput(Output):
 	def __init__(self, name, district):
 		Output.__init__(self, name, district)
 		self.aspect = 0
+		self.locked = False
 
 	def SetAspect(self, aspect):
 		if aspect == self.aspect:
@@ -335,6 +336,18 @@ class SignalOutput(Output):
 
 	def GetAspect(self):
 		return self.aspect
+
+	def SetLock(self, lock):
+		if self.locked and lock == 1:
+			return
+		if not self.locked and lock == 0:
+			return
+
+		self.locked = lock == 1
+		self.rr.RailroadEvent({"refreshoutput": [self.name]})
+
+	def IsLocked(self):
+		return self.locked
 
 	def GetAspectBit(self, abit):
 		mask = (1 << abit) & 0xff
