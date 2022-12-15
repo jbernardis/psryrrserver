@@ -31,7 +31,7 @@ class Port(District):
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in toNames:
-			self.SetTurnoutPulseLen(n, 2)
+			self.SetTurnoutPulseLen(n, settings.topulselen)
 
 		blockNames = [ "P1", "P2", "P3", "P4", "P5", "P6", "P7",
 						"P10", "P10.E", "P11.W", "P11", "P11.E", "P20", "P20.E", "P21", "P21.E",

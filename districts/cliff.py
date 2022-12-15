@@ -78,7 +78,7 @@ class Cliff(District):
 		ix = self.AddOutputs(handswitchNames, HandSwitchOutput, District.handswitch, ix)
 
 		for n in nxButtons:
-			self.SetNXButtonPulseLen(n, 2)
+			self.SetNXButtonPulseLen(n, settings.nxbpulselen)
 
 		blockNames = [ "G21", "C10", "C30", "C31", "COSGMW", "G10", "G12", "C20", "COSGME",
 					"C44", "C43", "C42", "C41", "C40", "C21", "C50", "C51", "C52", "C53", "C54", "COSSHE", "COSSHW"]

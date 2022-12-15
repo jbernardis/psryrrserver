@@ -30,7 +30,7 @@ class Shore(District):
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in toNames:
-			self.SetTurnoutPulseLen(n, 2)
+			self.SetTurnoutPulseLen(n, settings.topulselen)
 
 		ix = 0
 		ix = self.AddInputs(["S20.W"], BlockInput, District.block, ix)

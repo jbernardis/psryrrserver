@@ -192,7 +192,6 @@ class MainFrame(wx.Frame):
 			self.rr.SetSignalFleet(signame, value)
 			resp = {"fleet": [{"name": signame, "value": value}]}
 			# fleeting changes are always echoed back to all listeners
-			# TODO: need to record this somewhere for outpuing bits
 			self.socketServer.sendToAll(resp)
 
 		elif verb == "settrain":
@@ -278,7 +277,7 @@ class MainFrame(wx.Frame):
 
 			# turnouts are not normally echoed back to listeners.  Instead,
 			# the turnout information that the railroad reponds with is sent
-			# back to listeners to convey this information
+			# back to listeners to convey this information.  In simulation, we echo
 			if self.settings.echoTurnout and self.settings.simulation:
 				self.rr.GetInput(swname).SetState(status)
 
@@ -304,7 +303,7 @@ class MainFrame(wx.Frame):
 
 			# nxbuttons are not normally echoed back to listeners.  Instead,
 			# the turnout information that the railroad reponds with is sent
-			# back to listeners to convey this information
+			# back to listeners to convey this information.  In simulation we echo
 			if self.settings.echoTurnout and self.settings.simulation:
 				if bentry and bexit:
 					self.rr.EvaluateNXButtons(bentry, bexit)
@@ -375,7 +374,7 @@ class MainFrame(wx.Frame):
 
 			self.socketServer.sendToAll(resp)
 
-		elif verb == "placetrain":
+		elif verb == "movetrain":
 			try:
 				blknm = evt.data["block"][0]
 			except (IndexError, KeyError):

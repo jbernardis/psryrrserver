@@ -28,7 +28,7 @@ class Bank(District):
 		ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
 
 		for n in toNames:
-			self.SetTurnoutPulseLen(n, 2)
+			self.SetTurnoutPulseLen(n, settings.topulselen)
 
 		brkrNames = sorted([ "CBBank", "CBKale",  "CBWaterman", "CBEngineYard", "CBEastEndJct",
 						"CBShore", "CBRockyHill", "CBHarpersFerry", "CBBlockY30", "CBBlockY81" ])

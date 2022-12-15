@@ -108,7 +108,8 @@ class BlockInput(Input):
 		self.SetValue(nv)
 
 	def GetEventMessage(self):
-		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W", "clear": 1 if self.clear else 0}]}
+		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W",
+							"clear": 1 if self.clear else 0}]}
 
 
 class SubBlockInput(Input):

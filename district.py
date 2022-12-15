@@ -149,7 +149,6 @@ class District(wx.Panel):
 			self.rr.ClearIO()
 
 	def inputDClick(self, evt):
-		# TODO - only allow this in simulation mode
 		index = evt.Index
 		logging.debug("Double click item %d" % index)
 		if index == wx.NOT_FOUND:
@@ -328,6 +327,12 @@ class District(wx.Panel):
 			else:
 				ip.SetState(tostate)
 		return True
+
+	def EvaluateNXButtons(self, bEntry, bExit):
+		pass
+
+	def EvaluateNXButton(self, btn):
+		pass
 
 	def SetTurnoutPulseLen(self, to, pl):
 		if to not in self.outputMap:

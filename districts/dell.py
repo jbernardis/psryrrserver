@@ -30,7 +30,7 @@ class Dell(District):
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in toNames:
-			self.SetTurnoutPulseLen(n, 2)
+			self.SetTurnoutPulseLen(n, settings.topulselen)
 
 		ix = 0
 		ix = self.AddInputs(["D20", "D20.E", "H23", "H23.E", "DOSVJW", "DOSVJE", "D11.W"], BlockInput, District.block, ix)

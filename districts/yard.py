@@ -2,7 +2,7 @@ import logging
 
 from district import District, leverState, CORNELL, EASTJCT, KALE, YARD, YARDSW
 from rrobjects import TurnoutInput, BlockInput, RouteInput, SignalOutput, TurnoutOutput, RelayOutput, \
-	FleetLeverInput, IndicatorOutput, SignalLeverInput, ToggleInput
+	FleetLeverInput, IndicatorOutput, SignalLeverInput, ToggleInput, NXButtonOutput
 from bus import setBit, getBit
 
 
@@ -24,15 +24,20 @@ class Yard(District):
 				"YSw17", "YSw19", "YSw21", "YSw23", "YSw25", "YSw27", "YSw29", "YSw33"]
 		relayNames = [ "Y11.srel", "Y20.srel", "Y21.srel", "L10.srel" ]
 		indNames = [ "Y20H", "Y20D" ]
+		nxButtons = ["YWEB1", "YWEB2", "YWEB3", "YWEB4", "YWWB1", "YWWB2", "YWWB3", "YWWB4", "YY50W", "YY51W"]
 
 		ix = 0
 		ix = self.AddOutputs(sigNames, SignalOutput, District.signal, ix)
 		ix = self.AddOutputs(toNames, TurnoutOutput, District.turnout, ix)
+		ix = self.AddOutputs(nxButtons, NXButtonOutput, District.nxbutton, ix)
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 		ix = self.AddOutputs(indNames, IndicatorOutput, District.indicator, ix)
 
+		for n in nxButtons:
+			self.SetNXButtonPulseLen(n, settings.nxbpulselen)
+
 		for n in toNames:
-			self.SetTurnoutPulseLen(n, 2)
+			self.SetTurnoutPulseLen(n, settings.topulselen)
 
 		# INPUTS (also using toNames from above)
 		blockNames = [
@@ -490,28 +495,38 @@ class Yard(District):
 		outb[2] = setBit(outb[2], 6, 1 if op > 0 else 0)
 		outb[2] = setBit(outb[2], 7, 1 if op < 0 else 0)
 
-# 	YSWOut[3].bit.b0 = SBY51W;
-# 	YSWOut[3].bit.b1 = SBY50W;
-# //	YSWOut[3].bit.b2 = ;
-# //	YSWOut[3].bit.b3 = ;
-# //	YSWOut[3].bit.b4 = ;
-# //	YSWOut[3].bit.b5 = ;
-# //	YSWOut[3].bit.b6 = ;
-# //	YSWOut[3].bit.b7 = ;
+		op = self.rr.GetOutput("YY51W").GetOutPulse()
+		outb[3] = setBit(outb[3], 0, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YY50W").GetOutPulse()
+		outb[3] = setBit(outb[3], 1, 1 if op > 0 else 0)
+		# 	YSWOut[3].bit.b2 = ;
+		# 	YSWOut[3].bit.b3 = ;
+		# 	YSWOut[3].bit.b4 = ;
+		# 	YSWOut[3].bit.b5 = ;
+		# 	YSWOut[3].bit.b6 = ;
+		# 	YSWOut[3].bit.b7 = ;
 
-# 	YSWOut[4].bit.b0 = SBY81W;
-# 	YSWOut[4].bit.b1 = SBY82W;
-# 	YSWOut[4].bit.b2 = SBY83W;
-# 	YSWOut[4].bit.b3 = SBY84W;
-# 	YSWOut[4].bit.b4 = SBY81E;
-# 	YSWOut[4].bit.b5 = SBY82E;
-# 	YSWOut[4].bit.b6 = SBY83E;
-# 	YSWOut[4].bit.b7 = SBY84E;
+		op = self.rr.GetOutput("YWWB1").GetOutPulse()  # Y81W
+		outb[4] = setBit(outb[4], 0, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWWB2").GetOutPulse()  # Y82W
+		outb[4] = setBit(outb[4], 1, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWWB3").GetOutPulse()  # Y83W
+		outb[4] = setBit(outb[4], 2, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWWB4").GetOutPulse()  # Y84W
+		outb[4] = setBit(outb[4], 3, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWEB1").GetOutPulse()  # Y81E
+		outb[4] = setBit(outb[4], 4, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWEB2").GetOutPulse()  # Y82E
+		outb[4] = setBit(outb[4], 5, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWEB3").GetOutPulse()  # Y83E
+		outb[4] = setBit(outb[4], 6, 1 if op > 0 else 0)
+		op = self.rr.GetOutput("YWEB4").GetOutPulse()  # Y84E
+		outb[4] = setBit(outb[4], 7, 1 if op > 0 else 0)
 
 # 	SendPacket(YARDSW, &YardSWAborts, &YSWIn[0], &YSWOld[0], &YSWOut[0], 5, true);
 # 	YSWText = "YardSW\t" + OutText;
 
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
+		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
 		logging.debug("Yard:Waterman: Output bytes: %s" % otext)
 		if self.sendIO:
 			self.rr.ShowText(otext, "", 4, 5)

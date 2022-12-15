@@ -6,3 +6,5 @@ class Settings:
 		self.socketport = 9001
 		self.tty = "COM4"
 		self.busInterval = 0.4
+		self.topulselen = 4
+		self.nxbpulselen = 4

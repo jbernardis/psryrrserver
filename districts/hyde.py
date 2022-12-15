@@ -28,7 +28,7 @@ class Hyde(District):
 		ix = self.AddOutputs(relayNames, RelayOutput, District.relay, ix)
 
 		for n in toNames:
-			self.SetTurnoutPulseLen(n, 2)
+			self.SetTurnoutPulseLen(n, settings.topulselen)
 
 		# INPUTS
 		routeNames = [ "H30E",
@@ -62,7 +62,7 @@ class Hyde(District):
 
 		blockNames = [ "H21", "H21.E",
 				"HOSWW2", "HOSWW", "HOSWE",
-				"H31", "H33", "H34", "H12", "H22", "H43", "H42", "H41", "H40",
+				"H31", "H32", "H33", "H34", "H12", "H22", "H43", "H42", "H41", "H40",
 				"HOSEW", "HOSEE",
 				"H13.W", "H13" ]
 		fleetlLeverNames = [ "hyde.fleet" ]
@@ -151,7 +151,7 @@ class Hyde(District):
 
 		inbc = 0
 		if inbc == 5:
-			self.rr.GetInput("H12W").SetValue(getBit(inb[0], 0))   #Routes
+			self.rr.GetInput("H12W").SetValue(getBit(inb[0], 0))   # Routes
 			self.rr.GetInput("H34W").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("H33W").SetValue(getBit(inb[0], 2))
 			self.rr.GetInput("H30E").SetValue(getBit(inb[0], 3))
@@ -173,12 +173,12 @@ class Hyde(District):
 			self.rr.GetInput("H33E").SetValue(getBit(inb[2], 1))
 			self.rr.GetInput("H32E").SetValue(getBit(inb[2], 2))
 			self.rr.GetInput("H31E").SetValue(getBit(inb[2], 3))
-			self.rr.GetInput("H21").SetValue(getBit(inb[2], 4))   #detection
+			self.rr.GetInput("H21").SetValue(getBit(inb[2], 4))   # detection
 			self.rr.GetInput("H21.E").SetValue(getBit(inb[2], 5))
-			self.rr.GetInput("HOSWW2").SetValue(getBit(inb[2], 6)) #HOS4
-			self.rr.GetInput("HOSWW").SetValue(getBit(inb[2], 7)) #HOS5
+			self.rr.GetInput("HOSWW2").SetValue(getBit(inb[2], 6)) # HOS4
+			self.rr.GetInput("HOSWW").SetValue(getBit(inb[2], 7)) # HOS5
 
-			self.rr.GetInput("HOSWE").SetValue(getBit(inb[3], 0))  #HOS6
+			self.rr.GetInput("HOSWE").SetValue(getBit(inb[3], 0))  # HOS6
 			self.rr.GetInput("H31").SetValue(getBit(inb[3], 1))
 			self.rr.GetInput("H32").SetValue(getBit(inb[3], 2))
 			self.rr.GetInput("H33").SetValue(getBit(inb[3], 3))
@@ -190,7 +190,7 @@ class Hyde(District):
 			self.rr.GetInput("H42").SetValue(getBit(inb[4], 0))
 			self.rr.GetInput("H41").SetValue(getBit(inb[4], 1))
 			self.rr.GetInput("H40").SetValue(getBit(inb[4], 2))
-			self.rr.GetInput("HOSEW").SetValue(getBit(inb[4], 3))  #HOS7
-			self.rr.GetInput("HOSEE").SetValue(getBit(inb[4], 4))  #HOS8 
+			self.rr.GetInput("HOSEW").SetValue(getBit(inb[4], 3))  # HOS7
+			self.rr.GetInput("HOSEE").SetValue(getBit(inb[4], 4))  # HOS8
 			self.rr.GetInput("H13.W").SetValue(getBit(inb[4], 5))
 			self.rr.GetInput("H13").SetValue(getBit(inb[4], 6))
