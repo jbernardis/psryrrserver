@@ -128,13 +128,13 @@ class Nassau(District):
 		ix = self.AddInputs(toggleNames, ToggleInput, District.toggle, ix)
 
 	def EvaluateNXButtons(self, bEntry, bExit):
-		if bEntry not in self.NXMap:
-			return
-
-		if bExit not in self.NXMap[bEntry]:
-			return
-
-		tolist = self.NXMap[bEntry][bExit]
+		try:
+			tolist = self.NXMap[bEntry][bExit]
+		except KeyError:
+			try:
+				tolist = self.NXMap[bExit][bEntry]
+			except KeyError:
+				return
 
 		for toName, status in tolist:
 			self.rr.GetInput(toName).SetState(status)
