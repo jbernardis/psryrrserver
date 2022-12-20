@@ -10,6 +10,7 @@ from bus import RailroadMonitor
 from railroad import Railroad
 from httpserver import HTTPServer
 from sktserver import SktServer
+from routedef import RouteDef
 
 from clientlist import ClientList
 from trainlist import TrainList
@@ -32,6 +33,8 @@ class MainFrame(wx.Frame):
 		self.rrMonitor = None
 		self.Bind(wx.EVT_CLOSE, self.onClose)
 		logging.info("pydispatch starting")
+
+		self.routeDefs = {}
 
 		hostname = socket.gethostname()
 		self.ip = socket.gethostbyname(hostname)
@@ -136,6 +139,10 @@ class MainFrame(wx.Frame):
 				except KeyError:
 					pass
 				self.clientList.DelClient(addr)
+
+	def sendRouteDefs(self, addr, skt):
+		for rte in self.routeDefs.values():
+			self.socketServer.sendToOne(skt, addr, rte.FormatRoute())
 
 	def refreshClient(self, addr, skt):
 		for m in self.rr.GetCurrentValues():
@@ -343,7 +350,16 @@ class MainFrame(wx.Frame):
 			else:
 				logging.info("session %s not found" % sid)
 				return
-			self.refreshClient(addr, skt)
+
+			try:
+				reftype = evt.data["type"][0]
+			except:
+				reftype = None
+
+			if reftype is None:
+				self.refreshClient(addr, skt)
+			elif reftype == "routes":
+				self.sendRouteDefs(addr, skt)
 
 		elif verb == "setroute":
 			blknm = evt.data["block"][0]
@@ -399,6 +415,19 @@ class MainFrame(wx.Frame):
 			value = evt.data["value"]
 
 			self.rr.SetDistrictLock(name, [int(v) for v in value])
+
+		elif verb == "routedef":
+			name = evt.data["name"][0]
+			try:
+				signals = evt.data["signals"]
+			except KeyError:
+				signals = []
+			try:
+				turnouts = evt.data["turnouts"]
+			except KeyError:
+				turnouts = []
+
+			self.routeDefs[name] = (RouteDef(name, evt.data["os"][0], evt.data["ends"], signals, turnouts))
 
 		elif verb == "quit":
 			logging.info("HTTP 'quit' command received - terminating")

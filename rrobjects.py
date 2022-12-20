@@ -71,18 +71,23 @@ class BlockInput(Input):
 		self.rr.RailroadEvent(self.GetEventMessage())
 
 	def SetDirection(self, direction):
-		if len(self.subBlocks) == 0:
-			self.east = direction == "E"
-			self.rr.RailroadEvent({"refreshinput": [self.name]})
-		else:
+		nv = direction == 'E'
+		if self.east == nv:
+			return
+		self.east = nv
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent(self.GetEventMessage())
+		if len(self.subBlocks) != 0:
 			for sb in self.subBlocks:
 				sb.SetDirection(direction)
 
 	def SetClear(self, clear):
-		if len(self.subBlocks) == 0:
-			self.clear = clear
-			self.rr.RailroadEvent({"refreshinput": [self.name]})
-		else:
+		if self.clear == clear:
+			return
+		self.clear = clear
+		self.rr.RailroadEvent({"refreshinput": [self.name]})
+		self.rr.RailroadEvent(self.GetEventMessage())
+		if len(self.subBlocks) != 0:
 			for sb in self.subBlocks:
 				sb.SetClear(clear)
 
