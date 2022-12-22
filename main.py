@@ -140,15 +140,20 @@ class MainFrame(wx.Frame):
 					pass
 				self.clientList.DelClient(addr)
 
-	def sendRouteDefs(self, addr, skt):
-		for rte in self.routeDefs.values():
-			self.socketServer.sendToOne(skt, addr, rte.FormatRoute())
-
 	def refreshClient(self, addr, skt):
 		for m in self.rr.GetCurrentValues():
 			self.socketServer.sendToOne(skt, addr, m)
+		self.socketServer.sendToOne(skt, addr, {"end": {"type": "layout"}})
+
+	def sendTrainInfo(self, addr, skt):
 		for m in self.trainList.GetSetTrainCmds():
 			self.socketServer.sendToOne(skt, addr, m)
+		self.socketServer.sendToOne(skt, addr, {"end": {"type": "trains"}})
+
+	def sendRouteDefs(self, addr, skt):
+		for rte in self.routeDefs.values():
+			self.socketServer.sendToOne(skt, addr, rte.FormatRoute())
+		self.socketServer.sendToOne(skt, addr, {"end": {"type": "routes"}})
 
 	def rrEventReceipt(self, cmd, addr=None, skt=None):
 		evt = RailroadEvent(data=cmd, addr=addr, skt=skt)
@@ -173,7 +178,7 @@ class MainFrame(wx.Frame):
 
 	def onHTTPMessageEvent(self, evt):
 		logging.info("HTTP Request: %s" % json.dumps(evt.data))
-		print("HTTP Request: %s" % json.dumps(evt.data))
+		#  print("HTTP Request: %s" % json.dumps(evt.data))
 		verb = evt.data["cmd"][0]
 
 		if verb == "signal":
@@ -358,6 +363,8 @@ class MainFrame(wx.Frame):
 
 			if reftype is None:
 				self.refreshClient(addr, skt)
+			elif reftype == "trains":
+				self.sendTrainInfo(addr, skt)
 			elif reftype == "routes":
 				self.sendRouteDefs(addr, skt)
 
