@@ -17,7 +17,7 @@ class Hyde(District):
 				"H8L", "H8R",  
 				"H10L","H10RA", "H10RB", "H10RC", "H10RD", "H10RE", 
 				"H12RA", "H12RB", "H12RC", "H12RD", "H12RE", "H12L"]
-		toNames =[ "HSw1", "HSw3", "HSw7", "HSw9", "HSw11", "HSw15", "HSw17", "HSw19", "HSw21", "HSw23", "HSw25", "HSw27", "HSw29" ]
+		toNames =[ "HSw1", "HSw3", "HSw5", "HSw7", "HSw9", "HSw11", "HSw13", "HSw15", "HSw17", "HSw19", "HSw21", "HSw23", "HSw25", "HSw27", "HSw29" ]
 		indNames = [ "CBHydeJct", "CBHydeEast", "CBHydeWest", "HydeEastPower", "HydeWestPower", ]
 		relayNames = [ "H13.srel", "H21.srel" ]
 
