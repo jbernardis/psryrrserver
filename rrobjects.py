@@ -1,3 +1,4 @@
+
 class Input:
 	def __init__(self, name, district):
 		self.name = name
@@ -116,6 +117,13 @@ class BlockInput(Input):
 		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W",
 							"clear": 1 if self.clear else 0}]}
 
+	def ToJson(self):
+		sbs = [sb.GetName() for sb in self.subBlocks]
+		if len(sbs) > 0:
+			return {self.name: sbs}
+		else:
+			return {}
+
 
 class SubBlockInput(Input):
 	def __init__(self, name, district):
@@ -160,6 +168,9 @@ class SubBlockInput(Input):
 
 	def GetEventMessage(self):
 		return None
+
+	def ToJson(self):
+		return {}
 
 
 class TurnoutInput(Input):

@@ -1,5 +1,6 @@
 import wx
 import logging
+import json
 
 from districts.hyde import Hyde
 from districts.yard import Yard
@@ -79,6 +80,8 @@ class Railroad(wx.Notebook):
 		for dname, dobj in self.districts.items():
 			dobj.SendIO(False)
 			dobj.DetermineSignalLevers()
+
+		self.GenerateLayoutInfo()
 
 		self.districts["Yard"].SendIO(True)
 
@@ -331,3 +334,12 @@ class Railroad(wx.Notebook):
 
 	def RailroadEvent(self, event):
 		self.cbEvent(event)
+
+	def GenerateLayoutInfo(self):
+		subblocks = {}
+		for iput, district, itype in self.inputs.values():
+			if itype == district.block:
+				subblocks.update(iput.ToJson())
+
+		with open("subblocks.json", "w") as jfp:
+			json.dump(subblocks, jfp, sort_keys=True, indent=2)
