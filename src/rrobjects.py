@@ -77,7 +77,7 @@ class BlockInput(Input):
 			return
 		self.east = nv
 		self.rr.RailroadEvent({"refreshinput": [self.name]})
-		self.rr.RailroadEvent(self.GetEventMessage())
+		self.rr.RailroadEvent(self.GetEventMessage(direction=True))
 		if len(self.subBlocks) != 0:
 			for sb in self.subBlocks:
 				sb.SetDirection(direction)
@@ -87,7 +87,7 @@ class BlockInput(Input):
 			return
 		self.clear = clear
 		self.rr.RailroadEvent({"refreshinput": [self.name]})
-		self.rr.RailroadEvent(self.GetEventMessage())
+		self.rr.RailroadEvent(self.GetEventMessage(clear=True))
 		if len(self.subBlocks) != 0:
 			for sb in self.subBlocks:
 				sb.SetClear(clear)
@@ -113,9 +113,14 @@ class BlockInput(Input):
 				break
 		self.SetValue(nv)
 
-	def GetEventMessage(self):
-		return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W",
-							"clear": 1 if self.clear else 0}]}
+	def GetEventMessage(self, clear=False, direction=False):
+		if clear:
+			return {"blockclear": [{ "block": self.name, "clear": 1 if self.clear else 0}]}
+		if direction:
+			return {"blockdir": [{ "block": self.name, "dir": "E" if self.east else "W"}]}
+		else:
+			return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W",
+								"clear": 1 if self.clear else 0}]}
 
 	def ToJson(self):
 		sbs = [sb.GetName() for sb in self.subBlocks]

@@ -178,7 +178,7 @@ class MainFrame(wx.Frame):
 
 	def onHTTPMessageEvent(self, evt):
 		logging.info("HTTP Request: %s" % json.dumps(evt.data))
-		#  print("HTTP Request: %s" % json.dumps(evt.data))
+		print("HTTP Request: %s" % json.dumps(evt.data))
 		verb = evt.data["cmd"][0]
 
 		if verb == "signal":
