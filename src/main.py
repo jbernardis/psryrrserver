@@ -154,6 +154,10 @@ class MainFrame(wx.Frame):
 		for rte in self.routeDefs.values():
 			self.socketServer.sendToOne(skt, addr, rte.FormatRoute())
 		self.socketServer.sendToOne(skt, addr, {"end": {"type": "routes"}})
+		
+	def sendSubBlocks(self, addr, skt):
+		subs = self.rr.GetSubBlockInfo()
+		self.socketServer.sendToOne(skt, addr, {"subblocks": subs})
 
 	def rrEventReceipt(self, cmd, addr=None, skt=None):
 		evt = RailroadEvent(data=cmd, addr=addr, skt=skt)
@@ -178,7 +182,7 @@ class MainFrame(wx.Frame):
 
 	def onHTTPMessageEvent(self, evt):
 		logging.info("HTTP Request: %s" % json.dumps(evt.data))
-		print("HTTP Request: %s" % json.dumps(evt.data))
+		print("Incoming HTTP Request: %s" % json.dumps(evt.data))
 		verb = evt.data["cmd"][0]
 
 		if verb == "signal":
@@ -367,6 +371,8 @@ class MainFrame(wx.Frame):
 				self.sendTrainInfo(addr, skt)
 			elif reftype == "routes":
 				self.sendRouteDefs(addr, skt)
+			elif reftype == "subblocks":
+				self.sendSubBlocks(addr, skt)
 
 		elif verb == "setroute":
 			blknm = evt.data["block"][0]

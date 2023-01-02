@@ -81,8 +81,6 @@ class Railroad(wx.Notebook):
 			dobj.SendIO(False)
 			dobj.DetermineSignalLevers()
 
-		self.GenerateLayoutInfo()
-
 		self.districts["Yard"].SendIO(True)
 
 	def pageChanged(self, evt):
@@ -335,11 +333,12 @@ class Railroad(wx.Notebook):
 	def RailroadEvent(self, event):
 		self.cbEvent(event)
 
-	def GenerateLayoutInfo(self):
+	def GetSubBlockInfo(self):
 		subblocks = {}
 		for iput, district, itype in self.inputs.values():
 			if itype == district.block:
 				subblocks.update(iput.ToJson())
 
-		with open("subblocks.json", "w") as jfp:
-			json.dump(subblocks, jfp, sort_keys=True, indent=2)
+		# with open("subblocks.json", "w") as jfp:
+		# 	json.dump(subblocks, jfp, sort_keys=True, indent=2)
+		return subblocks

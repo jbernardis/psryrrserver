@@ -119,8 +119,9 @@ class BlockInput(Input):
 		if direction:
 			return {"blockdir": [{ "block": self.name, "dir": "E" if self.east else "W"}]}
 		else:
-			return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W",
-								"clear": 1 if self.clear else 0}]}
+			# return {"block": [{ "name": self.name, "state": self.value, "dir": "E" if self.east else "W",
+			# 					"clear": 1 if self.clear else 0}]}
+			return {"block": [{ "name": self.name, "state": self.value}]}
 
 	def ToJson(self):
 		sbs = [sb.GetName() for sb in self.subBlocks]
