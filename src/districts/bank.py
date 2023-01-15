@@ -1,6 +1,6 @@
 import logging
 
-from district import District, LATHAM
+from district import District, BANK, formatIText, formatOText
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, \
 	SignalLeverInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
@@ -41,7 +41,7 @@ class Bank(District):
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def OutIn(self):
-		outb = [0 for i in range(4)]
+		outb = [0 for _ in range(4)]
 		asp = self.rr.GetOutput("C22R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp != 0 else 0)   # Bank West eastbound signals
 		asp = self.rr.GetOutput("C24R").GetAspect()
@@ -86,18 +86,24 @@ class Bank(District):
 		outb[3] = setBit(outb[3], 4, self.rr.GetInput("CBBank").GetValue())  #Circuit breaker
 		outb[3] = setBit(outb[3], 5, 1 if asp24l != 0 else 0)  #Signal 24L indicator
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		otext = formatOText(outb, 4)
 		logging.debug("Bank: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 1)
-	# SendPacket(BANK, &BankAborts, &BKIn[0], &BKOld[0], &BKOut[0], 4, true);
-	# BKText = "Bank\t" + OutText;
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(BANK, outb, 4, swap=False)
 
-		inb = []
-		inbc = 0
-		if inbc == 4:
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 1)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Bank: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 1)
+			
 			nb = getBit(inb[0], 0)  # Switch Positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("CSw23").SetState(nb, rb)

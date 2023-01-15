@@ -1,7 +1,6 @@
-import wx
 import logging
 
-from district import District, HYDE
+from district import District, HYDE, formatIText, formatOText
 from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput, RouteInput, BlockInput, \
 	FleetLeverInput, TurnoutInput
 from bus import setBit, getBit
@@ -77,7 +76,7 @@ class Hyde(District):
 			self.rr.AddInput(TurnoutInput(t, self), self, District.turnout)
 
 	def OutIn(self):
-		outb = [0 for i in range(5)]
+		outb = [0 for _ in range(5)]
 		op = self.rr.GetOutput("HSw1").GetOutPulse()
 		outb[0] = setBit(outb[0], 0, 1 if op > 0 else 0)                   # switches
 		outb[0] = setBit(outb[0], 1, 1 if op < 0 else 0)
@@ -135,22 +134,25 @@ class Hyde(District):
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("HydeWestPower").GetStatus())  # Power Control
 		outb[4] = setBit(outb[4], 4, self.rr.GetOutput("HydeEastPower").GetStatus()) 
 
-		# inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=True)
-		# if inb is None:
-		# 		print("No data received from Hyde")
-		# 	return
 
-		# 	print("HydeIO: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
+		otext = formatOText(outb, 5)
+		logging.debug("Hyde: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(HYDE, outb, 5, swap=False)
 
-		inb = [0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4])
-		logging.debug("BHyde: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 1)
+		if inbc != 5:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 1)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Hyde: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 1)
 
-		inbc = 0
-		if inbc == 5:
 			self.rr.GetInput("H12W").SetValue(getBit(inb[0], 0))   # Routes
 			self.rr.GetInput("H34W").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("H33W").SetValue(getBit(inb[0], 2))

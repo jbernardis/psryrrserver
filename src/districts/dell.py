@@ -1,7 +1,7 @@
 import logging
 
-from district import District, DELL
-from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, SubBlockInput, BlockInput, TurnoutInput
+from district import District, DELL, FOSS, formatIText, formatOText
+from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
 class Dell(District):
@@ -82,7 +82,7 @@ class Dell(District):
 		RXO = (r10b and self.RXE) or (r10c and self.RXW)
 
 		#Dell
-		outb = [0 for i in range(4)]
+		outb = [0 for _ in range(4)]
 		asp = self.rr.GetOutput("D4RA").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # eastbound signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -130,22 +130,24 @@ class Dell(District):
 		outb[3] = setBit(outb[3], 6, self.rr.GetOutput("H23.srel").GetStatus())
 		outb[3] = setBit(outb[3], 7, self.rr.GetOutput("D11.srel").GetStatus())
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
-		logging.debug("Dell:Dell:: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 2)
+		otext = formatOText(outb, 4)
+		logging.debug("Dell: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(DELL, outb, 4, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(DELL, outb, 4, swap=True)
-		# if inb is None:
-		# 		print("No data received from Latham:Latham")
-		# 	return
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 2)
+		else:
+			itext = formatIText(inb, 3)
+			logging.debug("Dell: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 2)
 
-		# 	print("Latham:Latham: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3]))
-		inb = []
-		inbc = 0
-		if inbc == 5:
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("DSw1").SetState(nb, rb)
@@ -178,7 +180,7 @@ class Dell(District):
 			self.rr.GetInput("D11.E").SetValue(getBit(inb[2], 5))
 
 		# Foss
-		outb = [0 for i in range(3)]
+		outb = [0 for _ in range(3)]
 		asp = self.rr.GetOutput("D10R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # eastbound signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -207,22 +209,24 @@ class Dell(District):
 		outb[2] = setBit(outb[2], 4, 1 if asp in [2, 3, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 5, 1 if asp in [4, 5, 6, 7] else 0)
 
-		inb = [0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
-		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
-		logging.debug("Dell:Foss: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 2)
+		otext = formatOText(outb, 3)
+		logging.debug("Foss: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(FOSS, outb, 3, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(FOSS, outb, 3, swap=True)
-		# if inb is None:
-		# 		print("No data received from Latham:Latham")
-		# 	return
+		if inbc != 3:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 2)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("FOSS: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 2)
 
-		# 	print("Latham:Latham: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3]))
-		inb = []
-		inbc = 0
-		if inbc == 5:
 			self.rr.GetInput("D21.W").SetValue(getBit(inb[0], 0))  # Detection
 			self.rr.GetInput("D21A").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("D21B").SetValue(getBit(inb[0], 2))

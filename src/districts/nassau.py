@@ -1,6 +1,6 @@
 import logging
 
-from district import District, leverState,  LATHAM
+from district import District, leverState,  NASSAUE, NASSAUW, NASSAUNX, formatIText, formatOText
 from rrobjects import SignalOutput, TurnoutOutput, NXButtonOutput, RelayOutput, BreakerInput, BlockInput, \
 	TurnoutInput, SignalLeverInput, ToggleInput
 from bus import setBit, getBit
@@ -155,7 +155,7 @@ class Nassau(District):
 		NESL = self.rr.GetDistrictLock("NESL")
 		NWSL = self.rr.GetDistrictLock("NWSL")
 		# Nassau West
-		outb = [0 for i in range(8)]
+		outb = [0 for _ in range(8)]
 
 		asp = self.rr.GetOutput("N14LC").GetAspect()     # signals
 		outb[0] = setBit(outb[0], 0, 1 if asp != 0 else 0)
@@ -251,25 +251,24 @@ class Nassau(District):
 		asp = self.rr.GetOutput("N24RD").GetAspect()   
 		outb[7] = setBit(outb[7], 5, 1 if asp != 0 else 0)
 
-		# inb, inbc = self.rrbus.sendRecv(NASSAUW, outb, 4, swap=True)
-		# if inb is None:
-		# 		print("No data received from NASSAU:NASSAUW")
-		# 	return
+		otext = formatOText(outb, 8)
+		logging.debug("Nassau West: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(NASSAUW, outb, 8, swap=False)
 
-		# 	print("NASSAU_NASSAUE: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
-		inb = [0, 0, 0, 0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(
-					outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(
-					inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6], inb[7])
-		logging.debug("Nassau:West: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 3)
+		if inbc != 8:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Nassau West: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 3)
 
-
-		inb = []
-		inbc = 0
-		if inbc == 8:
 			ip = self.rr.GetInput("NSw19")  #Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -403,7 +402,7 @@ class Nassau(District):
 			ip.SetState(nb, rb)
 
 		# Nassau East
-		outb = [0 for i in range(4)]
+		outb = [0 for _ in range(4)]
 
 		asp = self.rr.GetOutput("N24RB").GetAspect()             # Signals
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3] else 0)
@@ -455,19 +454,24 @@ class Nassau(District):
 		outb[3] = setBit(outb[3], 6, 1 if sigL == "N" else 0)
 		outb[3] = setBit(outb[3], 7, 1 if sigL == "R" else 0)
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
-		logging.debug("Nassau:East: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 3)
+		otext = formatOText(outb, 4)
+		logging.debug("Nassau East: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(NASSAUE, outb, 4, swap=False)
 
-# 	SendPacket(NASSAUE, &NassauEAborts, &NEIn[0], &NEOld[0], &NEOut[0], 4, true);
-# 		NEText = "NassauE\t" + OutText;
-
-		inb = []
-		inbc = 0
-		if inbc == 4:
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Nassau East: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 3)
+		
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("NSw41").SetState(nb, rb)
@@ -508,7 +512,7 @@ class Nassau(District):
 			self.rr.GetInput("NSw39").SetState(nb, rb)
 
 		# NX Buttons Output only
-		outb = [0 for i in range(3)]
+		outb = [0 for _ in range(3)]
 
 		op = self.rr.GetOutput("NNXBtnT12").GetOutPulse() # Nassau West
 		outb[0] = setBit(outb[0], 0, 1 if op != 0 else 0)
@@ -559,15 +563,15 @@ class Nassau(District):
 		op = self.rr.GetOutput("NNXBtnB20").GetOutPulse()
 		outb[2] = setBit(outb[2], 6, 1 if op != 0 else 0)
 
-		logging.debug("Nassau:NX: Output bytes: {0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2]))
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
-		logging.debug("Nassau:NX: Output bytes: %s" % otext)
+		otext = formatOText(outb, 3)
+		logging.debug("Nassau NX: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(NASSAUNX, outb, 3, swap=False)
 		if self.sendIO:
 			self.rr.ShowText(otext, "", 2, 3)
 
-
-# 	SendPacket(NASSAUNX, &NassauNXAborts, &NXIn[0], &NXOld[0], &NXOut[0], 3, true);
-# 		NXText = "NassauNX" + OutText;
-# }
-# //---------------------------------------------------------------------------
-
+# 	No inputs here

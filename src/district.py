@@ -95,6 +95,18 @@ def leverState(lvrL, _, lvrR):  # parameter 2 is callon lever - not yet used
 
 	return "N"
 
+def formatIText(ibuf, nibuf):
+	s = []
+	for i in range(nibuf):
+		s.append("{0:08b}".format(int(ibuf[i].hex(), 16)))
+	return " ".join(s)
+
+def formatOText(obuf, nobuf):
+	s = []
+	for i in range(nobuf):
+		s.append("{0:08b}".format(obuf[i]))
+	return " ".join(s)
+
 
 class District(wx.Panel):
 	signal = 0

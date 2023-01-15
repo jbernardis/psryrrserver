@@ -1,6 +1,6 @@
 import logging
 
-from district import District, leverState, CORNELL, EASTJCT, KALE, YARD, YARDSW
+from district import District, leverState, CORNELL, EASTJCT, KALE, YARD, YARDSW, formatIText, formatOText
 from rrobjects import TurnoutInput, BlockInput, RouteInput, SignalOutput, TurnoutOutput, RelayOutput, \
 	FleetLeverInput, IndicatorOutput, SignalLeverInput, ToggleInput, NXButtonOutput
 from bus import setBit, getBit
@@ -90,7 +90,7 @@ class Yard(District):
 		optControl = self.rr.GetControlOption("yard")  # 0 => Yard, 1 => Dispatcher
 		optFleet = self.rr.GetControlOption("yard.fleet")  # 0 => no fleeting, 1 => fleeting
 		#Cornell Jct
-		outb = [0 for i in range(2)]
+		outb = [0 for _ in range(2)]
 		asp = self.rr.GetOutput("Y4R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -111,21 +111,24 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 3, self.rr.GetOutput("Y21.srel").GetStatus())	      # Stop relays
 		outb[1] = setBit(outb[1], 4, self.rr.GetOutput("L10.srel").GetStatus())
 
-		inb = [0, 0]
-		otext = "{0:08b}  {1:08b}".format(outb[0], outb[1])
-		itext = "{0:08b}  {1:08b}".format(inb[0], inb[1])
-		logging.debug("Yard:Cornell Jct: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 5)
+		otext = formatOText(outb, 2)
+		logging.debug("Cornell: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(CORNELL, outb, 2, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(CORNELL, outb, 2, swap=True)
-		# if inb is None:
-		# 		print("No data received from Yard:Cornell Jct")
-		# 	return
+		if inbc != 2:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 5)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Cornell: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 5)
 
-		# 	print("Yard:Cornell Jct: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
-		inbc = len(inb)
-		if inbc == 20:
 			ip = self.rr.GetInput("YSw1")  #Switches
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -151,7 +154,7 @@ class Yard(District):
 			ip.SetValue(getBit(inb[1], 2))
 
 		# East Junction-----------------------------------------------------------------
-		outb = [0 for i in range(2)]
+		outb = [0 for _ in range(2)]
 		asp = self.rr.GetOutput("Y10R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -172,23 +175,24 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 2, self.rr.GetOutput("Y20.srel").GetStatus())	      # Stop relays
 		outb[1] = setBit(outb[1], 3, self.rr.GetOutput("Y11.srel").GetStatus())
 
-		inb = [0, 0]
-		otext = "{0:08b}  {1:08b}".format(outb[0], outb[1])
-		itext = "{0:08b}  {1:08b}".format(inb[0], inb[1])
-		logging.debug("Yard:East Jct: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 5)
+		otext = formatOText(outb, 2)
+		logging.debug("East Jct: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(EASTJCT, outb, 2, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(EASTJCT, outb, 2, swap=True)
-		# if inb is None:
-		# 		print("No data received from Yard:East Jct")
-		# 	return
+		if inbc != 2:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 5)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("East Jct: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 5)
 
-		# 	print("Yard:East Jct: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
-
-		inb = []
-		inbc = 0
-		if inbc == 20:
 			ip = self.rr.GetInput("YSw7")  #Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -216,7 +220,7 @@ class Yard(District):
 			ip.SetValue(getBit(inb[1], 3))
 
 		# Kale-----------------------------------------------------------------------
-		outb = [0 for i in range(4)]
+		outb = [0 for _ in range(4)]
 		asp = self.rr.GetOutput("Y22R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp != 0 else 0)
 		asp = self.rr.GetOutput("Y26RA").GetAspect()
@@ -240,23 +244,24 @@ class Yard(District):
 		outb[1] = setBit(outb[1], 1, 1 if asp == 0b101 else 0)  # Approach
 		outb[1] = setBit(outb[1], 2, 1 if asp == 0b001 else 0)  # Restricting
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
-		logging.debug("Yard:Kale: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 2, 5)
+		otext = formatOText(outb, 4)
+		logging.debug("Kale: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(KALE, outb, 4, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(KALE, outb, 4, swap=True)
-		# if inb is None:
-		# 		print("No data received from Yard:Kale")
-		# 	return
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 2, 5)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Kale: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 2, 5)
 
-		# 	print("Yard:Kale: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
-
-
-		inbc = 0
-		if inbc == 4:
 			ip = self.rr.GetInput("YSw17")  #Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -309,7 +314,7 @@ class Yard(District):
 			ip.SetValue(getBit(inb[2], 7))
 
 		# Yard-----------------------------------------------------------------------
-		outb = [0 for i in range(6)]
+		outb = [0 for _ in range(6)]
 		sigL2 = self.sigLever["Y2"]
 		outb[0] = setBit(outb[0], 0, 1 if sigL2 == "L" else 0)       # Signal Indicators
 		outb[0] = setBit(outb[0], 1, 1 if sigL2 == "N" else 0)
@@ -373,24 +378,24 @@ class Yard(District):
 		outb[5] = setBit(outb[5], 4, self.rr.GetOutput("YSw29").GetLock())
 		outb[5] = setBit(outb[5], 5, self.rr.GetOutput("YSw33").GetLock())
 
-		inb = [0, 0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4], inb[5])
-		logging.debug("Yard:Yard: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 3, 5)
+		otext = formatOText(outb, 6)
+		logging.debug("Yard: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(YARD, outb, 6, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(YARD, outb, 6, swap=True)
-		# if inb is None:
-		# 		print("No data received from Yard:Yard")
-		# 	return
+		if inbc != 6:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 3, 5)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Yard: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 3, 5)
 
-		# 	print("Yard:Yard: Input bytes: {0:08b}  {1:08b}".format(inb[0], inb[1], inb[2]))
-
-
-		inb = []
-		inbc = 0
-		if inbc == 6:
 			ip = self.rr.GetInput("YSw33")  # Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -455,7 +460,7 @@ class Yard(District):
 			self.rr.GetInput("Y81").SetValue(getBit(inb[5], 3))  
 
 		# Yard and Waterman switch control by dispatcher
-		outb = [0 for i in range(5)]
+		outb = [0 for _ in range(5)]
 		op = self.rr.GetOutput("YSw1").GetOutPulse()
 		outb[0] = setBit(outb[0], 0, 1 if op > 0 else 0)                   # switches
 		outb[0] = setBit(outb[0], 1, 1 if op < 0 else 0)
@@ -523,12 +528,13 @@ class Yard(District):
 		op = self.rr.GetOutput("YWEB4").GetOutPulse()  # Y84E
 		outb[4] = setBit(outb[4], 7, 1 if op > 0 else 0)
 
-# 	SendPacket(YARDSW, &YardSWAborts, &YSWIn[0], &YSWOld[0], &YSWOut[0], 5, true);
-# 	YSWText = "YardSW\t" + OutText;
+		otext = formatOText(outb, 5)
+		logging.debug("YardSW: Output bytes: %s" % otext)
+			
+		if not self.settings.simulation:
+			inb, inbc = self.rrbus.sendRecv(YARDSW, outb, 5, swap=False)
 
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
-		logging.debug("Yard:Waterman: Output bytes: %s" % otext)
 		if self.sendIO:
-			self.rr.ShowText(otext, "", 4, 5)
+				self.rr.ShowText(otext, "", 4, 5)
 
 		# No inputs from this node

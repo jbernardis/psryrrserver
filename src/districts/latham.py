@@ -1,7 +1,7 @@
 import logging
 
-from district import District, LATHAM
-from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
+from district import District, LATHAM, CARLTON, formatIText, formatOText
+from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
 
@@ -45,7 +45,7 @@ class Latham(District):
 
 	def OutIn(self):
 		#Latham
-		outb = [0 for i in range(5)]
+		outb = [0 for _ in range(5)]
 		op = self.rr.GetOutput("LSw1").GetOutPulse()
 		outb[0] = setBit(outb[0], 0, 1 if op > 0 else 0)                   # switches
 		outb[0] = setBit(outb[0], 1, 1 if op < 0 else 0)
@@ -98,22 +98,24 @@ class Latham(District):
 		outb[4] = setBit(outb[4], 1, self.rr.GetOutput("L21.srel").GetStatus())
 		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("P50.srel").GetStatus())
 
-		inb = [0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4])
-		logging.debug("Latham:Latham: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 2)
+		otext = formatOText(outb, 5)
+		logging.debug("Latham: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(LATHAM, outb, 5, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(LATHAM, outb, 5, swap=True)
-		# if inb is None:
-		# 		print("No data received from Latham:Latham")
-		# 	return
+		if inbc != 5:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 2)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Latham: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 2)
 
-		# 	print("Latham:Latham: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
-		inb = []
-		inbc = 0
-		if inbc == 5:
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("LSw1").SetState(nb, rb)
@@ -160,7 +162,7 @@ class Latham(District):
 
 
 		# Carlton (includes Krulish West tracks and signals
-		outb = [0 for i in range(5)]
+		outb = [0 for _ in range(5)]
 		asp = self.rr.GetOutput("L16R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -211,22 +213,24 @@ class Latham(District):
 		outb[4] = setBit(outb[4], 2, self.rr.GetOutput("S21.srel").GetStatus())	# Krulish West stopping relays
 		outb[4] = setBit(outb[4], 3, self.rr.GetOutput("N25.srel").GetStatus())	
 
-		inb = [0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4])
-		logging.debug("Latham:Carlton: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 2)
+		otext = formatOText(outb, 5)
+		logging.debug("Carlton: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(CARLTON, outb, 5, swap=False)
 
-		# inb, inbc = self.rrbus.sendRecv(CARLTON, outb, 5, swap=True)
-		# if inb is None:
-		# 		print("No data received from Latham:Carlton")
-		# 	return
+		if inbc != 5:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 2)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Carlton: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 2)
 
-		# 	print("Latham:Latham: Input bytes: {0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4]))
-		inb = []
-		inbc = 0
-		if inbc == 5:
 			nb = getBit(inb[0], 0)  # Carlton switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("LSw11").SetState(nb, rb)

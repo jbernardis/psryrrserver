@@ -1,6 +1,6 @@
 import logging
 
-from district import District, leverState
+from district import District, leverState, PORTA, PORTB, PARSONS, formatIText, formatOText
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, ToggleInput, SignalLeverInput, BlockInput, TurnoutInput, HandswitchLeverInput
 from bus import setBit, getBit
 
@@ -177,21 +177,25 @@ class Port(District):
 		clr40w = inp.GetClear() and not inp.GetEast()
 		outb[8] = setBit(outb[2], 5, 1 if clr40w else 0)  # semaphore signal
 		outb[8] = setBit(outb[2], 6, 1 if clr40w else 0)  # should be using RstrW
-#
-# 	SendPacket(PORTA, &PortAAborts, &PAIn[0], &PAOld[0], &PAOut[0], 9, true);
-#    		PAText = "PortA\t" + OutText;
-		inb = [0, 0, 0, 0, 0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}  {8:08b}".format(
-					outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7], outb[8])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}  {8:08b}".format(
-					inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6], inb[7], inb[8])
-		logging.debug("Port A:Southport: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 3)
 
-		inb = []
-		inbc = 0
-		if inbc == 9:
+		otext = formatOText(outb, 9)
+		logging.debug("Port A: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(PORTA, outb, 9, swap=False)
+
+		if inbc != 9:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Port A: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 3)
+
 			ip = self.rr.GetInput("PASw1")  # Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -308,7 +312,7 @@ class Port(District):
 			self.rr.GetInput("parelease").SetState(release)  # Port A Release switch
 
 		# Parsons Junction
-		outb = [0 for _ in range(3)]
+		outb = [0 for _ in range(4)]
 		asp = self.rr.GetOutput("PA34LB").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # westward signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -343,22 +347,25 @@ class Port(District):
 		outb[2] = setBit(outb[2], 4, self.rr.GetOutput("P30.srel").GetStatus())
 		outb[2] = setBit(outb[2], 5, self.rr.GetOutput("P50.srel").GetStatus())
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("P11.srel").GetStatus())
-#
-# 	SendPacket(PARSONS, &ParsonsAborts, &PJIn[0], &PJOld[0], &PJOut[0], 4, true);
-#    		PJText = "Parsons Jct" + OutText;
-#
-		inb = [0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(
-					outb[0], outb[1], outb[2])
-		itext = "{0:08b}  {1:08b}  {2:08b}".format(
-					inb[0], inb[1], inb[2])
-		logging.debug("Port A:Parsons: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 3)
 
-		inb = []
-		inbc = 0
-		if inbc == 9:
+		otext = formatOText(outb, 4)
+		logging.debug("Parsons: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(PARSONS, outb, 4, swap=False)
+
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Parsons: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 3)
+
 			ip = self.rr.GetInput("PASw27")  # Switch positions
 			nb = getBit(inb[0], 0)
 			rb = getBit(inb[0], 1)
@@ -494,23 +501,25 @@ class Port(District):
 		outb[6] = setBit(outb[6], 4, self.rr.GetOutput("P32.srel").GetStatus())	      # Stop relays
 		outb[6] = setBit(outb[6], 5, self.rr.GetOutput("P41.srel").GetStatus())
 		outb[6] = setBit(outb[6], 6, 1 if PBXO else 0)  # Crossing signal
-#
-#
-# 	SendPacket(PORTB, &PortBAborts, &PBIn[0], &PBOld[0], &PBOut[0], 7, true);
-#    		PBText = "PortB\t" + OutText;
-#
-		inb = [0, 0, 0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(
-					outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[5])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(
-					inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6])
-		logging.debug("Port B: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 2, 3)
 
-		inb = []
-		inbc = 0
-		if inbc == 7:
+		otext = formatOText(outb, 7)
+		logging.debug("Port  B: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(PORTB, outb, 7, swap=False)
+
+		if inbc != 7:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 2, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Port B: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 2, 3)
+
 			nb = getBit(inb[0], 0)  # Switch Positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("PBSw1").SetState(nb, rb)

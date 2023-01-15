@@ -1,7 +1,7 @@
 import logging
 
-from district import District, SHORE
-from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, IndicatorOutput, BreakerInput, BlockInput, TurnoutInput
+from district import District, SHORE, HYDEJCT, formatIText, formatOText
+from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
 
@@ -72,7 +72,7 @@ class Shore(District):
 		F10H = asp8l == 0 and f10occ == 0
 		F10D = F10H and (asp8r != 0)
 
-		outb = [0 for i in range(7)]
+		outb = [0 for _ in range(7)]
 		asp = self.rr.GetOutput("S4R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # Main Signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -153,19 +153,24 @@ class Shore(District):
 		outb[6] = setBit(outb[6], 4, 0 if self.rr.GetOutput("CSw15.hand").GetStatus() != 0 else 1) # spikes peak hand switch
 		outb[6] = setBit(outb[6], 5, 1 if SXG else 0)  # Bortell crossing gates
 
-		inb = [0, 0, 0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6])
+		otext = formatOText(outb, 7)
 		logging.debug("Shore: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 2)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(SHORE, outb, 7, swap=False)
 
-# 	SendPacket(SHORE, &ShoreAborts, &SIn[0], &SOld[0], &SOut[0], 8, true);
-# 	SHText = "Shore\t" + OutText;
+		if inbc != 7:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 2)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Shore: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 2)
 
-		inb = []
-		inbc = 0
-		if inbc == 7:
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("SSw1").SetState(nb, rb)
@@ -219,7 +224,7 @@ class Shore(District):
 			self.rr.GetInput("H10A").SetValue(getBit(inb[4], 6))
 
 		#  Hyde Junction
-		outb = [0 for i in range(3)]
+		outb = [0 for _ in range(3)]
 		asp = self.rr.GetOutput("S16R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -257,19 +262,24 @@ class Shore(District):
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("P42.srel").GetStatus())
 		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("H11.srel").GetStatus())	
 
-		inb = [0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
-		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
-		logging.debug("Shore:HydeJct: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 2)
+		otext = formatOText(outb, 3)
+		logging.debug("Hyde Jct: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(HYDEJCT, outb, 3, swap=False)
 
-# 	SendPacket(HYDEJCT, &HydeJctAborts, &HJIn[0], &HJOld[0], &HJOut[0], 3, true);
-# 	HJctText = "Hyde Jct " + OutText;
+		if inbc != 3:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 2)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Hyde Jct: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 2)
 
-		inb = []
-		inbc = 0
-		if inbc == 3:
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("SSw15").SetState(nb, rb)

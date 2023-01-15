@@ -1,6 +1,6 @@
 import logging
 
-from district import District, KRULISH
+from district import District, KRULISH, formatIText, formatOText
 from rrobjects import SignalOutput, TurnoutOutput, RelayOutput, IndicatorOutput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
@@ -29,7 +29,7 @@ class Krulish(District):
 		ix = self.AddInputs(toNames, TurnoutInput, District.turnout, ix)
 
 	def OutIn(self):
-		outb = [0 for i in range(3)]
+		outb = [0 for _ in range(3)]
 		asp = self.rr.GetOutput("K8R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # eastbound signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -59,19 +59,24 @@ class Krulish(District):
 		outb[2] = setBit(outb[2], 6, self.rr.GetOutput("N20.srel").GetStatus())	# Stop relays
 		outb[2] = setBit(outb[2], 7, self.rr.GetOutput("N11.srel").GetStatus())	# Stop relays
 
-		inb = [0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
-		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
+		otext = formatOText(outb, 3)
 		logging.debug("Krulish: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 1)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(KRULISH, outb, 3, swap=False)
 
-	# SendPacket(KRULISH, &KrulishAborts, &KIn[0], &KOld[0], &KOut[0], 3, true);
-	#     KRText = "Krulish\t" + OutText;
+		if inbc != 3:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 1)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Krulish: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 1)
 
-		inb = []
-		inbc = 0
-		if inbc == 5:
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("KSw1").SetState(nb, rb)

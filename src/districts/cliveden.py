@@ -1,6 +1,6 @@
 import logging
 
-from district import District, LATHAM
+from district import District, CLIVEDEN, formatIText, formatOText
 from rrobjects import SignalOutput, TurnoutOutput, HandSwitchOutput, RelayOutput, SignalLeverInput, BreakerInput, BlockInput, TurnoutInput
 from bus import setBit, getBit
 
@@ -40,7 +40,7 @@ class Cliveden(District):
 		ix = self.AddInputs(brkrNames, BreakerInput, District.breaker, ix)
 
 	def OutIn(self):
-		outb = [0 for i in range(4)]
+		outb = [0 for _ in range(4)]
 
 		asp = self.rr.GetOutput("C14R").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # signals
@@ -85,15 +85,24 @@ class Cliveden(District):
 		outb[3] = setBit(outb[3], 4, self.rr.GetOutput("C23.srel").GetStatus())
 		outb[3] = setBit(outb[3], 5, self.rr.GetOutput("C12.srel").GetStatus())
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
+		otext = formatOText(outb, 4)
 		logging.debug("Cliveden: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 1)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(CLIVEDEN, outb, 4, swap=False)
 
-		inbc = 0
-		if inbc == 4:
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 1)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("CLIVEDEN: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 1)
+
 			nb = getBit(inb[0], 0)  # Switch positions
 			rb = getBit(inb[0], 1)
 			self.rr.GetInput("CSw13").SetState(nb, rb)

@@ -1,7 +1,14 @@
-import wx
-import wx.lib.newevent
+import os, inspect, sys
+cmdFolder = os.path.realpath(os.path.abspath(os.path.split(inspect.getfile( inspect.currentframe() ))[0]))
+if cmdFolder not in sys.path:
+	sys.path.insert(0, cmdFolder)
 
 import logging
+logging.basicConfig(filename=os.path.join("logs", "server.log"), filemode='w', format='%(asctime)s %(message)s', level=logging.DEBUG)
+
+#import wx
+import wx.lib.newevent
+
 import json
 import socket
 

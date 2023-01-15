@@ -1,6 +1,6 @@
 import logging
 
-from district import District, leverState
+from district import District, leverState, formatIText, formatOText, GREENMTN, CLIFF, SHEFFIELD
 from rrobjects import SignalOutput, NXButtonOutput, HandSwitchOutput, BlockInput, TurnoutInput, RouteInput, \
 	FleetLeverInput, SignalLeverInput, HandswitchLeverInput, ToggleInput
 from bus import setBit, getBit
@@ -120,7 +120,7 @@ class Cliff(District):
 		optCliveden = self.rr.GetControlOption("bank.fleet")  # 0 => no fleeting, 1 => fleeting
 		optFleet = optBank or optCliveden
 		# Green Mountain
-		outb = [0 for i in range(3)]
+		outb = [0 for _ in range(3)]
 		asp = self.rr.GetOutput("C2RB").GetAspect()
 		outb[0] = setBit(outb[0], 0, 1 if asp in [1, 3, 5, 7] else 0)  # east end signals
 		outb[0] = setBit(outb[0], 1, 1 if asp in [2, 3, 6, 7] else 0)
@@ -156,16 +156,24 @@ class Cliff(District):
 		outb[2] = setBit(outb[2], 4, 1 if asp in [4, 5, 6, 7] else 0)
 		outb[2] = setBit(outb[2], 5, 0 if self.rr.GetOutput("CSw3.hand").GetStatus() != 0 else 1)  # hand switch 3
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}".format(outb[0], outb[1], outb[2])
-		itext = "{0:08b}  {1:08b}  {2:08b}".format(inb[0], inb[1], inb[2])
-		logging.debug("Cliff:GM: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 0, 3)
+		otext = formatOText(outb, 3)
+		logging.debug("Green Mountain: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(GREENMTN, outb, 3, swap=False)
 
-		inb = []
-		inbc = 0
-		if inbc == 3:
+		if inbc != 3:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 0, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Green Mountain: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 0, 3)
+
 			self.rr.GetInput("CC30E").SetValue(getBit(inb[0], 0))   # Routes
 			self.rr.GetInput("CC10E").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("CG10E").SetValue(getBit(inb[0], 2))
@@ -188,7 +196,7 @@ class Cliff(District):
 			self.rr.GetInput("C20").SetValue(getBit(inb[2], 0))
 
 		# Cliff
-		outb = [0 for i in range(8)]
+		outb = [0 for _ in range(8)]
 		sigl = self.sigLever["C2"]  # signal indicators
 		outb[0] = setBit(outb[0], 0, 1 if sigl == "L" else 0)
 		outb[0] = setBit(outb[0], 1, 1 if sigl == "N" else 0)
@@ -277,16 +285,24 @@ class Cliff(District):
 		outb[7] - setBit(outb[7], 3, 1 if self.rr.GetInput("CSw15").GetValue() == "R" else 0)
 		outb[7] - setBit(outb[7], 4, 1 if self.rr.GetInput("CSw11").GetValue() == "R" else 0)
 
-		inb = [0, 0, 0, 0, 0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(outb[0], outb[1], outb[2], outb[3], outb[4], outb[5], outb[6], outb[7])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}  {4:08b}  {5:08b}  {6:08b}  {7:08b}".format(inb[0], inb[1], inb[2], inb[3], inb[4], inb[5], inb[6], inb[7])
+		otext = formatOText(outb, 8)
 		logging.debug("Cliff: Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 1, 3)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(CLIFF, outb, 8, swap=False)
 
-		inb = []
-		inbc = 0
-		if inbc == 7:
+		if inbc != 8:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 1, 3)
+		else:
+			itext = formatIText(inb, 7)
+			logging.debug("Cliff: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 1, 3)
+
 			self.rr.GetInput("CC21W").SetValue(getBit(inb[0], 0))  # Routes
 			self.rr.GetInput("CC40W").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("CC44W").SetValue(getBit(inb[0], 2))
@@ -369,7 +385,7 @@ class Cliff(District):
 				self.rr.GetInput("CSw21b.lvr").SetState(st)
 
 		# Sheffield
-		outb = [0 for i in range(4)]
+		outb = [0 for _ in range(4)]
 		op = self.rr.GetOutput("CC54E").GetOutPulse()  # Switch button outputs - Sheffield
 		outb[0] = setBit(outb[0], 0, 1 if op != 0 else 0)
 		op = self.rr.GetOutput("CC53E").GetOutPulse()
@@ -434,16 +450,24 @@ class Cliff(District):
 		op = self.rr.GetOutput("CG21W").GetOutPulse()
 		outb[3] = setBit(outb[3], 5, 1 if op != 0 else 0)
 
-		inb = [0, 0, 0, 0]
-		otext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(outb[0], outb[1], outb[2], outb[3])
-		itext = "{0:08b}  {1:08b}  {2:08b}  {3:08b}".format(inb[0], inb[1], inb[2], inb[3])
-		logging.debug("Cliff:Switches Output bytes: %s" % otext)
-		if self.sendIO:
-			self.rr.ShowText(otext, itext, 2, 3)
+		otext = formatOText(outb, 4)
+		logging.debug("Sheffield: Output bytes: %s" % otext)
+			
+		if self.settings.simulation:
+			inb = []
+			inbc = 0
+		else:
+			inb, inbc = self.rrbus.sendRecv(SHEFFIELD, outb, 4, swap=False)
 
-		inb = []
-		inbc = 0
-		if inbc == 4:
+		if inbc != 4:
+			if self.sendIO:
+				self.rr.ShowText(otext, "", 2, 3)
+		else:
+			itext = formatIText(inb, inbc)
+			logging.debug("Sheffield: Input Bytes: %s" % itext)
+			if self.sendIO:
+				self.rr.ShowText(otext, itext, 2, 3)
+
 			self.rr.GetInput("CC50W").SetValue(getBit(inb[0], 0))  # Routes
 			self.rr.GetInput("CC51W").SetValue(getBit(inb[0], 1))
 			self.rr.GetInput("CC52W").SetValue(getBit(inb[0], 2))

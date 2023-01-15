@@ -20,8 +20,9 @@ def getBit(ibyte, ibit):
 	if ibit < 0 or ibit > 7:
 		# bit index is out of range
 		return 0
-	mask = 1 << ibit
-	return 1 if ibyte & mask != 0 else 0
+	mask = 1 << (7-ibit)
+	b = int(ibyte.hex(), 16)
+	return 1 if b & mask != 0 else 0
 
 
 class Bus:
